@@ -1,0 +1,248 @@
+Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statistics	EMGT	Notes
+1	MP-1:N30D	313;323	Increased virulence in mice	H5N1							
+3	MP-1:T215A	313;323	Increased virulence in mice	H5N1							
+4	MP-1:I43M	16;323	Increased virulence in chickens;Increased virulence in ducks;Increased virulence in mice	H5N1							
+5	MP-2:L26F	112;4;61;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1							
+6	MP-2:I27A	61;112;4;84;80;323	increased resistance to amantadine;Increased resistance to rimantadine	H5N1; H5N2							
+7	MP-2:I27T	4;61;80;84;112;323	increased resistance to amantadine;Increased resistance to rimantadine	H5N1; H5N2							
+8	MP-2:I27S	4;61;80;84;112;323	increased resistance to amantadine;Increased resistance to rimantadine	H5N1; H5N2							
+9	MP-2:A30V	84;61;80;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1;H5N2;H7N2							
+10	MP-2:A30T	84;61;80;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1;H5N2;H7N2							
+11	MP-2:A30S	84;61;80;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1;H5N2;H7N2							
+12	MP-2:S31N	4;84;61;80;43;179;274;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1;H5N2;H9N2							
+13	MP-2:S31G	4;84;61;80;43;179;274;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1;H5N2;H9N2							
+14	MP-2:G34E	112;323	Increased resistance to amantadine;Increased resistance to rimantadine	H5N1							
+15	NS-1:P42S	26;323	Increased virulence in mice;Decreased antiviral response in mice	H5N1							
+16	NS-1:D74N	140;323	Enhanced replication in mammalian cells;Enhanced pathogenicity in mice	H7N1 backbone with H5N1 NS							
+17	NS-1:Y84F	5;323	Decreased replication in mammalian cells;Enhanced interferon response	H1N1 with H5N1 NS							
+18	NS-1:D92E	170;204;323	Increased virulence in mice;Increased virulence in swine	H1N1 backbone with H5N1 NS							
+19	NS-1:D92E	317;323	Increased virulence in mice;Increased virulence in chickens	H1N1 backbone with H5N1 HA, NA and NS							
+20	NS-1:I106M	19;323	Increased viral replication in mammalian cells;Increased virulence in mice	H1N1 with all internal genes from H7N9							
+21	NS-1:C138F	308;323	Increased viral replication in mammalian cells;Decreased interferon response	H5N1							
+22	NS-1:V149A	294;323	Increased virulence in chickens;Decreased interferon response in chickens	H5N1							
+23	NS-1:L103F;NS-1:I106M	150;306;323	Increased virulence in mice	H5N1							
+24	NS-1:N205S;NS-2:T47A	284;323	Decreased antiviral response in ferrets	H5N1							
+25	NS-1:G210R;NS-2:M51I	284;323	Decreased antiviral response in ferrets	H5N1							
+26	NS-1:D74N;NS-1:P3S;NS-1:R41K	140;323	Enhanced replication in mammalian cells;Enhanced pathogenicity in mice	H7N1 backbone with H5N1 NS							
+27	NS-1:R38A;NS-1:K41A	172;323	Decreased replication in mammalian cells;Decreased replication in avian cells	H7N1							
+28	NS-1:C138F;NS-1:K55E;NS-1:K66E	308;323	Enhanced replication in mammalian cells;Decreased interferon response	H5N1							
+29	NS-2:MP-16I	40;323	Increased polymerase activity in mammalian cells	H5N1							
+30	NS-2:MP-16I;NS-2:Y41C;NS-2:E75G	40;323	Increased polymerase activity in mammalian cells	H5N1							
+31	NP:I41V	245;323	Increased polymerase activity in mammalian cells	H7N9							
+32	NP:K91R	47;323	Decreased polymerase activity in mammalian cells	H5N1							
+33	NP:MP-105V	93;197;323	Increased virulence in chickens	H5N1							
+34	NP:I109T	93;197;323	Increased polymerase activity in chickens (but not ducks);Increased virulence in chickens;Increased replication in chickens (but not ducks)	H5N1							
+35	NP:A184K	24;323	Increased replication in avian cells;Increased virulence in chickens;Enhanced interferon response	H5N1							
+36	NP:K198R	47;323	Decreased polymerase activity in mammalian cells	H5N1							
+37	NP:E210D	245;323	Increased polymerase activity in mammalian cells	H7N9							
+38	NP:K227R	47;323	Increased polymerase activity in mammalian cells	H5N1							
+39	NP:K229R	47;323	Increased polymerase activity in mammalian cells	H5N1							
+40	NP:N319K	305;166;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N7							
+41	NP:E434K	35;323	Increased polymerase activity in mammalian cells	H9N2							
+42	NP:K470R	47;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H5N1							
+43	NP:Q357L;PB2:E627K	251;323	Increased virulence in mice	H5N1							
+44	PB2:D9N	251;298;323	Increased virulence in mice	H5N1							
+45	PB2:V25A	180;323	Increased virulence in mice	H5N1 backbone with H1N1 NS							
+46	PB2:I63T	92;323	Decreased pathogenicity in mice	H5N1							
+47	PB2:E158G	214;323	Increased virulence in mice;Increased polymerase activity in mammalian cells	H5N2;H5N9							
+48	PB2:E158K	187;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H4N6							
+49	PB2:E192K	138;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells	H5N1							
+50	PB2:A199S	251;323	Increased virulence in mice	H5N1							
+51	PB2:D253N	282;323	Increased polymerase activity in mammalian cells	H9N2							
+52	PB2:D256G	213;323	Increased polymerase activity in mammalian cells	H5N1 backbone with pH1N1 PB2							
+53	PB2:T271A	215;148;48;323	Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells	H3N2 (avian);H5N1;H7N9							
+54	PB2:I292V	228;323	Increased virulence in mice;Increased polymerase activity in mammalian cells	H9N2							
+55	PB2:E358V	246;323	Decreased virulence in mice	H7N3							
+56	PB2:I292V	219;323	Increased polymerase activity in mammalian cells	H10N8							
+57	PB2:K389R	217;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N9							
+58	PB2:L339T	267;323	Decreased polymerase activity in mice;Decreased virulence in mice	H5N1							
+59	PB2:K482R	318;99;323	Increased polymerase activity in mammalian cells	H7N9							
+60	PB2:K526R	291;323	Increased polymerase activity in mammalian cells	H5N1;H7N9							
+61	PB2:M535L	115;323	Increased polymerase activity in mammalian cells	H7N9							
+62	PB2:A588V	219;323	Increased replication in avian cells;Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells;Increased replication in mammalian cells	H7N9;H9N2;H10N8							
+63	PB2:Q591K	138;62;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells;Increased replication in mammalian cells	H5N1							
+64	PB2:Q591K	115;48;323	Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells	H7N9							
+65	PB2:Q591K	221;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H9N2							
+66	PB2:V598T	217;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N9							
+67	PB2:V598I	217;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N9							
+68	PB2:E627K	187;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H4N6							
+69	PB2:E627K	220;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H6N1							
+70	PB2:E627K	218;237;323	Increased virulence in mice;Increased polymerase activity in avian cells	H7N7							
+71	PB2:E627K	218;296;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N9							
+72	PB2:E627K	236;218;323	Increased virulence in mice;Increased polymerase activity in mammalian cells	H9N2							
+73	PB2:E627K	42;120;175;250;283;185;251;102;213;225;210;25;239;126;323	Increased virulence in mice;Decreased replication in avian cells;Enhanced polymerase activity;Decreases virulence in chickens;Decreased polymerase activity in avian cells;Contributes to contact transmission in guinea pigs;Contributes to airborne pathogenicity in ferrets	H5N1							
+74	PB2:E627V	138;323	Increased virulence in mice;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H5N1							
+75	PB2:K627E	252;323	Increased virulence in chickens	H5N1							
+76	PB2:D701N	211;323	Increased viral replication in mammalian cells;Increased virulence in mice	H1N2							
+77	PB2:D701N	115;48;323	Increased polymerase activity in mammalian cells	H7N9							
+78	PB2:D701N	218;323	Increased polymerase activity in mammalian cells	H9N2							
+79	PB2:D701N	310;138;136;257;176;323	Increased polymerase activity in guinea pigs;Enhanced replication efficiency in guinea pigs;Increased virulence in guinea pigs;Contact transmission in guinea pigs;Increased virulence in mice	H5N1							
+80	PB2:D701V	138;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells;Increased virulence in mice	H5N1							
+81	PB2:S714R	305;218;83;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N7							
+82	PB2:S714R	218;323	Increased polymerase activity in mammalian cells	H9N2							
+83	PB2:S715N	216;323	Decreased virulence in mice	H5N1							
+84	PB2:MP-28I;PB2:A274T;PB2:K526R;PB2:I553V;PB2:L607V	75;323	Decreased polymerase activity in mammalian cells	H5N1							
+85	PB2:L89V;PB2:G309D	263;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
+86	PB2:L89V;PB2:G309D;PB2:T339K;PB2:R477G;PB2:I495V;PB2:K627E;PB2:A676T	263;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
+87	PB2:MP-147L;PB2:E627K	183;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H9N2							
+88	PB2:I147T;PB2:K339T;PB2:A588T	195;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
+89	PB2:K526R;PB2:E627K	291;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells;Increased virulence in mice	H5N1;H7N9							
+90	PB2:E627K;PB2:D701N	245;323	Increased polymerase activity in mammalian cells	H7N9							
+91	PB2:E627K;PB2:S714R	218;323	Increased polymerase activity in mammalian cells	H7N7;H7N9;H9N2							
+92	PB2:E627K;PB2:D701N;PB2:S714R	;218;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H9N2							
+93	PB2:D701N;PB2:S714R	;212;323	Increased replication in mammalian cells;Increased virulence in mice	H5N1							
+94	PB2:D701N;PB2:S714R	;218;323	Increased polymerase activity in mammalian cells	H7N7;H7N9;H9N2							
+95	PB1:D3V	139;323	Increased polymerase activity in avian cells;Increased replication in avian cells;Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H5N1							
+96	PB1:N105S	140;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells;Increased virulence in mice	H5N1							
+97	PB1:K207R	178;323	Decreased polymerase activity in mammalian cells	H5N1							
+98	PB1:Y436H	178;323	Decreased polymerase activity in mammalian cells;Decreased virulence in mice;Decreased virulence in ducks;Decreased virulence in ferrets	H5N1							
+99	PB1:V473L	50;323	Decreased polymerase activity in mammalian cells;Decreased replication in mammalian cells	H1N1 with PB2, PB1, PA NP from H5N1							
+100	PB1:K577E	;14;323	Increased polymerase activity in mice;Increased virulence in mice	H9N2							
+101	PB1:V598P	50;323	Decreased polymerase activity in mammalian cells;Decreased replication in mammalian cells	H1N1 with PB2, PB1, PA NP from H5N1							
+102	PB1:D622G	116;323	Increased polymerase activity in mice;Increased virulence in mice	H5N1							
+103	PB1:T677M	92;323	Increased polymerase activity in mammalian cells;Decreased virulence in mice;Decreased replication in mice	H5N1							
+104	PB1:S678N	83;323	Increased replication in avian cells;Increased replication in mammalian cells	H7N7							
+105	PB1:V3A;PB1:N328K;PB1:N375S	301;323	Decreased replication in ferrets;Decreased virulence in ferrets	H5N1							
+106	PB1:V473L;PB1:P598L	50;323	Decreased polymerase activity in mammalian cells;Decreased replication in mammalian cells	H1N1 with PB2, PB1, PA NP from H5N1							
+107	PB1-F2:N66S	81;22;323	Enhanced replication in mice;Enhanced virulence in mice;Enhanced antiviral response in mice	H5N1							
+108	PB1-F2:T51M;PB1-F2:V56A;PB1-F2:E87G	307;323	Decreased polymerase activity in ducks;Decreased replication in ducks;Decreased virulence in ducks	H5N1							
+109	PA:S37A	318;323	Increased polymerase activity in mammalian cells	H7N9							
+110	PA:A37S	202;323	Decreased polymerase activity in mammalian cells	H7N7							
+111	PA:V63I	202;49;323	Increased polymerase activity in mammalian cells;Enhanced replication in mammalian cells;Increased virulence in mice	H7N7							
+112	PA:T97I	138;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells;Increased virulence in mice	H5N1							
+113	PA:T97I	300;323	Increased polymerase activity in mammalian cells;Enhanced replication in mice	H5N2							
+114	PA:T97I	220;323	Increased polymerase activity in mammalian cells	H6N1							
+115	PA:K142N	251;323	Increased virulence in mice	H5N1							
+116	PA:K142E	251;323	Increased virulence in mice	H5N1							
+117	PA:K158R	139;323	Increased polymerase activity in mammalian cells	H5N1							
+118	PA:P190S	246;323	Decreased virulence in mice	H7N3							
+119	PA:K356R	229;323	Increased polymerase activity in mammalian cells;Enhanced replication in mammalian cells;Increased virulence in mice	H9N2							
+120	PA:N383D	276;295;323	Increased polymerase activity in mammalian cells;Increased polymerase activity in avian cells	H5N1							
+121	PA:Q400P	246;323	Decreased virulence in mice	H7N3							
+122	PA:N409S	318;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N9							
+123	PA:S421I	251;323	Increased virulence in mice	H5N1							
+124	PA:R443K	180;323	Increased virulence in mice	H5N1							
+125	PA:K497R	244;323	Increased polymerase activity in mammalian cells	H7N9 (human isolate)							
+126	PA:T515A	281;323	Decreased polymerase activity in mammalian cells;Decreased virulence in ducks	H5N1							
+127	PA:K615N	269;22;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H7N7							
+128	PA:A343S;PA:D347E	113;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
+129	PA:P103H;PA:S659L	;132;323	Decreased polymerase activity in mammalian cells;Decreased virulence in mice	H7N7							
+130	PA:S224P;PA:N383D	;219;75;323	Enhanced replication in duck cells;Increased polymerase activity in duck cells;Increased polymerase activity in mice cells;Enhanced replication in mice cells;Increased virulence in ducks;Increased virulence in mice	H5N1							
+131	PA:K142R;PA:I147V;PA:I171V;PA:MP-182L	;81;323	Increased polymerase activity in mammalian cells	H7N9							
+132	PA:V44I;PA:V127A;PA:C241Y;PA:A343T;PA:I573V	;307;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
+133	PA:S149P;PA:H266R;PA:I357K;PA:S515T	;66;323	Increased polymerase activity in mammalian cells	H5N1							
+134	PA:K356R;PB2:E627K	;63;323	Increased polymerase activity in mammalian cells;Enhanced replication in mammalian cells;Increased virulence in mice	H9N2							
+135	HA-1-5:D94N	53;323	Increased pseudovirus binding to α2-6	H5N1							H3 numbering: 101
+136	HA-1-5:S121N	117;323	Increased virus binding to α2-6	H5N1							H3 numbering:126
+137	HA-1-5:S133A	145;323	Increased pseudovirus binding to α2-6	H5N1							H3 numbering: 137
+138	HA-1-5:A134V	190;226;323	Increased infectivity in mammalian cells	H5N1							H3 numbering: 138
+139	HA-1-5:G139R	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 143
+140	HA-1-5:S154N	117;323	Increased virus binding to α2-6	H5N1							H3 numbering: 158
+141	HA-1-5:N154D	23;323	Decreased virulence in mice	H9N2							H3 numbering: 158
+142	HA-1-5:S155N	117;323	Increased virus binding to α2-6	H5N1							H3 numbering: 159
+143	HA-1-5:T156A	117;136;323	Increased virus binding to α2-6	H5N1							H3 numbering: 160
+144	HA-1-5:T156A	117;136;323	Increased transmission in guinea pigs	H5N1							H3 numbering: 160
+145	HA-1-5:G182V	36;323	Increased virus binding to α2-3	H7N9							H3 numbering: 186
+146	HA-1-5:N182K	117;226;122;136;323	Increased virus binding to α2-6	H5N1							H3 numbering: 186
+147	HA-1-5:N182D	117;226;122;136;323	Increased virus binding to α2-6	H5N1							H3 numbering: 186
+148	HA-1-5:V182N	271;323	Increased virus binding to α2-6	H13N6							H3 numbering: 186
+149	HA-1-5:V182N	271;323	Decreased virus binding to α2-3	H13N6							H3 numbering: 186
+150	HA-1-5:P182L	33;323	Decreased virus binding to α2-3	H6N1							H3 numbering: 186
+151	HA-1-5:D183G	101;323	Increased virus binding to α2-6	H5N1							H3 numbering: 187
+152	HA-1-5:E186G	101;182;323	Increased virus binding to α2-6	H5N1							H3 numbering: 190
+153	HA-1-5:E186G	101;182;323	Maintained virus binding to α2-3	H5N1							H3 numbering: 190
+154	HA-1-5:E186G	101;182;323	Decreased virulence in mice	H5N1							H3 numbering: 190
+155	HA-1-5:E186V	134;323	Decreased virus binding to α2-3	H6N2							H3 numbering: 190
+156	HA-1-5:E186V	134;323	Decreased virus binding to α2-6	H6N2							H3 numbering: 186
+157	HA-1-5:T186V	20;323	Enhanced binding affinity to mammalian cells;Enhanced replication in mammalian cells	H9N2							H3 numbering: 190
+158	HA-1-5:T188I	145;323	Increased pseudovirus binding to α2-6	H5N1							H3 numbering: 192
+159	HA-1-5:K189R	117;98;323	Increased virus binding to α2-6	H5N1							H3 numbering: 193
+160	HA-1-5:K189T	117;98;323	Increased virus binding to α2-6	H5N1							H3 numbering: 193
+161	HA-1-5:Q192R	101;122;31;323	Increased virus binding to α2-6	H5N1							H3 numbering: 196
+162	HA-1-5:Q192H	101;122;31;323	Increased virus binding to α2-6	H5N1							H3 numbering: 196
+163	HA-1-5:N193K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 197
+164	HA-1-5:V210I	31;323	Increased virus binding to α2-6	H5N1							H3 numbering: 214
+165	HA-1-5:G221D	21;323	Increased virus binding to α2-6	H6N1							H3 numbering: 225
+166	HA-1-5:Q222L	58;323	Increased virus binding to α2-6	H4N6							H3 numbering: 226
+167	HA-1-5:Q222L	134;232;323	Increased virus binding to α2-6	H6N2							H3 numbering: 226
+168	HA-1-5:Q222L	0;323	Increased virus binding to α2-6;Decreased virus binding to α2-3	H5N1							H3 numbering: 226
+169	HA-1-5:Q222L	227;121;323	Increased virus binding to α2-3;Decreased virus binding to α2-6	H7N9							H3 numbering: 226
+170	HA-1-5:Q222L	44;243;323	Increased virus binding to α2-6;Enhanced replication in mammalian cells;Enhanced replication in ferrets;Enhanced contact transmission in ferrets	H9N2							H3 numbering: 226
+171	HA-1-5:Q222L	35;277;9;323	Loss of binding to α2–3	H10N8 (human isolate)							H3 numbering: 226
+172	HA-1-5:L222I	227;323	Decreased virus binding to α2-3	H7N9							H3 numbering: 226
+173	HA-1-5:S223N	0;101;226;105;10;323	Increased virus binding to α2-6	H5N1							H3 numbering: 227
+174	HA-1-5:G224A	58;323	Increased virus binding to α2-6;Dual receptor specificity	H4N6							H3 numbering: 228
+175	HA-1-5:G224S	58;323	Increased virus binding to α2-6;Dual receptor specificity	H4N6							H3 numbering: 228
+176	HA-1-5:G224S	211;323	Increased replication in mammalian cells;Increased virulence in mice	H1N2							H3 numbering: 228
+177	HA-1-5:G224S	272;0;117;33;323	Increased virus binding to α2-6	H5N1							H3 numbering: 228
+178	HA-1-5:G224S	134;323	Decreased virus binding to α2-3	H6N2							H3 numbering: 228
+179	HA-1-5:G224S	309;323	Decreased virus binding to α2-3;Decreased virus binding to α2-6	H7N9							H3 numbering: 228
+180	HA-1-5:G224S	35;9;323	Decreased virus binding to α2-3;No binding to α2–6	H10N8 (human isolate)							H3 numbering: 228
+181	HA-1-5:P235S	31;323	Increased virus binding to α2-6	H5N1							H3 numbering: 239
+182	HA-1-5:E251K	101;323	Increased virus binding to α2-6	H5N1							H3 numbering: 255
+183	HA-2-5:K58I	230;46;262;323	Decreased pH of fusion;Increased HA stability;Increased viral replication efficiency;Increased virulence in mice	H5N1							H3 numbering: 387
+184	HA-2-5:K64E	137;323	Increased pH of fusion;Decreased HA stability;Decreased virulence in mice	H7N9							H3 numbering: 393
+185	HA-1-5:E75K;HA-1-5:S123P	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83;128
+186	HA-1-5:E75K;HA-1-5:S123P;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83; 128; 496
+187	HA-1-5:E75K;HA-1-5:S123P;HA-1-5:N193K;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83; 128; 197;496 
+188	HA-1-5:E75K;HA-1-5:N193K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83;197
+189	HA-1-5:E75K;HA-1-5:N193K;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83;197;496
+190	HA-1-5:E75K;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3 numbering: 83;496
+191	HA-1-5:H103Y;HA-1-5:T156A;HA-1-5:Q222L;HA-1-5:G224S;PB2:E627K;PB1:H99Y	42;142;323	Airborne transmissible in ferrets	H5N1							H3 numbering: 110;160;226;228
+192	HA-1-5:S107R;HA-1-5:T108I	7;323	Increased virulence in chickens;Increased virulence in mice;Increased pH of fusion	H5N1							H3_numbering: 114;115
+193	HA-1-5:S123P;HA-1-5:N193K	122;323	Increased virus binding to α2-6	H5N1							H3_numbering: 128;197
+194	HA-1-5:S123P;HA-1-5:N193K;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3_numbering:128;197;496
+195	HA-1-5:S133A;HA-1-5:T188I	145;323	Increased pseudovirus binding to α2-6	H5N1							H3_numbering: 137;192
+196	HA-1-5:G139R;HA-1-5:N182K	0;122;323	Decreased virus binding to α2-3;Increased virus binding to α2-6	H5N1							H3_numbering:143;186
+197	HA-1-5:N154D;HA-1-5:N220K;HA-1-5:Q222L;HA-1-5:T315I	324;323	Transmissible among ferrets	H5N1							H3_numbering: 158;224;226;318
+198	HA-1-5:N154S;HA-1-5:Q222L	133;323	Increased virus binding to α2-6	H5N1							H3_numbering: 158;226
+199	HA-1-5:N154S;HA-1-5:Q222L;HA-1-5:N244D	133;323	Increased virus binding to α2-6	H5N1							H3_numbering: 158;226;248
+200	HA-1-5:S155N;HA-1-5:T156A	117;33;323	Increased virus binding to α2-6	H5N1							H3_numbering: 159;160
+201	HA-1-5:S155N;HA-1-5:T156A;HA-1-5:S223N	65;323	Increased virus binding to α2-6;Reduced lethality in mice;Systemic spread in mice	H5N1							H3_numbering:159;160;227
+202	HA-1-5:T156A;HA-1-5:K189T;HA-1-5:N220K;HA-1-5:Q222L	98;323	Increased virus binding to α2-6	H5N1							H3_numbering:160;193;224;226
+203	HA-1-5:T156A;HA-1-5:Q222L	117;33;323	Increased virus binding to α2-6	H5N1							H3_numbering: 160;226
+204	HA-1-5:T156A;HA-1-5:Q222L;HA-1-5:G224S	117;33;238;323	Increased virus binding to α2-6	H5N1							H3_numbering: 160;226;228
+205	HA-1-5:T156A;HA-1-5:S223N	117;33;323	Increased virus binding to α2-6	H5N1							H3_numbering: 160;227
+206	HA-1-5:V182N;HA-1-5:N224K	309;323	Increased virus binding to α2-6	H7N9							H3_numbering: 186;228
+207	HA-1-5:V182K;HA-1-5:V182G;HA-1-5:K189T;HA-1-5:G224S	309;323	Increased virus binding to α2-6	H7N9							H3_numbering: 186;193;228
+208	HA-1-5:V182N;HA-1-5:N220K;HA-1-5:G224S	309;323	Increased virus binding to α2-6	H7N9							H3_numbering: 186;224;228
+209	HA-1-5:N182K;HA-1-5:Q192R;HA-1-5:Q222L;HA-1-5:S223N;HA-1-5:G224S	0;323	Increased virus binding to α2-6	H5N1							H3_numbering: 186;196;226;227;228
+210	HA-1-5:N182K;HA-1-5:Q222L;HA-1-5:S223N;HA-1-5:G224S	0;323	Increased virus binding to α2-6	H5N1							H3_numbering: 186;226;227;228
+211	HA-1-5:E183G;HA-1-5:E186D;HA-1-5:K189S;HA-1-5:Q222L;HA-1-5:G224S	90;323	Increased virus binding to α2-6	H5N1							H3_numbering: 187;190;193;226;228
+212	HA-1-5:E183G;HA-1-5:Q222L;HA-1-5:G224S	101;323	Increased virus binding to α2-6	H5N1							H3_numbering: 187;226;228
+213	HA-1-5:D183G;HA-1-5:S223N	101;323	Increased virus binding to α2-6	H5N1							H3_numbering: 187;227
+214	HA-1-5:T185A;HA-1-5:G188R	174;323	Enhanced replication in ferrets;Transmitted via aerosol among ferrets	Human H3N2 backbone with HA from H9N2							H3_numbering: 189;192
+215	HA-1-5:E186G;HA-1-5:Q222E;HA-1-5:G224S	101;323	Increased virus binding to α2-6	H5N1							H3_numbering: 190;226;228
+216	HA-1-5:K189R;HA-1-5:Q222L;HA-1-5:G224S	238;9;323	Increased virus binding to α2-6	H5N1							H3_numbering: 193;226;228
+217	HA-1-5:Q192R;HA-1-5:Q222L;HA-1-5:S223N;HA-1-5:G224S	0;323	Increased virus binding to α2-6	H5N1							H3_numbering:196;226;227;228
+218	HA-1-5:Q192R;HA-1-5:Q222L;HA-1-5:G224S	0;101;323	Increased virus binding to α2-6	H5N1							H3_numbering: 196;226;228
+219	HA-1-5:Q192R;HA-1-5:S223N	0;101;323	Increased virus binding to α2-6	H5N1							H3_numbering:196;227
+220	HA-1-5:N193K;HA-2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3_numbering: 197;496
+221	HA-1-5:K218Q;HA-1-5:S223R	125;323	Increased virus binding to α2-3;Increased virus binding to α2-6	H5N1							H3_numbering: 222;227
+222	HA-1-5:N220K;HA-1-5:G224S	309;323	Increased virus binding to α2-6	H7N9							H3_numbering: 224;228
+223	HA-1-5:Q222L;HA-1-5:S223N;HA-1-5:G224S	0;323	Increased virus binding to α2-6	H5N1							H3_numbering:226;227;228
+224	HA-1-5:Q222L;HA-1-5:G224S	58;323	Increased virus binding to α2-6	H4N6							H3_numbering: 226;228
+225	HA-1-5:Q222L;HA-1-5:G224S	233;323	Increased virus binding to α2-6	H7N7 (human isolate)							H3_numbering: 226;228
+226	HA-1-5:Q222L;HA-1-5:G224S	35;277;9;323	Loss of binding to α2–3;No binding to α2–6	H10N8 (human isolate)							H3_numbering: 226;228
+227	HA-1-5:Q222L;HA-1-5:G224S	272;0;101;117;136;33;12;1;133;238;90;248;186;323	Increased virus binding to α2-6;Decreased antiviral response in host;Reduced tissue tropism in guinea pigs	H5N1							H3_numbering: 226;228
+228	NA-1:V116A	275;94;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
+229	NA-1:I117T	12;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
+230	NA-1:E119A	231;89;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
+231	NA-1:E119D	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
+232	NA-1:E119G	231;323	Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
+233	NA-1:Q136L	55;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
+234	NA-1:D199G	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
+235	NA-1:I223M	146;323	Reduced susceptibility to oseltamivir	H5N1							
+236	NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							
+237	NA-1:H275Y	231;89;146;86;102;54;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
+238	NA-1:E278Q	91;323	Reduced susceptibility to oseltamivir	H5N1							
+239	NA-1:N295S	231;89;102;201;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
+240	NA-1:K432T	124;323	Reduced susceptibility to zanamivir	H5N1							
+241	NA-1:I117V;NA-1:I314V	275;323	Reduced susceptibility to oseltamivir	H5N1							
+242	NA-1:E119A;NA-1:E119D;NA-1:E119G;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							
+243	NA-1:I223L;NA-1:S247N	124;323	Reduced susceptibility to oseltamivir	H5N1							
+244	NA-1:I223V;NA-1:I223M;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
+245	NA-1:K150N;NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							
+246	HA-1-5:K189T;HA-1-5:G224S	309;323	Dual α2–3 and α2–6 binding	H7N9							H3_numbering: 193;228
+247	NP:E434K;HA-1-9:Q227P;HA-2-9:D46E	35;323	Enhanced contact transmission in guinea pigs	H9N2							
+248	NP:E434K;HA-1-9:Q227P;PB2:D195N	35;323	Enhanced contact transmission in guinea pigs	H9N2							
