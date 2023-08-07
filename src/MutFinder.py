@@ -10,6 +10,7 @@ from uuid import uuid4
 import click
 from collections import defaultdict
 
+
 @click.command
 @click.option('--tmp-path', type=str, default='.mutfinder_tmp')
 @click.option('-r', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
@@ -25,7 +26,7 @@ def main(tmp_path, name_regex: str, markers_file: click.File, references_fasta: 
     mutations = load_mutations(markers)  # TODO: extract mutations
     references = load_references(references_fasta)
 
-    muts_per_sample = {}
+    muts_per_sample = defaultdict(list)
 
     for name, seq in read_fasta(samples_fasta):
         sample,  segment = parse_name(name, pattern)
@@ -41,7 +42,18 @@ def main(tmp_path, name_regex: str, markers_file: click.File, references_fasta: 
 
             # TODO: checks like len, frameshift, stalk deletion ecc.
 
-            muts = find_mutations()
+            muts_per_sample[sample] += find_mutations(ref_aa, sample_aa, mutations[ref_protein])
+    
+    markers_per_sample = defaultdict(list)
+    for sample in muts_per_sample:
+        markers_per_sample[sample] = get_markers_from_mutations(muts_per_sample[sample], markers)
+        
+    for sample in markers_per_sample:
+        for marker in markers_per_sample[sample]:
+            lst = [sample] + list(marker.values())
+            string = '\t'.join(lst)
+            print(string)
+
 
     try:
         tmp_dir.rmdir()
@@ -51,8 +63,39 @@ def main(tmp_path, name_regex: str, markers_file: click.File, references_fasta: 
         pass
 
 
-def find_mutations():
-    pass
+def get_markers_from_mutations(muts, markers):
+    found_markers = []
+    for marker in markers:
+        marker['FoundMutations'] = []
+        marker_muts = marker['Marker'].split(';')
+        for mut in marker_muts:
+            if mut in muts:
+                marker['FoundMutations'].append(mut)
+        if marker['FoundMutations']:
+            marker['FoundMutations'] = ';'.join(marker['FoundMutations'])
+            found_markers.append(marker)
+    return found_markers
+
+
+def find_mutations(ref_aa, sample_aa, mutations):
+    found_mutations = []
+    pattern = re.compile(r'^.+:.(?P<pos>\d+)(?P<alt>.)$')
+    for mutation in mutations:
+        match = pattern.match(mutation)
+        pos = adjust_mutation_position(ref_aa, int(match.group('pos')) - 1)
+        if sample_aa[pos] == match.group('alt'):
+            found_mutations.append(mutation)
+    return found_mutations
+
+
+def adjust_mutation_position(ref_seq, pos):
+    adjusted_pos = pos
+    while True:
+        dash_count = ref_seq.count('-', 0, adjusted_pos)
+        adjusted_pos = pos + dash_count
+        if ref_seq.count('-', 0, adjusted_pos) == dash_count:
+            break
+    return pos
 
 
 def align_2_sequences(ref_name, ref_seq, sample_name, sample_seq, tmp_path):
@@ -68,7 +111,7 @@ def align_2_sequences(ref_name, ref_seq, sample_name, sample_seq, tmp_path):
 
 
 def load_markers(makers_file: click.File):
-    return csv.DictReader(makers_file, delimiter='\t')
+    return list(csv.DictReader(makers_file, delimiter='\t'))
 
 
 def load_mutations(markers: dict):
@@ -76,8 +119,9 @@ def load_mutations(markers: dict):
     for marker in markers:
         muts = marker['Marker'].split(';')
         for mut in muts:
-            segment, mutation = mut.split(':')
-            mutations[segment].append(mutation)
+            segment = mut.split(':')[0]
+            if mut not in mutations[segment]:
+                mutations[segment].append(mut)
     return mutations
 
 

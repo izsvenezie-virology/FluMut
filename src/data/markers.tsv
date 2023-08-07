@@ -26,11 +26,11 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 26	NS-1:D74N;NS-1:P3S;NS-1:R41K	140;323	Enhanced replication in mammalian cells;Enhanced pathogenicity in mice	H7N1 backbone with H5N1 NS							
 27	NS-1:R38A;NS-1:K41A	172;323	Decreased replication in mammalian cells;Decreased replication in avian cells	H7N1							
 28	NS-1:C138F;NS-1:K55E;NS-1:K66E	308;323	Enhanced replication in mammalian cells;Decreased interferon response	H5N1							
-29	NS-2:MP-16I	40;323	Increased polymerase activity in mammalian cells	H5N1							
-30	NS-2:MP-16I;NS-2:Y41C;NS-2:E75G	40;323	Increased polymerase activity in mammalian cells	H5N1							
+29	NS-2:M16I	40;323	Increased polymerase activity in mammalian cells	H5N1							
+30	NS-2:M16I;NS-2:Y41C;NS-2:E75G	40;323	Increased polymerase activity in mammalian cells	H5N1							
 31	NP:I41V	245;323	Increased polymerase activity in mammalian cells	H7N9							
 32	NP:K91R	47;323	Decreased polymerase activity in mammalian cells	H5N1							
-33	NP:MP-105V	93;197;323	Increased virulence in chickens	H5N1							
+33	NP:M105V	93;197;323	Increased virulence in chickens	H5N1							
 34	NP:I109T	93;197;323	Increased polymerase activity in chickens (but not ducks);Increased virulence in chickens;Increased replication in chickens (but not ducks)	H5N1							
 35	NP:A184K	24;323	Increased replication in avian cells;Increased virulence in chickens;Enhanced interferon response	H5N1							
 36	NP:K198R	47;323	Decreased polymerase activity in mammalian cells	H5N1							
@@ -81,10 +81,10 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 81	PB2:S714R	305;218;83;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells	H7N7							
 82	PB2:S714R	218;323	Increased polymerase activity in mammalian cells	H9N2							
 83	PB2:S715N	216;323	Decreased virulence in mice	H5N1							
-84	PB2:MP-28I;PB2:A274T;PB2:K526R;PB2:I553V;PB2:L607V	75;323	Decreased polymerase activity in mammalian cells	H5N1							
+84	PB2:M28I;PB2:A274T;PB2:K526R;PB2:I553V;PB2:L607V	75;323	Decreased polymerase activity in mammalian cells	H5N1							
 85	PB2:L89V;PB2:G309D	263;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
 86	PB2:L89V;PB2:G309D;PB2:T339K;PB2:R477G;PB2:I495V;PB2:K627E;PB2:A676T	263;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
-87	PB2:MP-147L;PB2:E627K	183;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H9N2							
+87	PB2:M147L;PB2:E627K	183;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H9N2							
 88	PB2:I147T;PB2:K339T;PB2:A588T	195;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
 89	PB2:K526R;PB2:E627K	291;323	Increased polymerase activity in mammalian cells;Increased replication in mammalian cells;Increased virulence in mice	H5N1;H7N9							
 90	PB2:E627K;PB2:D701N	245;323	Increased polymerase activity in mammalian cells	H7N9							
@@ -128,7 +128,7 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 128	PA:A343S;PA:D347E	113;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
 129	PA:P103H;PA:S659L	;132;323	Decreased polymerase activity in mammalian cells;Decreased virulence in mice	H7N7							
 130	PA:S224P;PA:N383D	;219;75;323	Enhanced replication in duck cells;Increased polymerase activity in duck cells;Increased polymerase activity in mice cells;Enhanced replication in mice cells;Increased virulence in ducks;Increased virulence in mice	H5N1							
-131	PA:K142R;PA:I147V;PA:I171V;PA:MP-182L	;81;323	Increased polymerase activity in mammalian cells	H7N9							
+131	PA:K142R;PA:I147V;PA:I171V;PA:M182L	;81;323	Increased polymerase activity in mammalian cells	H7N9							
 132	PA:V44I;PA:V127A;PA:C241Y;PA:A343T;PA:I573V	;307;323	Increased polymerase activity in mammalian cells;Increased virulence in mice	H5N1							
 133	PA:S149P;PA:H266R;PA:I357K;PA:S515T	;66;323	Increased polymerase activity in mammalian cells	H5N1							
 134	PA:K356R;PB2:E627K	;63;323	Increased polymerase activity in mammalian cells;Enhanced replication in mammalian cells;Increased virulence in mice	H9N2							
