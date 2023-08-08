@@ -4,22 +4,19 @@ import csv
 import re
 import subprocess
 from io import TextIOWrapper
-from pathlib import Path
 from sys import stderr
-from uuid import uuid4
 import click
 from collections import defaultdict
+from Bio.Align import PairwiseAligner
+from Bio.Seq import Seq
 
 
 @click.command
-@click.option('--tmp-path', type=str, default='.mutfinder_tmp')
 @click.option('-r', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
 @click.option('--markers-file', type=click.File('r'), default='src/data/markers.tsv')
 @click.option('--references-fasta', type=click.File('r'), default='src/data/references.fa')
 @click.argument('samples-fasta', type=click.File('r'))
-def main(tmp_path, name_regex: str, markers_file: click.File, references_fasta: click.File, samples_fasta: click.File):
-    tmp_dir = Path(tmp_path)
-    tmp_dir.mkdir(exist_ok=True)
+def main(name_regex: str, markers_file: click.File, references_fasta: click.File, samples_fasta: click.File):
     pattern = re.compile(name_regex)
 
     markers = load_markers(markers_file)
@@ -32,35 +29,27 @@ def main(tmp_path, name_regex: str, markers_file: click.File, references_fasta: 
         sample,  segment = parse_name(name, pattern)
 
         for ref_protein, ref_sequence in references[segment].items():
-            ref_nucl, sample_nucl = align_2_sequences(
-                ref_protein, ref_sequence, name, seq, tmp_path)
+            ref_nucl, sample_nucl = pairwise_alignment(ref_sequence, seq)
             ref_nucl, sample_nucl = trim_alignment(ref_nucl, sample_nucl)
 
             ref_aa, sample_aa = map(translate, [ref_nucl, sample_nucl])
-            ref_aa, sample_aa = align_2_sequences(
-                ref_protein, ref_aa, name, sample_aa, tmp_path)
+            ref_aa, sample_aa = pairwise_alignment(ref_aa, sample_aa)
 
             # TODO: checks like len, frameshift, stalk deletion ecc.
 
-            muts_per_sample[sample] += find_mutations(ref_aa, sample_aa, mutations[ref_protein])
-    
+            muts_per_sample[sample] += find_mutations(
+                ref_aa, sample_aa, mutations[ref_protein])
+
     markers_per_sample = defaultdict(list)
     for sample in muts_per_sample:
-        markers_per_sample[sample] = get_markers_from_mutations(muts_per_sample[sample], markers)
-        
+        markers_per_sample[sample] = get_markers_from_mutations(
+            muts_per_sample[sample], markers)
+
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
             string = '\t'.join(lst)
             print(string)
-
-
-    try:
-        tmp_dir.rmdir()
-    except:
-        print(
-            f'Tmp folder not removed because is not empty: {tmp_dir.absolute()}', file=stderr)
-        pass
 
 
 def get_markers_from_mutations(muts, markers):
@@ -98,16 +87,13 @@ def adjust_mutation_position(ref_seq, pos):
     return pos
 
 
-def align_2_sequences(ref_name, ref_seq, sample_name, sample_seq, tmp_path):
-    tmp_file = Path(tmp_path, f'{str(uuid4())}.fa')
-    fasta = f'>{ref_name}\n{ref_seq}\n>{sample_name}\n{sample_seq}'
-    try:
-        with open(tmp_file, 'w') as fa:
-            fa.write(fasta)
-        ref_aligned, sample_aligned = mafft_alignment(tmp_file)
-    finally:
-        tmp_file.unlink()
-    return ref_aligned, sample_aligned
+def pairwise_alignment(ref_seq, sample_seq):
+    aligner = PairwiseAligner()
+    aligner.open_gap_score = -10
+    aligner.extend_gap_score = -1
+    alignment = aligner.align(ref_seq, sample_seq)[0]
+    print(alignment)
+    return alignment[0], alignment[1]
 
 
 def load_markers(makers_file: click.File):
@@ -169,7 +155,8 @@ def trim_alignment(ref, sample):
     return ref_trim, sample_trim
 
 
-def translate(seq_nucl):
+def translate(sequence):
+    seq_nucl = sequence.replace('-', '')
     seq_aa = []
     for i in range(0, len(seq_nucl), 3):
         seq_aa.append(translation_dict.get(seq_nucl[i:i+3], '?'))
