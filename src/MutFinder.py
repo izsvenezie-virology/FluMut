@@ -4,11 +4,9 @@ import csv
 import re
 import subprocess
 from io import TextIOWrapper
-from sys import stderr
 import click
 from collections import defaultdict
 from Bio.Align import PairwiseAligner
-from Bio.Seq import Seq
 
 
 @click.command
