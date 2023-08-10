@@ -2,41 +2,50 @@
 
 import csv
 import re
-import subprocess
-from io import TextIOWrapper
-import click
+import sys
 from collections import defaultdict
+from io import TextIOWrapper
+from typing import Dict, Generator, List, Tuple
+
+import click
 from Bio.Align import PairwiseAligner
+from click import File
+
+PRINT_ALIGNMENT = False
 
 
 @click.command
-@click.option('-r', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
-@click.option('--markers-file', type=click.File('r'), default='src/data/markers.tsv')
-@click.option('--references-fasta', type=click.File('r'), default='src/data/references.fa')
-@click.argument('samples-fasta', type=click.File('r'))
-def main(name_regex: str, markers_file: click.File, references_fasta: click.File, samples_fasta: click.File):
-    pattern = re.compile(name_regex)
+@click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
+@click.option('-M', '--markers-file', type=File('r'), default='src/data/markers.tsv')
+@click.option('-R', '--references-fasta', type=File('r'), default='src/data/references.fa')
+@click.option('-A', '--annotation-file', type=File('r'), default='src/data/annotations.tsv')
+@click.option('-o', '--output', type=File('w'), default='-')
+@click.argument('samples-fasta', type=File('r'))
+def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File):
+    seq_name_re = re.compile(name_regex)
 
     markers = load_markers(markers_file)
-    mutations = load_mutations(markers)  # TODO: extract mutations
+    mutations = load_mutations(markers)
     references = load_references(references_fasta)
+    annotations = load_annotations(annotation_file)
 
     muts_per_sample = defaultdict(list)
 
     for name, seq in read_fasta(samples_fasta):
-        sample,  segment = parse_name(name, pattern)
+        sample,  segment = parse_name(name, seq_name_re)
+        if segment not in references:
+            print(f'Segment {segment} is not present in your reference. Sequence id: {name}', file=sys.stderr)
+            continue
+        ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
 
-        for ref_protein, ref_sequence in references[segment].items():
-            ref_nucl, sample_nucl = pairwise_alignment(ref_sequence, seq)
-            ref_nucl, sample_nucl = trim_alignment(ref_nucl, sample_nucl)
-
-            ref_aa, sample_aa = map(translate, [ref_nucl, sample_nucl])
-            ref_aa, sample_aa = pairwise_alignment(ref_aa, sample_aa)
-
-            # TODO: checks like len, frameshift, stalk deletion ecc.
+        for protein, cds in annotations[segment].items():
+            ref_coding, sample_coding = get_coding_sequences(
+                ref_nucl, sample_nucl, cds)
+            ref_aa, _ = translate(ref_coding)
+            sample_aa, degenerations = translate(sample_coding)
 
             muts_per_sample[sample] += find_mutations(
-                ref_aa, sample_aa, mutations[ref_protein])
+                ref_aa, sample_aa, mutations[protein])
 
     markers_per_sample = defaultdict(list)
     for sample in muts_per_sample:
@@ -48,6 +57,38 @@ def main(name_regex: str, markers_file: click.File, references_fasta: click.File
             lst = [sample] + list(marker.values())
             string = '\t'.join(lst)
             print(string)
+
+
+def load_markers(makers_file: click.File) -> List[Dict[str, str]]:
+    return list(csv.DictReader(makers_file, delimiter='\t'))
+
+
+def load_mutations(markers: dict) -> Dict[str, List[str]]:
+    mutations = defaultdict(list)
+    for marker in markers:
+        muts = marker['Marker'].split(';')
+        for mut in muts:
+            segment = mut.split(':')[0]
+            if mut not in mutations[segment]:
+                mutations[segment].append(mut)
+    return mutations
+
+
+def load_references(ref_fasta: File) -> Dict[str, str]:
+    refs = defaultdict(str)
+    for name, seq in read_fasta(ref_fasta):
+        refs[name] = seq
+    return refs
+
+
+def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    ann = defaultdict(lambda: defaultdict(list))
+    for line in annotation_file:
+        if line.startswith('#'):
+            continue
+        info = line.split('\t')
+        ann[info[0]][info[1]].append((int(info[2]), int(info[3])))
+    return ann
 
 
 def get_markers_from_mutations(muts, markers):
@@ -69,20 +110,20 @@ def find_mutations(ref_aa, sample_aa, mutations):
     pattern = re.compile(r'^.+:.(?P<pos>\d+)(?P<alt>.)$')
     for mutation in mutations:
         match = pattern.match(mutation)
-        pos = adjust_mutation_position(ref_aa, int(match.group('pos')) - 1)
+        pos = adjust_position(ref_aa, int(match.group('pos')) - 1)
         if sample_aa[pos] == match.group('alt'):
             found_mutations.append(mutation)
     return found_mutations
 
 
-def adjust_mutation_position(ref_seq, pos):
+def adjust_position(ref_seq, pos):
     adjusted_pos = pos
     while True:
-        dash_count = ref_seq.count('-', 0, adjusted_pos)
+        dash_count = ref_seq.count('-', 0, adjusted_pos + 1)
         adjusted_pos = pos + dash_count
-        if ref_seq.count('-', 0, adjusted_pos) == dash_count:
+        if ref_seq.count('-', 0, adjusted_pos+1) == dash_count:
             break
-    return pos
+    return adjusted_pos
 
 
 def pairwise_alignment(ref_seq, sample_seq):
@@ -90,26 +131,12 @@ def pairwise_alignment(ref_seq, sample_seq):
     aligner.open_gap_score = -10
     aligner.extend_gap_score = -1
     alignment = aligner.align(ref_seq, sample_seq)[0]
-    print(alignment)
+    if PRINT_ALIGNMENT:
+        print(alignment, file=sys.stderr)
     return alignment[0], alignment[1]
 
 
-def load_markers(makers_file: click.File):
-    return list(csv.DictReader(makers_file, delimiter='\t'))
-
-
-def load_mutations(markers: dict):
-    mutations = defaultdict(list)
-    for marker in markers:
-        muts = marker['Marker'].split(';')
-        for mut in muts:
-            segment = mut.split(':')[0]
-            if mut not in mutations[segment]:
-                mutations[segment].append(mut)
-    return mutations
-
-
-def read_fasta(fasta_file: TextIOWrapper):
+def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
     for line in fasta_file:
@@ -124,41 +151,57 @@ def read_fasta(fasta_file: TextIOWrapper):
         yield name, ''.join(seq)
 
 
-def load_references(ref_fasta: click.File):
-    ref = defaultdict(dict)
-    for name, seq in read_fasta(ref_fasta):
-        name_info = name.split('-')
-        ref[name_info[0]][name] = seq
-    return ref
-
-
 def parse_name(name, pattern):
     match = pattern.match(name)
     return match.group('sample'), match.group('segment')
 
 
-def mafft_alignment(fasta_path: str):
-    mafft_proc = subprocess.run(
-        f'mafft --auto --thread 1 {fasta_path}'.split(), capture_output=True)
-    pattern = re.compile(r'>.+?\n(?P<ref>.+)\n>.+?\n(?P<sample>.+)', re.DOTALL)
-    stdout = mafft_proc.stdout.decode('utf-8').upper()
-    match = pattern.match(stdout)
-    return match.group('ref').replace('\n', ''), match.group('sample').replace('\n', '')
+
+def translate(seq):
+    degenerations = {}
+    nucls = list(seq)
+    aas = []
+
+    for i in range(0, len(nucls), 3):
+        triplet = nucls[i:i+3]
+        if '-' in triplet:
+            if triplet == ['-']*3:
+                aas.append('-')
+                continue
+            if not aas and triplet[0] == '-':
+                aas.append('?')
+                continue
+            triplet = [n for n in triplet if n != '-']
+            while len(triplet) < 3:
+                next_nucl = find_next_nucl(nucls, i)
+                if not next_nucl:
+                    break
+                triplet.append(nucls[next_nucl])
+                nucls[next_nucl] = '-'
+        aa = translation_dict.get(''.join(triplet), '?')
+        if aa == '?':
+            degenerations[i/3] = ''.join(triplet)
+        aas.append(aa)
+    return ''.join(aas), degenerations
 
 
-def trim_alignment(ref, sample):
-    ref_trim = ref.lstrip('-')
-    l_offset = len(ref) - len(ref_trim)
-    sample_trim = sample[l_offset:]
-    return ref_trim, sample_trim
+def find_next_nucl(seq, start):
+    for i in range(start + 3, len(seq)):
+        if not seq[i] == '-':
+            return i
+    return None
 
 
-def translate(sequence):
-    seq_nucl = sequence.replace('-', '')
-    seq_aa = []
-    for i in range(0, len(seq_nucl), 3):
-        seq_aa.append(translation_dict.get(seq_nucl[i:i+3], '?'))
-    return ''.join(seq_aa)
+def get_coding_sequences(ref_seq, sample_seq, cds):
+    ref_nucl = ''
+    sample_nucl = ''
+
+    for rng in cds:
+        start = adjust_position(ref_seq, rng[0] - 1)
+        end = adjust_position(ref_seq, rng[1] - 1)
+        ref_nucl += ref_seq[start:end + 1]
+        sample_nucl += sample_seq[start:end + 1]
+    return ref_nucl, sample_nucl
 
 
 translation_dict = {
