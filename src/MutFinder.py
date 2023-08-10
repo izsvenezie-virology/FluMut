@@ -52,11 +52,14 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
         markers_per_sample[sample] = get_markers_from_mutations(
             muts_per_sample[sample], markers)
 
+    lines = []
+    lines.append('\t'.join(['Sample'] + list(markers[0].keys())))
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
             string = '\t'.join(lst)
-            print(string)
+            lines.append(string)
+    print('\n'.join(lines), file=output)
 
 
 def load_markers(makers_file: click.File) -> List[Dict[str, str]]:
@@ -94,13 +97,13 @@ def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[in
 def get_markers_from_mutations(muts, markers):
     found_markers = []
     for marker in markers:
-        marker['FoundMutations'] = []
+        found_muts = []
         marker_muts = marker['Marker'].split(';')
         for mut in marker_muts:
             if mut in muts:
-                marker['FoundMutations'].append(mut)
-        if marker['FoundMutations']:
-            marker['FoundMutations'] = ';'.join(marker['FoundMutations'])
+                found_muts.append(mut)
+        if found_muts:
+            marker['FoundMutations'] = ';'.join(found_muts)
             found_markers.append(marker)
     return found_markers
 
@@ -154,7 +157,6 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
 def parse_name(name, pattern):
     match = pattern.match(name)
     return match.group('sample'), match.group('segment')
-
 
 
 def translate(seq):
