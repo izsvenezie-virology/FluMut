@@ -1,8 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-  - anaconda
-dependencies:
-  - mafft
-  - python
