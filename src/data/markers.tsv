@@ -244,5 +244,31 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 244	NA-1:I223V;NA-1:I223M;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
 245	NA-1:K150N;NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							
 246	HA1-5:K189T;HA1-5:G224S	309;323	Dual α2–3 and α2–6 binding	H7N9							H3_numbering: 193;228
-247	NP:E434K;HA1-9:Q227P;HA2-9:D46E	35;323	Enhanced contact transmission in guinea pigs	H9N2							
-248	NP:E434K;HA1-9:Q227P;PB2:D195N	35;323	Enhanced contact transmission in guinea pigs	H9N2							
+247	NP:E434K;HA1-5:Q227P;HA2-5:D46E	35;323	Enhanced contact transmission in guinea pigs	H9N2							
+248	NP:E434K;HA1-5:Q227P;PB2:D195N	35;323	Enhanced contact transmission in guinea pigs	H9N2							
+249	NA-1:S110F	379;380	Reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv	H1N1							A(H1N1)pdm09 WHO
+250	NA-1:V116A	94;275	Reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv;Normal Inhibition to Peramivir	H5N1							WHO
+251	NA-1:I117V	12;89;421	Normal Inhibition to Oseltamivir;Normal Inhibition to Zanamivir	H5N1							WHO
+252	NA-1:I117R	381	Normal Inhibition to Oseltamivir;Reduced inhibition to Zanamiriv	H1N1							A(H1N1)pdm09 WHO
+253	NA-1:I117T	12	Reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv	H5N1							WHO
+254	NA-1:E119A	382;231	From normal to reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv;From normal to reduced inhibition to Peramivir;Reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+255	NA-1:E119A	231;89	Reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Normal Inhibition to Peramivir	H5N1							WHO
+256	NA-1:E119V	386	Reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Reduced inhibition to Peramivir	H1N1							A(H1N1)pdm09 WHO
+257	NA-1:E119V	410;411	From reduced to higlhly reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Higly reduced inhibition to Peramivir	H1n1							WHO
+258	NA-1:E119D	231;384;385	Reduced inhibition to Oseltamivir;Highly reduced inhibition to Peramivir;Highly reduced inhibition to Zanamivir;Highly reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+259	NA-1:E119D	231	Reduced inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;Highly reduced inhibition to Peramivir	H5N1							WHO
+260	NA-1:E119G	231;385;386;387	Normal Inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;From reduced to higlhly reduced inhibition to Peramivir;Highly reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+261	NA-1:E119G	231;146	Normal Inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;From reduced to higlhly reduced inhibition to Peramivir	H5N1							WHO
+262	NA-1:Q136L	55	Reduced inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir	H5N1							WHO
+263	NA-1:Q136K	382;388;389	Normal Inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;Highly reduced inhibition to Peramivir;Reduced inhibition to Laninamivir	H1N1							Cell culture selected; A(H1N1) WHO
+264	NA-1:V149A	190	Normal Inhibition to Oseltamivir;Normal Inhibition to Zanamivir	H5N1							WHO
+265	NA-1:R152K	231;385	Reduced inhibition to Oseltamivir;From normal to reduced inhibition to Zanamivir;Normal Inhibition to Peramivir;Reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+266	NA-1:Y155H	413	Highly reduced inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir	H1N1							WHO
+267	NA-1:D199E	385;391	Reduced inhibition to Oseltamivir;Normal Inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+268	NA-1:D199Y	392	Reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+269	NA-5:D199G	146	Reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv;Normal Inhibition to Peramivir	H5N1							WHO
+270	NA-1:I223K	391;393;394	Reduced inhibition to Oseltamivir;Normal Inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+271	NA-1:I223L	395	Reduced inhibition to Oseltamivir;Normal Inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+272	NA-1:I223R	391;394;396;397;398	Reduced inhibition to Oseltamivir;From normal to reduced inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+273	NA-1:I223T	382	From normal to reduced inhibition to Oseltamivir;Normal Inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
+274	NA-1:I223V	382;386	Normal Inhibition to Oseltamivir;Normal Inhibition to Zanamivir;Normal Inhibition to Peramivir;Normal Inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
