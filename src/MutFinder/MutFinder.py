@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import csv
+import itertools
 import re
 import sys
 from collections import defaultdict
@@ -11,10 +12,10 @@ import click
 from Bio.Align import PairwiseAligner
 from click import File
 
-PRINT_ALIGNMENT = False
+PRINT_ALIGNMENT = True
 
 
-@click.command
+@click.command()
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
 @click.option('-M', '--markers-file', type=File('r'), default='src/data/markers.tsv')
 @click.option('-R', '--references-fasta', type=File('r'), default='src/data/references.fa')
@@ -34,22 +35,23 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
     for name, seq in read_fasta(samples_fasta):
         sample,  segment = parse_name(name, seq_name_re)
         if segment not in references:
-            print(f'Segment {segment} is not present in your reference. Sequence id: {name}', file=sys.stderr)
+            print(
+                f'Segment {segment} is not present in your reference. Sequence id: {name}', file=sys.stderr)
             continue
         ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
 
         for protein, cds in annotations[segment].items():
             ref_coding, sample_coding = get_coding_sequences(
                 ref_nucl, sample_nucl, cds)
-            ref_aa, _ = translate(ref_coding)
-            sample_aa, degenerations = translate(sample_coding)
+            ref_aa = translate(ref_coding)
+            sample_aa = translate(sample_coding)
 
             muts_per_sample[sample] += find_mutations(
                 ref_aa, sample_aa, mutations[protein])
 
     markers_per_sample = defaultdict(list)
     for sample in muts_per_sample:
-        markers_per_sample[sample] = get_markers_from_mutations(
+        markers_per_sample[sample] = match_markers(
             muts_per_sample[sample], markers)
 
     lines = []
@@ -78,10 +80,7 @@ def load_mutations(markers: dict) -> Dict[str, List[str]]:
 
 
 def load_references(ref_fasta: File) -> Dict[str, str]:
-    refs = defaultdict(str)
-    for name, seq in read_fasta(ref_fasta):
-        refs[name] = seq
-    return refs
+    return {name: seq for name, seq in read_fasta(ref_fasta)}
 
 
 def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
@@ -94,12 +93,11 @@ def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[in
     return ann
 
 
-def get_markers_from_mutations(muts, markers):
+def match_markers(muts, markers):
     found_markers = []
     for marker in markers:
         found_muts = []
-        marker_muts = marker['Marker'].split(';')
-        for mut in marker_muts:
+        for mut in marker['Marker'].split(';'):
             if mut in muts:
                 found_muts.append(mut)
         if found_muts:
@@ -114,17 +112,18 @@ def find_mutations(ref_aa, sample_aa, mutations):
     for mutation in mutations:
         match = pattern.match(mutation)
         pos = adjust_position(ref_aa, int(match.group('pos')) - 1)
-        if sample_aa[pos] == match.group('alt'):
+        if match.group('alt') in sample_aa[pos]:
             found_mutations.append(mutation)
     return found_mutations
 
 
-def adjust_position(ref_seq, pos):
+def adjust_position(ref_seq: list[list[str]], pos):
+    ref = ''.join([n[0] for n in ref_seq])
     adjusted_pos = pos
     while True:
-        dash_count = ref_seq.count('-', 0, adjusted_pos + 1)
+        dash_count = ref.count('-', 0, adjusted_pos + 1)
         adjusted_pos = pos + dash_count
-        if ref_seq.count('-', 0, adjusted_pos+1) == dash_count:
+        if ref.count('-', 0, adjusted_pos+1) == dash_count:
             break
     return adjusted_pos
 
@@ -145,13 +144,13 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
     for line in fasta_file:
         if line.startswith('>'):
             if name is not None:
-                yield name, ''.join(seq)
+                yield name, ''.join(seq).upper()
             name = line[1:].strip()
             seq = []
         else:
             seq.append(line.strip())
     if name is not None:
-        yield name, ''.join(seq)
+        yield name, ''.join(seq).upper()
 
 
 def parse_name(name, pattern):
@@ -160,31 +159,40 @@ def parse_name(name, pattern):
 
 
 def translate(seq):
-    degenerations = {}
     nucls = list(seq)
     aas = []
 
     for i in range(0, len(nucls), 3):
-        triplet = nucls[i:i+3]
-        if '-' in triplet:
-            if triplet == ['-']*3:
-                aas.append('-')
-                continue
-            if not aas and triplet[0] == '-':
-                aas.append('?')
-                continue
-            triplet = [n for n in triplet if n != '-']
-            while len(triplet) < 3:
-                next_nucl = find_next_nucl(nucls, i)
-                if not next_nucl:
-                    break
-                triplet.append(nucls[next_nucl])
-                nucls[next_nucl] = '-'
-        aa = translation_dict.get(''.join(triplet), '?')
-        if aa == '?':
-            degenerations[i/3] = ''.join(triplet)
+        codon = nucls[i:i+3]
+        if codon == ['-']*3:
+            aas.append('-')
+            continue
+        if all(x in ('-', '?') for x in aas[::-1]) and codon[0] == '-':
+            aas.append('?')
+            continue
+        codon = [n for n in codon if n != '-']
+        while len(codon) < 3:
+            next_nucl = find_next_nucl(nucls, i)
+            if not next_nucl:
+                break
+            codon.append(nucls[next_nucl])
+            nucls[next_nucl] = '-'
+        aa = translate_codon(codon)
         aas.append(aa)
-    return ''.join(aas), degenerations
+    return aas
+
+
+def translate_codon(codon):
+    if not len(codon) == 3:
+        return ['?']
+    if 'N' in codon:
+        return ['?']
+    f, s, t = [degeneration_dict[nucl] for nucl in ''.join(codon)]
+    codons = itertools.product(f, s, t)
+    aas = []
+    for c in codons:
+        aas.append(translation_dict.get(''.join(c), '?'))
+    return list(dict.fromkeys(aas))
 
 
 def find_next_nucl(seq, start):
@@ -215,6 +223,14 @@ translation_dict = {
     'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
     'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
     'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'
+}
+
+
+degeneration_dict = {
+    "A": ["A"], "C": ["C"], "G": ["G"], "T": ["T"], "U": ["U"],
+    "R": ["A", "G"], "Y": ["C", "T"], "S": ["G", "C"], "W": ["A", "T"],
+    "K": ["G", "T"], "M": ["A", "C"], "B": ["C", "G", "T"], "D": ["A", "G", "T"],
+    "H": ["A", "C", "T"], "V": ["A", "C", "G"], "N": ["A", "C", "G", "T"]
 }
 
 
