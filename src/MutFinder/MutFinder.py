@@ -12,7 +12,7 @@ import click
 from Bio.Align import PairwiseAligner
 from click import File
 
-PRINT_ALIGNMENT = True
+PRINT_ALIGNMENT = False
 
 
 @click.command()
@@ -55,7 +55,8 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
             muts_per_sample[sample], markers)
 
     lines = []
-    lines.append('\t'.join(['Sample'] + list(markers[0].keys())))
+    lines.append(
+        '\t'.join(['Sample'] + list(markers[0].keys() + ['FoundMarkers'])))
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
@@ -101,8 +102,9 @@ def match_markers(muts, markers):
             if mut in muts:
                 found_muts.append(mut)
         if found_muts:
-            marker['FoundMutations'] = ';'.join(found_muts)
-            found_markers.append(marker)
+            mrk = marker.copy()
+            mrk['FoundMutations'] = ';'.join(found_muts)
+            found_markers.append(mrk)
     return found_markers
 
 
@@ -128,7 +130,8 @@ def adjust_position(ref_seq: list[list[str]], pos):
     return adjusted_pos
 
 
-def pairwise_alignment(ref_seq, sample_seq):
+def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
+    '''Align sequence against a reference'''
     aligner = PairwiseAligner()
     aligner.open_gap_score = -10
     aligner.extend_gap_score = -1
@@ -138,7 +141,7 @@ def pairwise_alignment(ref_seq, sample_seq):
     return alignment[0], alignment[1]
 
 
-def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
+def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
     for line in fasta_file:
@@ -153,56 +156,64 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
         yield name, ''.join(seq).upper()
 
 
-def parse_name(name, pattern):
+def parse_name(name: str, pattern: re.Pattern) -> Tuple[str, str]:
+    '''Get sample and segment information by sequence name'''
     match = pattern.match(name)
     return match.group('sample'), match.group('segment')
 
 
-def translate(seq):
+def translate(seq: str) -> List[str | List[str]]:
+    '''Translate nucleotidic sequence in AA sequence'''
     nucls = list(seq)
     aas = []
+    is_first = True
 
     for i in range(0, len(nucls), 3):
-        codon = nucls[i:i+3]
-        if codon == ['-']*3:
-            aas.append('-')
-            continue
-        if all(x in ('-', '?') for x in aas[::-1]) and codon[0] == '-':
-            aas.append('?')
-            continue
-        codon = [n for n in codon if n != '-']
-        while len(codon) < 3:
-            next_nucl = find_next_nucl(nucls, i)
-            if not next_nucl:
-                break
-            codon.append(nucls[next_nucl])
-            nucls[next_nucl] = '-'
+        codon = get_codon(nucls, i, is_first)
         aa = translate_codon(codon)
+        if aa not in ('-', '?'):
+            is_first = False
         aas.append(aa)
     return aas
 
 
-def translate_codon(codon):
-    if not len(codon) == 3:
-        return ['?']
+def get_codon(seq: List[str], start: int, is_first: bool) ->[str, str, str]:
+    '''Exctract the codon'''
+    codon = seq[start:start + 3]
+    if codon == ['-', '-', '-']:  # If the codon is a deletion
+        return codon
+    if is_first and codon[0] == '-': # If the codon starts from mid codon (to avoid frameshifts in truncated sequences)
+        return codon
+    codon = [n for n in codon if n != '-']
+    while len(codon) < 3:
+        if not (next_nucl := find_next_nucl(seq, start)):
+            break
+        codon.append(seq[next_nucl])
+        seq[next_nucl] = '-'
+    return codon
+
+
+def translate_codon(codon: List[str]) -> str:
+    '''Translate a codon into a set of AAs, containing all possible combinations in case of degenerations'''
     if 'N' in codon:
-        return ['?']
-    f, s, t = [degeneration_dict[nucl] for nucl in ''.join(codon)]
-    codons = itertools.product(f, s, t)
-    aas = []
-    for c in codons:
-        aas.append(translation_dict.get(''.join(c), '?'))
-    return list(dict.fromkeys(aas))
+        return '?'
+    undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
+    codons = list(itertools.product(*undegenerated_codon))
+    aas = [translation_dict.get(''.join(c), '?') for c in codons]
+    return ''.join(set(aas))
 
 
-def find_next_nucl(seq, start):
+def find_next_nucl(seq: List[str], start: int):
+    '''Returns the position of the next non deleted nucleotide'''
     for i in range(start + 3, len(seq)):
         if not seq[i] == '-':
             return i
     return None
 
 
-def get_coding_sequences(ref_seq, sample_seq, cds):
+def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]):
+    '''Cut and assemble the nucleotide sequences based on positions given by the cds'''
+    cds.sort(key=lambda x: x[0])
     ref_nucl = ''
     sample_nucl = ''
 
@@ -222,15 +233,16 @@ translation_dict = {
     'TAT': 'Y', 'TAC': 'Y', 'TAA': '*', 'TAG': '*', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
     'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
     'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
-    'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'
+    'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G',
+    '---': '-'
 }
 
 
 degeneration_dict = {
-    "A": ["A"], "C": ["C"], "G": ["G"], "T": ["T"], "U": ["U"],
-    "R": ["A", "G"], "Y": ["C", "T"], "S": ["G", "C"], "W": ["A", "T"],
-    "K": ["G", "T"], "M": ["A", "C"], "B": ["C", "G", "T"], "D": ["A", "G", "T"],
-    "H": ["A", "C", "T"], "V": ["A", "C", "G"], "N": ["A", "C", "G", "T"]
+    'A': ['A'], 'C': ['C'], 'G': ['G'], 'T': ['T'], 'U': ['U'],
+    'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'], 'W': ['A', 'T'],
+    'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['C', 'G', 'T'], 'D': ['A', 'G', 'T'],
+    'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
 }
 
 
