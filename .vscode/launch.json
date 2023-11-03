@@ -8,10 +8,10 @@
             "name": "MutFinder",
             "type": "python",
             "request": "launch",
-            "program": "src/MutFinder.py",
+            "program": "src/MutFinder/MutFinder.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["tests/test_seq.fa"]
+            "args": ["-o", "tests/feedback_flumut_numero_2.tsv", "-n", "(?P<sample>.+)_(?P<segment>.+)", "tests/feedback_flumut_numero_2.fa"]
         }
     ]
 }

@@ -31,7 +31,6 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
     annotations = load_annotations(annotation_file)
 
     muts_per_sample = defaultdict(list)
-
     for name, seq in read_fasta(samples_fasta):
         sample,  segment = parse_name(name, seq_name_re)
         if segment not in references:
@@ -43,7 +42,7 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
         for protein, cds in annotations[segment].items():
             ref_coding, sample_coding = get_coding_sequences(
                 ref_nucl, sample_nucl, cds)
-            ref_aa = translate(ref_coding)
+            ref_aa: str = ''.join(translate(ref_coding))
             sample_aa = translate(sample_coding)
 
             muts_per_sample[sample] += find_mutations(
@@ -56,7 +55,7 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
 
     lines = []
     lines.append(
-        '\t'.join(['Sample'] + list(markers[0].keys() + ['FoundMarkers'])))
+        '\t'.join(['Sample'] + list(markers[0].keys()) + ['Mutations present']))
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
@@ -113,21 +112,10 @@ def find_mutations(ref_aa, sample_aa, mutations):
     pattern = re.compile(r'^.+:.(?P<pos>\d+)(?P<alt>.)$')
     for mutation in mutations:
         match = pattern.match(mutation)
-        pos = adjust_position(ref_aa, int(match.group('pos')) - 1)
+        pos = adjust_position(ref_aa, int(match.group('pos')))
         if match.group('alt') in sample_aa[pos]:
             found_mutations.append(mutation)
     return found_mutations
-
-
-def adjust_position(ref_seq: list[list[str]], pos):
-    ref = ''.join([n[0] for n in ref_seq])
-    adjusted_pos = pos
-    while True:
-        dash_count = ref.count('-', 0, adjusted_pos + 1)
-        adjusted_pos = pos + dash_count
-        if ref.count('-', 0, adjusted_pos+1) == dash_count:
-            break
-    return adjusted_pos
 
 
 def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
@@ -141,7 +129,7 @@ def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
     return alignment[0], alignment[1]
 
 
-def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str]:
+def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
     for line in fasta_file:
@@ -162,7 +150,7 @@ def parse_name(name: str, pattern: re.Pattern) -> Tuple[str, str]:
     return match.group('sample'), match.group('segment')
 
 
-def translate(seq: str) -> List[str | List[str]]:
+def translate(seq: str) -> List[str]:
     '''Translate nucleotidic sequence in AA sequence'''
     nucls = list(seq)
     aas = []
@@ -177,12 +165,13 @@ def translate(seq: str) -> List[str | List[str]]:
     return aas
 
 
-def get_codon(seq: List[str], start: int, is_first: bool) ->[str, str, str]:
+def get_codon(seq: List[str], start: int, is_first: bool) -> [str, str, str]:
     '''Exctract the codon'''
     codon = seq[start:start + 3]
     if codon == ['-', '-', '-']:  # If the codon is a deletion
         return codon
-    if is_first and codon[0] == '-': # If the codon starts from mid codon (to avoid frameshifts in truncated sequences)
+    # If the codon starts from mid codon (to avoid frameshifts in truncated sequences):
+    if is_first and codon[0] == '-':
         return codon
     codon = [n for n in codon if n != '-']
     while len(codon) < 3:
@@ -218,11 +207,21 @@ def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int
     sample_nucl = ''
 
     for rng in cds:
-        start = adjust_position(ref_seq, rng[0] - 1)
-        end = adjust_position(ref_seq, rng[1] - 1)
-        ref_nucl += ref_seq[start:end + 1]
-        sample_nucl += sample_seq[start:end + 1]
+        start = adjust_position(ref_seq, rng[0])
+        end = adjust_position(ref_seq, rng[1]) + 1
+        ref_nucl += ref_seq[start:end]
+        sample_nucl += sample_seq[start:end]
     return ref_nucl, sample_nucl
+
+
+def adjust_position(ref_seq: str, pos: int) -> int:
+    '''Adjust 1-based position to 0-based, considering reference sequence gaps'''
+    pos -= 1    # conversion 1-based to 0-based numeration
+    dashes = 0
+    adj_pos = pos
+    while ref_seq.count('-', 0, adj_pos + 1) != dashes:
+        adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
+    return adj_pos
 
 
 translation_dict = {
@@ -239,7 +238,7 @@ translation_dict = {
 
 
 degeneration_dict = {
-    'A': ['A'], 'C': ['C'], 'G': ['G'], 'T': ['T'], 'U': ['U'],
+    'A': ['A'], 'C': ['C'], 'G': ['G'], 'T': ['T'], 'U': ['U'], '-': ['-'],
     'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'], 'W': ['A', 'T'],
     'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['C', 'G', 'T'], 'D': ['A', 'G', 'T'],
     'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
