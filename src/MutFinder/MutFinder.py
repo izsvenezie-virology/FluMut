@@ -189,7 +189,7 @@ def translate_codon(codon: List[str]) -> str:
     undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
     codons = list(itertools.product(*undegenerated_codon))
     aas = [translation_dict.get(''.join(c), '?') for c in codons]
-    return ''.join(set(aas))
+    return ''.join(sorted(set(aas)))
 
 
 def find_next_nucl(seq: List[str], start: int):
