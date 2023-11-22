@@ -156,12 +156,15 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
 def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
     '''Get sample and segment information by sequence name'''
     match = pattern.match(name)
-    if match is None:
-        handle_unmatch_name(name, force)
-        return None
-    sample = match.groupdict().get('sample', match.group(1))
-    seg = match.groupdict().get('seg', match.group(2))
-    return sample, seg
+    try:
+        sample = match.groupdict().get('sample', match.group(1))
+        seg = match.groupdict().get('segment', match.group(2))
+    except (IndexError, AttributeError):
+        print(f'Failed to parse "{name}" with pattern "{pattern.pattern}".', file=sys.stderr)
+        if force: return None
+        sys.exit(f'To force execution and skip this sequence use {SKIP_UNMATCH_NAMES_OPT} option.')
+    else:
+        return sample, seg
 
 
 def translate(seq: str) -> List[str]:
@@ -242,12 +245,6 @@ def handle_unknown_segment(segment: str, name: str, force: bool):
     print(f'Unknown segment error: {segment}; {name}', file=sys.stderr)
     if not force:
         sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
-
-def handle_unmatch_name(name: str, force: bool) -> None:
-    print(f'RegEx match error: {name}', file=sys.stderr)
-    if not force:
-        sys.exit(f'To force execution use {SKIP_UNMATCH_NAMES_OPT} option.')
-
 
 translation_dict = {
     'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
