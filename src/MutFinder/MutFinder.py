@@ -43,6 +43,8 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
     # Per sequence analysis
     for name, seq in read_fasta(samples_fasta):
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
+        if sample is None or segment is None:
+            continue
         if segment not in references:
             handle_unknown_segment(segment, name, skip_unknown_segments)
             continue
@@ -161,7 +163,7 @@ def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
         seg = match.groupdict().get('segment', match.group(2))
     except (IndexError, AttributeError):
         print(f'Failed to parse "{name}" with pattern "{pattern.pattern}".', file=sys.stderr)
-        if force: return None
+        if force: return None, None
         sys.exit(f'To force execution and skip this sequence use {SKIP_UNMATCH_NAMES_OPT} option.')
     else:
         return sample, seg
