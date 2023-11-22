@@ -13,17 +13,24 @@ from Bio.Align import PairwiseAligner
 from click import File
 
 PRINT_ALIGNMENT = False
+SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
+SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 
 
 @click.command()
+@click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
+@click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
 @click.option('-M', '--markers-file', type=File('r'), default='src/data/markers.tsv')
 @click.option('-R', '--references-fasta', type=File('r'), default='src/data/references.fa')
 @click.option('-A', '--annotation-file', type=File('r'), default='src/data/annotations.tsv')
 @click.option('-o', '--output', type=File('w'), default='-')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File):
-    seq_name_re = re.compile(name_regex)
+def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File,
+         skip_unmatch_names: bool, skip_unknown_segments: bool):
+
+    # Initialization
+    pattern = re.compile(name_regex)
 
     markers = load_markers(markers_file)
     mutations = load_mutations(markers)
@@ -31,14 +38,17 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
     annotations = load_annotations(annotation_file)
 
     muts_per_sample = defaultdict(list)
-    for name, seq in read_fasta(samples_fasta):
-        sample,  segment = parse_name(name, seq_name_re)
-        if segment not in references:
-            print(
-                f'Segment {segment} is not present in your reference. Sequence id: {name}', file=sys.stderr)
-            continue
-        ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
+    markers_per_sample = defaultdict(list)
 
+    # Per sequence analysis
+    for name, seq in read_fasta(samples_fasta):
+        sample,  segment = parse_name(name, pattern, skip_unmatch_names)
+        if segment not in references:
+            handle_unknown_segment(segment, name, skip_unknown_segments)
+            continue
+
+        ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
+        
         for protein, cds in annotations[segment].items():
             ref_coding, sample_coding = get_coding_sequences(
                 ref_nucl, sample_nucl, cds)
@@ -48,7 +58,6 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
             muts_per_sample[sample] += find_mutations(
                 ref_aa, sample_aa, mutations[protein])
 
-    markers_per_sample = defaultdict(list)
     for sample in muts_per_sample:
         markers_per_sample[sample] = match_markers(
             muts_per_sample[sample], markers)
@@ -144,10 +153,15 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
         yield name, ''.join(seq).upper()
 
 
-def parse_name(name: str, pattern: re.Pattern) -> Tuple[str, str]:
+def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
     '''Get sample and segment information by sequence name'''
     match = pattern.match(name)
-    return match.group('sample'), match.group('segment')
+    if match is None:
+        handle_unmatch_name(name, force)
+        return None
+    sample = match.groupdict().get('sample', match.group(1))
+    seg = match.groupdict().get('seg', match.group(2))
+    return sample, seg
 
 
 def translate(seq: str) -> List[str]:
@@ -222,6 +236,17 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
         adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
     return adj_pos
+
+
+def handle_unknown_segment(segment: str, name: str, force: bool):
+    print(f'Unknown segment error: {segment}; {name}', file=sys.stderr)
+    if not force:
+        sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
+
+def handle_unmatch_name(name: str, force: bool) -> None:
+    print(f'RegEx match error: {name}', file=sys.stderr)
+    if not force:
+        sys.exit(f'To force execution use {SKIP_UNMATCH_NAMES_OPT} option.')
 
 
 translation_dict = {
