@@ -46,8 +46,9 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
         if sample is None or segment is None:
             continue
         if segment not in references:
-            handle_unknown_segment(segment, name, skip_unknown_segments)
-            continue
+            print(f'Unknown segment {segment} found in {name}', file=sys.stderr)
+            if skip_unknown_segments: continue
+            sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
         ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
         
@@ -241,12 +242,6 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
         adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
     return adj_pos
-
-
-def handle_unknown_segment(segment: str, name: str, force: bool):
-    print(f'Unknown segment error: {segment}; {name}', file=sys.stderr)
-    if not force:
-        sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
 translation_dict = {
     'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
