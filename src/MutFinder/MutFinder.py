@@ -7,6 +7,7 @@ import sys
 from collections import defaultdict
 from io import TextIOWrapper
 from typing import Dict, Generator, List, Tuple
+from importlib.resources import files
 
 import click
 from Bio.Align import PairwiseAligner
@@ -21,9 +22,9 @@ SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)')
-@click.option('-M', '--markers-file', type=File('r'), default='src/data/markers.tsv')
-@click.option('-R', '--references-fasta', type=File('r'), default='src/data/references.fa')
-@click.option('-A', '--annotation-file', type=File('r'), default='src/data/annotations.tsv')
+@click.option('-M', '--markers-file', type=File('r'), default=files('data').joinpath('markers.tsv'))
+@click.option('-R', '--references-fasta', type=File('r'), default=files('data').joinpath('references.fa'))
+@click.option('-A', '--annotation-file', type=File('r'), default=files('data').joinpath('annotations.tsv'))
 @click.option('-o', '--output', type=File('w'), default='-')
 @click.argument('samples-fasta', type=File('r'))
 def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File,
@@ -51,11 +52,11 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
             sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
         ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
-        
+
         for protein, cds in annotations[segment].items():
             ref_coding, sample_coding = get_coding_sequences(
                 ref_nucl, sample_nucl, cds)
-            ref_aa: str = ''.join(translate(ref_coding))
+            ref_aa = ''.join(translate(ref_coding))
             sample_aa = translate(sample_coding)
 
             muts_per_sample[sample] += find_mutations(
@@ -242,6 +243,7 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
         adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
     return adj_pos
+
 
 translation_dict = {
     'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
