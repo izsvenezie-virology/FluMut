@@ -33,7 +33,7 @@ class TestNameParser(unittest.TestCase):
         pattern = re.compile(r'unmatching_pattern')
         name = 'my_sample_name_PB1'
         result = mf.parse_name(name, pattern, True)
-        self.assertEqual(result, None)
+        self.assertEqual(result, (None, None))
     
     def test_no_groups(self):
         pattern = re.compile(r'.+')
@@ -45,4 +45,4 @@ class TestNameParser(unittest.TestCase):
         pattern = re.compile(r'.+')
         name = 'my_sample_name_PB1'
         result = mf.parse_name(name, pattern, True)
-        self.assertEqual(result, None)    
+        self.assertEqual(result, (None, None))
