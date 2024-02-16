@@ -95,9 +95,7 @@ def load_mutations(markers: dict) -> Dict[str, List[str]]:
 
 
 def load_references() -> Dict[str, str]:
-    con = sqlite3.connect(files('data').joinpath('mutfinderDB.sqlite'))
-    cur = con.cursor()
-    res = cur.execute("SELECT name, sequence FROM 'references'")
+    res = query_db("SELECT name, sequence FROM 'references'")
     return {name: sequence for name, sequence in res}
 
 
@@ -248,6 +246,11 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
         adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
     return adj_pos
+
+def query_db(query: str) -> sqlite3.Cursor:
+    con = sqlite3.connect(files('data').joinpath('mutfinderDB.sqlite'))
+    cur = con.cursor()
+    return cur.execute(query)
 
 
 translation_dict = {
