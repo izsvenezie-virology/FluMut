@@ -23,11 +23,10 @@ SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-M', '--markers-file', type=File('r'), default=files('data').joinpath('markers.tsv'), help='Tab separated file containing all markers to be found')
-@click.option('-R', '--references-fasta', type=File('r'), default=files('data').joinpath('references.fa'), help='FASTA file containing all nucleotidic reference sequences')
 @click.option('-A', '--annotation-file', type=File('r'), default=files('data').joinpath('annotations.tsv'), help='Tab separated file containing annotation informations for all proteins')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File,
+def main(name_regex: str, markers_file: File, annotation_file: File, output: File, samples_fasta: File,
          skip_unmatch_names: bool, skip_unknown_segments: bool):
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -38,7 +37,7 @@ def main(name_regex: str, markers_file: File, references_fasta: File, annotation
 
     markers = load_markers(markers_file)
     mutations = load_mutations(markers)
-    references = load_references(references_fasta)
+    references = load_references()
     annotations = load_annotations(annotation_file)
 
     muts_per_sample = defaultdict(list)
@@ -95,7 +94,7 @@ def load_mutations(markers: dict) -> Dict[str, List[str]]:
     return mutations
 
 
-def load_references(ref_fasta: File) -> Dict[str, str]:
+def load_references() -> Dict[str, str]:
     con = sqlite3.connect(files('data').joinpath('mutfinderDB.sqlite'))
     cur = con.cursor()
     res = cur.execute("SELECT name, sequence FROM 'references'")
