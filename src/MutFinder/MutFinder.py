@@ -8,7 +8,7 @@ from collections import defaultdict
 from io import TextIOWrapper
 from typing import Dict, Generator, List, Tuple
 from importlib.resources import files
-
+import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
@@ -96,7 +96,10 @@ def load_mutations(markers: dict) -> Dict[str, List[str]]:
 
 
 def load_references(ref_fasta: File) -> Dict[str, str]:
-    return {name: seq for name, seq in read_fasta(ref_fasta)}
+    con = sqlite3.connect(files('data').joinpath('mutfinderDB.sqlite'))
+    cur = con.cursor()
+    res = cur.execute("SELECT name, sequence FROM 'references'")
+    return {name: sequence for name, sequence in res}
 
 
 def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
