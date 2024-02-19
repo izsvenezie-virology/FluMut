@@ -23,10 +23,9 @@ SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-M', '--markers-file', type=File('r'), default=files('data').joinpath('markers.tsv'), help='Tab separated file containing all markers to be found')
-@click.option('-A', '--annotation-file', type=File('r'), default=files('data').joinpath('annotations.tsv'), help='Tab separated file containing annotation informations for all proteins')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, markers_file: File, annotation_file: File, output: File, samples_fasta: File,
+def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
          skip_unmatch_names: bool, skip_unknown_segments: bool):
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -38,7 +37,7 @@ def main(name_regex: str, markers_file: File, annotation_file: File, output: Fil
     markers = load_markers(markers_file)
     mutations = load_mutations(markers)
     references = load_references()
-    annotations = load_annotations(annotation_file)
+    annotations = load_annotations()
 
     muts_per_sample = defaultdict(list)
     markers_per_sample = defaultdict(list)
@@ -99,13 +98,11 @@ def load_references() -> Dict[str, str]:
     return {name: sequence for name, sequence in res}
 
 
-def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    res = query_db("SELECT reference_name, protein_name, start, end FROM 'annotations'")
     ann = defaultdict(lambda: defaultdict(list))
-    for line in annotation_file:
-        if line.startswith('#'):
-            continue
-        info = line.split('\t')
-        ann[info[0]][info[1]].append((int(info[2]), int(info[3])))
+    for ref, prot, start, end in res:
+        ann[ref][prot].append((start, end))
     return ann
 
 
