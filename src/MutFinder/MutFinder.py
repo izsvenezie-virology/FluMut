@@ -18,6 +18,15 @@ SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 
 
+class Mutation:
+    def __init__(self, name: str, type: str, ref: str, alt: str, pos: int) -> None:
+        self.name: str = name
+        self.type: str = type
+        self.ref: str = ref
+        self.alt: str = alt
+        self.pos: int = pos
+
+
 @click.command()
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
@@ -35,7 +44,7 @@ def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
     pattern = re.compile(name_regex)
 
     markers = load_markers(markers_file)
-    mutations = load_mutations(markers)
+    mutations = load_mutations()
     references = load_references()
     annotations = load_annotations()
 
@@ -64,8 +73,7 @@ def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
                 ref_aa, sample_aa, mutations[protein])
 
     for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers(
-            muts_per_sample[sample], markers)
+        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], markers)
 
     lines = []
     lines.append(
@@ -82,14 +90,13 @@ def load_markers(makers_file: click.File) -> List[Dict[str, str]]:
     return list(csv.DictReader(makers_file, delimiter='\t'))
 
 
-def load_mutations(markers: dict) -> Dict[str, List[str]]:
+def load_mutations() -> Dict[str, List[str]]:
     mutations = defaultdict(list)
-    for marker in markers:
-        muts = marker['Marker'].split(';')
-        for mut in muts:
-            segment = mut.split(':')[0]
-            if mut not in mutations[segment]:
-                mutations[segment].append(mut)
+    res = query_db("""SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
+                      FROM mutations_characteristics
+                      JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
+    for mut in res:
+        mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
 
@@ -120,13 +127,11 @@ def match_markers(muts, markers):
     return found_markers
 
 
-def find_mutations(ref_aa, sample_aa, mutations):
+def find_mutations(ref_aa, sample_aa, mutations: List[Mutation]):
     found_mutations = []
-    pattern = re.compile(r'^.+:.(?P<pos>\d+)(?P<alt>.)$')
     for mutation in mutations:
-        match = pattern.match(mutation)
-        pos = adjust_position(ref_aa, int(match.group('pos')))
-        if match.group('alt') in sample_aa[pos]:
+        pos = adjust_position(ref_aa, mutation.pos)
+        if mutation.alt in sample_aa[pos]:
             found_mutations.append(mutation)
     return found_mutations
 
