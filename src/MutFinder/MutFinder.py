@@ -31,9 +31,10 @@ class Mutation:
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
+@click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, output: File, samples_fasta: File,
+def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
          skip_unmatch_names: bool, skip_unknown_segments: bool):
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -41,10 +42,13 @@ def main(name_regex: str, output: File, samples_fasta: File,
 
     # Initialization
     pattern = re.compile(name_regex)
-
-    mutations = load_mutations()
-    references = load_references()
-    annotations = load_annotations()
+    
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    mutations = load_mutations(cur)
+    references = load_references(cur)
+    annotations = load_annotations(cur)
+    conn.close()
 
     muts_per_sample = defaultdict(list)
     markers_per_sample = defaultdict(list)
@@ -70,8 +74,11 @@ def main(name_regex: str, output: File, samples_fasta: File,
             muts_per_sample[sample] += find_mutations(
                 ref_aa, sample_aa, mutations[protein])
 
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
     for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]])
+        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], cur)
+    conn.close()
 
     lines = []
     lines.append('Sample\teffect\tpaper\tsubtype\tfound_mutations\tmarker_mutations')
@@ -85,9 +92,9 @@ def main(name_regex: str, output: File, samples_fasta: File,
     output.write(out_str)
 
 
-def load_mutations() -> Dict[str, List[str]]:
+def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[str]]:
     mutations = defaultdict(list)
-    res = query_db("""SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
+    res = cur.execute("""SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
                       FROM mutations_characteristics
                       JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
     for mut in res:
@@ -95,49 +102,49 @@ def load_mutations() -> Dict[str, List[str]]:
     return mutations
 
 
-def load_references() -> Dict[str, str]:
-    res = query_db("SELECT name, sequence FROM 'references'")
+def load_references(cur: sqlite3.Cursor) -> Dict[str, str]:
+    res = cur.execute("SELECT name, sequence FROM 'references'")
     return {name: sequence for name, sequence in res}
 
 
-def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
-    res = query_db("SELECT reference_name, protein_name, start, end FROM 'annotations'")
+def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    res = cur.execute("SELECT reference_name, protein_name, start, end FROM 'annotations'")
     ann = defaultdict(lambda: defaultdict(list))
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann
 
 
-def match_markers(muts):
+def match_markers(muts, cur: sqlite3.Cursor):
     muts_str = ','.join([f"'{mut}'" for mut in muts])
-    res = query_db(f"""
-                    WITH marker_mutation_count AS (SELECT markers_mutations.marker_id, group_concat(markers_mutations.mutation_name) AS marker_total_mutations
-                                                FROM markers_mutations GROUP BY markers_mutations.marker_id),
-                        markers_tbl AS (SELECT  markers_mutations.marker_id,
-                                            group_concat(mutation_name) AS found_mutations,
-                                            marker_mutation_count.marker_total_mutations
-                                    FROM markers_mutations
-                                    JOIN marker_mutation_count ON marker_mutation_count.marker_id = markers_mutations.marker_id
-                                    WHERE mutation_name IN (
-                                    {muts_str})
-                                    GROUP BY markers_mutations.marker_id)
+    res = cur.execute(f"""
+                        WITH marker_mutation_count AS (SELECT markers_mutations.marker_id, group_concat(markers_mutations.mutation_name) AS marker_total_mutations
+                                                    FROM markers_mutations GROUP BY markers_mutations.marker_id),
+                            markers_tbl AS (SELECT  markers_mutations.marker_id,
+                                                group_concat(mutation_name) AS found_mutations,
+                                                marker_mutation_count.marker_total_mutations
+                                        FROM markers_mutations
+                                        JOIN marker_mutation_count ON marker_mutation_count.marker_id = markers_mutations.marker_id
+                                        WHERE mutation_name IN (
+                                        {muts_str})
+                                        GROUP BY markers_mutations.marker_id)
 
-                    SELECT  group_concat(markers_mutations.mutation_name) AS 'Mutations', 
-                            effects.name AS 'Effect', 
-                            papers.id AS 'Paper', 
-                            markers_effects.subtype AS 'Subtype',
-                            markers_tbl.found_mutations AS 'Found mutations',
-                            markers_tbl.marker_total_mutations AS 'Marker total mutations'
-                    FROM markers_effects
-                    JOIN markers_mutations ON markers_mutations.marker_id = markers_effects.marker_id
-                    JOIN papers ON papers.id = markers_effects.paper_id
-                    JOIN effects ON effects.id = markers_effects.effect_id
-                    JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
-                    WHERE markers_mutations.marker_id IN (
-                        SELECT markers_tbl.marker_id 
-                        FROM markers_tbl)
-                    GROUP BY markers_mutations.marker_id, effects.id, papers.id, markers_effects.subtype
-                    """)
+                        SELECT  group_concat(markers_mutations.mutation_name) AS 'Mutations', 
+                                effects.name AS 'Effect', 
+                                papers.id AS 'Paper', 
+                                markers_effects.subtype AS 'Subtype',
+                                markers_tbl.found_mutations AS 'Found mutations',
+                                markers_tbl.marker_total_mutations AS 'Marker total mutations'
+                        FROM markers_effects
+                        JOIN markers_mutations ON markers_mutations.marker_id = markers_effects.marker_id
+                        JOIN papers ON papers.id = markers_effects.paper_id
+                        JOIN effects ON effects.id = markers_effects.effect_id
+                        JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
+                        WHERE markers_mutations.marker_id IN (
+                            SELECT markers_tbl.marker_id 
+                            FROM markers_tbl)
+                        GROUP BY markers_mutations.marker_id, effects.id, papers.id, markers_effects.subtype
+                       """)
     found_markers = []
     for _, effect, paper, subtype, found_mutations, marker_mutations in res:
         found_markers.append({
@@ -271,11 +278,6 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
         adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
     return adj_pos
-
-def query_db(query: str) -> sqlite3.Cursor:
-    con = sqlite3.connect(files('data').joinpath('mutfinderDB.sqlite'))
-    cur = con.cursor()
-    return cur.execute(query)
 
 
 translation_dict = {
