@@ -189,7 +189,7 @@ def translate(seq: str) -> List[str]:
     return aas
 
 
-def get_codon(seq: List[str], start: int, is_first: bool) -> [str, str, str]:
+def get_codon(seq: List[str], start: int, is_first: bool) -> List[str]:
     '''Exctract the codon'''
     codon = seq[start:start + 3]
     if codon == ['-', '-', '-']:  # If the codon is a deletion

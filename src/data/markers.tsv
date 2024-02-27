@@ -1,4 +1,3 @@
-Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statistics	EMGT	Notes
 1	M1:N30D	313;323	Increased virulence in mice	H5N1							
 2	M1:T215A	313;323	Increased virulence in mice	H5N1							
 3	M1:I43M	16;323	Increased virulence in chickens;Increased virulence in ducks;Increased virulence in mice	H5N1							
@@ -221,27 +220,27 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 220	HA1-5:Q222L;HA1-5:G224S	233;323	Increased virus binding to α2-6	H7N7 (human isolate)							H3_numbering: 226;228
 221	HA1-5:Q222L;HA1-5:G224S	35;277;9;323	Loss of binding to α2–3;No binding to α2–6	H10N8 (human isolate)							H3_numbering: 226;228
 222	HA1-5:Q222L;HA1-5:G224S	272;0;101;117;136;33;12;1;133;238;90;248;186;323	Increased virus binding to α2-6;Decreased antiviral response in host;Reduced tissue tropism in guinea pigs	H5N1							H3_numbering: 226;228
-223	NA-1:V116A	275;94;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
-224	NA-1:I117T	12;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
-225	NA-1:E119A	231;89;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
-226	NA-1:E119D	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
-227	NA-1:E119G	231;323	Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
-228	NA-1:Q136L	55;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
-229	NA-1:D199G	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							
-230	NA-1:I223M	146;323	Reduced susceptibility to oseltamivir	H5N1							
-231	NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							
-232	NA-1:H275Y	231;89;146;86;102;54;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
-233	NA-1:E278Q	91;323	Reduced susceptibility to oseltamivir	H5N1							
-234	NA-1:N295S	231;89;102;201;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							
-235	NA-1:K432T	124;323	Reduced susceptibility to zanamivir	H5N1							
-236	NA-1:I117V;NA-1:I314V	275;323	Reduced susceptibility to oseltamivir	H5N1							
-237	NA-1:E119A;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							
-238	NA-1:E119D;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							
-239	NA-1:E119G;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							
-240	NA-1:I223L;NA-1:S247N	124;323	Reduced susceptibility to oseltamivir	H5N1							
-241	NA-1:I223M;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
-242	NA-1:I223V;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							
-243	NA-1:K150N;NA-1:I223L;NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							
+223	NA-1:V116A	275;94;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:116
+224	NA-1:I117T	12;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:117
+225	NA-1:E119A	231;89;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:119
+226	NA-1:E119D	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:119
+227	NA-1:E119G	231;323	Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:119
+228	NA-1:Q136L	55;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:136
+229	NA-1:D199G	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:198
+230	NA-1:I223M	146;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:222
+231	NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:246
+232	NA-1:H275Y	231;89;146;86;102;54;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:274
+233	NA-1:E278Q	91;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:277
+234	NA-1:N295S	231;89;102;201;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to zanamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:294
+235	NA-1:K432T	124;323	Reduced susceptibility to zanamivir	H5N1							N2 numbering:432
+236	NA-1:I117V;NA-1:I314V	275;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:117;314
+237	NA-1:E119A;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:119; 274
+238	NA-1:E119D;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:119; 274
+239	NA-1:E119G;NA-1:H275Y	231;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir;Reduced susceptibility to zanamivir	H5N1							N2 numbering:119; 274
+240	NA-1:I223L;NA-1:S247N	124;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:222; 246
+241	NA-1:I223M;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:222; 274
+242	NA-1:I223V;NA-1:H275Y	146;323	Reduced susceptibility to oseltamivir;Reduced susceptibility to peramivir	H5N1							N2 numbering:222; 274
+243	NA-1:K150N;NA-1:I223L;NA-1:S247N	94;323	Reduced susceptibility to oseltamivir	H5N1							N2 numbering:150; 222; 246
 244	HA1-5:K189T;HA1-5:G224S	309;323	Dual α2–3 and α2–6 binding	H7N9							H3_numbering: 193;228
 245	NP:E434K;HA1-5:Q227P;HA2-5:D46E	35;323	Enhanced contact transmission in guinea pigs	H9N2							
 246	NP:E434K;HA1-5:Q227P;PB2:D195N	35;323	Enhanced contact transmission in guinea pigs	H9N2							
@@ -253,7 +252,7 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 252	NA-1:E119A	382;231	From normal to reduced inhibition to Oseltamivir;Reduced inhibition to Zanamiriv;From normal to reduced inhibition to Peramivir;Reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
 253	NA-1:E119A	231;89	Reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Normal Inhibition to Peramivir	H5N1							WHO
 254	NA-1:E119V	386	Reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Reduced inhibition to Peramivir	H1N1							A(H1N1)pdm09 WHO
-255	NA-1:E119V	410;411	From reduced to higlhly reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Higly reduced inhibition to Peramivir	H1n1							WHO
+255	NA-1:E119V	410;411	From reduced to higlhly reduced inhibition to Oseltamivir;Higly reduced inhibition to Zanamivir;Higly reduced inhibition to Peramivir	H1N1							WHO
 256	NA-1:E119D	231;384;385	Reduced inhibition to Oseltamivir;Highly reduced inhibition to Peramivir;Highly reduced inhibition to Zanamivir;Highly reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
 257	NA-1:E119D	231	Reduced inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;Highly reduced inhibition to Peramivir	H5N1							WHO
 258	NA-1:E119G	231;385;386;387	Normal Inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir;From reduced to higlhly reduced inhibition to Peramivir;Highly reduced inhibition to Laninamivir	H1N1							A(H1N1)pdm09 WHO
@@ -368,3 +367,10 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 367	HA1-5:S123P;HA2-5:R167K	122;323	Increased virus binding to α2-6	H5N1							H3_numbering: 128,496
 368	HA1-5:L129V;HA1-5:A134V	51;323	Increased virus binding to α2-6	H5N1							H3_numbering: -,138
 369	HA1-5:N182K;HA1-5:Q222L;HA1-5:G224S	0;323	Increased virus binding to α2-6	H5N1							H3_numbering: 186,226,228
+370	NA-1:I222K	253	Reduced susceptibility to oseltamivir, zanamivir, peramivir, and laninamivir	H7N9							
+371	NA-1:E276D	253	Reduced susceptibility to oseltamivir, zanamivir, peramivir, and laninamivir	H7N9							
+372	NA-1:R292K	250	Reduced susceptibility to zanamivir	H4N2							
+373	NA-1:R292K	261;262	Reduced susceptibility to oseltamivir, zanamivir, peramivir, and laninamivir	H7N9							
+374	NA-1:R371K	253	Reduced susceptibility to oseltamivir, zanamivir, peramivir, and laninamivir	H7N9							
+375	NA-1:E119V;NA-1:E222V	266	Reduced susceptibility to oseltamivir	H7N9							
+376	HA1-5:N189D	423	Increased virus binding to α2-6;Transmissible among ferrets	H5N1							
