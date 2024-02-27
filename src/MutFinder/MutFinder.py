@@ -31,10 +31,9 @@ class Mutation:
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
-@click.option('-M', '--markers-file', type=File('r'), default=files('data').joinpath('markers.tsv'), help='Tab separated file containing all markers to be found')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
+def main(name_regex: str, output: File, samples_fasta: File,
          skip_unmatch_names: bool, skip_unknown_segments: bool):
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -43,7 +42,6 @@ def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
     # Initialization
     pattern = re.compile(name_regex)
 
-    markers = load_markers(markers_file)
     mutations = load_mutations()
     references = load_references()
     annotations = load_annotations()
@@ -73,21 +71,18 @@ def main(name_regex: str, markers_file: File, output: File, samples_fasta: File,
                 ref_aa, sample_aa, mutations[protein])
 
     for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], markers)
+        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]])
 
     lines = []
-    lines.append(
-        '\t'.join(['Sample'] + list(markers[0].keys()) + ['Mutations present']))
+    lines.append('Sample\teffect\tpaper\tsubtype\tfound_mutations\tmarker_mutations')
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
             string = '\t'.join(lst)
             lines.append(string)
-    print('\n'.join(lines), file=output)
-
-
-def load_markers(makers_file: click.File) -> List[Dict[str, str]]:
-    return list(csv.DictReader(makers_file, delimiter='\t'))
+    out_str = '\n'.join(lines)
+    output.encoding = 'utf-8'
+    output.write(out_str)
 
 
 def load_mutations() -> Dict[str, List[str]]:
@@ -113,17 +108,45 @@ def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     return ann
 
 
-def match_markers(muts, markers):
+def match_markers(muts):
+    muts_str = ','.join([f"'{mut}'" for mut in muts])
+    res = query_db(f"""
+                    WITH marker_mutation_count AS (SELECT markers_mutations.marker_id, group_concat(markers_mutations.mutation_name) AS marker_total_mutations
+                                                FROM markers_mutations GROUP BY markers_mutations.marker_id),
+                        markers_tbl AS (SELECT  markers_mutations.marker_id,
+                                            group_concat(mutation_name) AS found_mutations,
+                                            marker_mutation_count.marker_total_mutations
+                                    FROM markers_mutations
+                                    JOIN marker_mutation_count ON marker_mutation_count.marker_id = markers_mutations.marker_id
+                                    WHERE mutation_name IN (
+                                    {muts_str})
+                                    GROUP BY markers_mutations.marker_id)
+
+                    SELECT  group_concat(markers_mutations.mutation_name) AS 'Mutations', 
+                            effects.name AS 'Effect', 
+                            papers.id AS 'Paper', 
+                            markers_effects.subtype AS 'Subtype',
+                            markers_tbl.found_mutations AS 'Found mutations',
+                            markers_tbl.marker_total_mutations AS 'Marker total mutations'
+                    FROM markers_effects
+                    JOIN markers_mutations ON markers_mutations.marker_id = markers_effects.marker_id
+                    JOIN papers ON papers.id = markers_effects.paper_id
+                    JOIN effects ON effects.id = markers_effects.effect_id
+                    JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
+                    WHERE markers_mutations.marker_id IN (
+                        SELECT markers_tbl.marker_id 
+                        FROM markers_tbl)
+                    GROUP BY markers_mutations.marker_id, effects.id, papers.id, markers_effects.subtype
+                    """)
     found_markers = []
-    for marker in markers:
-        found_muts = []
-        for mut in marker['Marker'].split(';'):
-            if mut in muts:
-                found_muts.append(mut)
-        if found_muts:
-            mrk = marker.copy()
-            mrk['FoundMutations'] = ';'.join(found_muts)
-            found_markers.append(mrk)
+    for _, effect, paper, subtype, found_mutations, marker_mutations in res:
+        found_markers.append({
+            'effect': effect,
+            'paper' : paper,
+            'subtype': subtype,
+            'found_mutations': found_mutations,
+            'marker_mutations': marker_mutations
+        })
     return found_markers
 
 
