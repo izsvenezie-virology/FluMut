@@ -16,6 +16,9 @@ from click import File
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
+__version__ = '0.2.0'
+__author__ = 'Edoardo Giussani'
+__contact__ = 'egiussani@izsvenezie.it'
 
 
 class Mutation:
@@ -28,6 +31,7 @@ class Mutation:
 
 
 @click.command()
+@click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
