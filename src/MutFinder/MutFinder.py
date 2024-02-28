@@ -122,41 +122,35 @@ def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int,
 def match_markers(muts, cur: sqlite3.Cursor):
     muts_str = ','.join([f"'{mut}'" for mut in muts])
     res = cur.execute(f"""
-                        WITH marker_mutation_count AS (SELECT markers_mutations.marker_id, group_concat(markers_mutations.mutation_name) AS marker_total_mutations
-                                                    FROM markers_mutations GROUP BY markers_mutations.marker_id),
-                            markers_tbl AS (SELECT  markers_mutations.marker_id,
-                                                group_concat(mutation_name) AS found_mutations,
-                                                marker_mutation_count.marker_total_mutations
-                                        FROM markers_mutations
-                                        JOIN marker_mutation_count ON marker_mutation_count.marker_id = markers_mutations.marker_id
-                                        WHERE mutation_name IN (
-                                        {muts_str})
-                                        GROUP BY markers_mutations.marker_id)
+    WITH markers_tbl AS (SELECT marker_id,
+                                group_concat(mutation_name) AS found_mutations,
+                                count(mutation_name) AS found_mutations_count
+                            FROM markers_mutations
+                            WHERE mutation_name IN ({muts_str})
+                            GROUP BY markers_mutations.marker_id)
 
-                        SELECT  group_concat(markers_mutations.mutation_name) AS 'Mutations', 
-                                effects.name AS 'Effect', 
-                                papers.id AS 'Paper', 
-                                markers_effects.subtype AS 'Subtype',
-                                markers_tbl.found_mutations AS 'Found mutations',
-                                markers_tbl.marker_total_mutations AS 'Marker total mutations'
-                        FROM markers_effects
-                        JOIN markers_mutations ON markers_mutations.marker_id = markers_effects.marker_id
-                        JOIN papers ON papers.id = markers_effects.paper_id
-                        JOIN effects ON effects.id = markers_effects.effect_id
-                        JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
-                        WHERE markers_mutations.marker_id IN (
-                            SELECT markers_tbl.marker_id 
-                            FROM markers_tbl)
-                        GROUP BY markers_mutations.marker_id, effects.id, papers.id, markers_effects.subtype
-                       """)
+    SELECT  markers_summary.all_mutations AS 'Marker mutations',
+            markers_tbl.found_mutations AS 'Found mutations',
+            effects.name AS 'Effect', 
+            markers_effects.paper_id AS 'Paper', 
+            markers_effects.subtype AS 'Subtype'
+    FROM markers_effects
+    JOIN effects ON effects.id = markers_effects.effect_id
+    JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
+    JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
+    WHERE markers_effects.marker_id IN (
+        SELECT markers_tbl.marker_id 
+        FROM markers_tbl)
+    GROUP BY markers_effects.marker_id, effects.id, markers_effects.paper_id, markers_effects.subtype
+    """)
     found_markers = []
-    for _, effect, paper, subtype, found_mutations, marker_mutations in res:
+    for marker_mutations, found_mutations,  effect, paper, subtype in res:
         found_markers.append({
+            'marker_mutations': marker_mutations,
+            'found_mutations': found_mutations,
             'effect': effect,
             'paper' : paper,
-            'subtype': subtype,
-            'found_mutations': found_mutations,
-            'marker_mutations': marker_mutations
+            'subtype': subtype
         })
     return found_markers
 
