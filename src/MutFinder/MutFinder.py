@@ -16,7 +16,7 @@ from click import File
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
@@ -34,12 +34,13 @@ class Mutation:
 @click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
+@click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
 def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
-         skip_unmatch_names: bool, skip_unknown_segments: bool):
+         strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool):
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
     '''
@@ -81,7 +82,7 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
     for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], cur)
+        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], cur, strict)
     conn.close()
 
     lines = []
@@ -119,7 +120,7 @@ def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int,
     return ann
 
 
-def match_markers(muts, cur: sqlite3.Cursor):
+def match_markers(muts, cur: sqlite3.Cursor, strict: str):
     muts_str = ','.join([f"'{mut}'" for mut in muts])
     res = cur.execute(f"""
     WITH markers_tbl AS (SELECT marker_id,
@@ -140,7 +141,7 @@ def match_markers(muts, cur: sqlite3.Cursor):
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
-        FROM markers_tbl)
+        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
     GROUP BY markers_effects.marker_id, effects.id, markers_effects.paper_id, markers_effects.subtype
     """)
     found_markers = []
