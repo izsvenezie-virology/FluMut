@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "MutFinder",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "src/MutFinder/MutFinder.py",
             "console": "integratedTerminal",
