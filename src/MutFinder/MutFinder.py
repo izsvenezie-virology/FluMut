@@ -50,8 +50,8 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
     
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
+    segments = load_segments(cur)
     mutations = load_mutations(cur)
-    references = load_references(cur)
     annotations = load_annotations(cur)
     conn.close()
 
@@ -63,14 +63,15 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
             continue
-        if segment not in references:
+        if segment not in segments:
             print(f'Unknown segment {segment} found in {name}', file=sys.stderr)
             if skip_unknown_segments: continue
             sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
-        ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
+        reference_name, reference_sequence = select_reference(segments[segment], seq)
+        ref_nucl, sample_nucl = pairwise_alignment(reference_sequence, seq)
 
-        for protein, cds in annotations[segment].items():
+        for protein, cds in annotations[reference_name].items():
             ref_coding, sample_coding = get_coding_sequences(
                 ref_nucl, sample_nucl, cds)
             ref_aa = ''.join(translate(ref_coding))
@@ -106,10 +107,12 @@ def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[str]]:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
-
-def load_references(cur: sqlite3.Cursor) -> Dict[str, str]:
-    res = cur.execute("SELECT name, sequence FROM 'references'")
-    return {name: sequence for name, sequence in res}
+def load_segments(cur: sqlite3.Cursor) -> Dict[str, Dict[str, str]]:
+    res = cur.execute("SELECT segment_name, name, sequence FROM 'references'")
+    segments = defaultdict(dict)
+    for segment, name, sequence in res:
+        segments[segment][name] = sequence
+    return segments
 
 
 def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
@@ -155,6 +158,12 @@ def match_markers(muts, cur: sqlite3.Cursor, strict: str):
         })
     return found_markers
 
+
+def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str]:
+    if len(references) > 1:
+        NotImplementedError('Selection for reference from segments with more than one is not yet implemented')
+    (name, sequence), = references.items()
+    return name, sequence
 
 def find_mutations(ref_aa, sample_aa, mutations: List[Mutation]):
     found_mutations = []
