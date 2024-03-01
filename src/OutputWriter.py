@@ -1,21 +1,23 @@
-from collections import defaultdict
+import csv
 from click.types import File
 
 from DataClass import Mutation
 
 
 def matrix_output(output_file: File, mutations: list[Mutation]):
-    lines = defaultdict(list)
+    samples = {}
     header = ['Sample']
     for mutation in mutations:
-        if not mutation.found:
-            continue
-        header.append(mutation.name)
-        for sample, sequence in mutation.samples.items():
-            lines[sample].append(sequence)
-    output_file.write('\t'.join(header))
-    for sample, sequences in lines.items():
-        output_file.write('\t'.join([sample] + sequences)+'\n')
+        if mutation.found and mutation.name not in header:
+            header.append(mutation.name)
+        for sample in mutation.samples:
+            if sample not in samples:
+                samples[sample] = {'Sample': sample}
+            samples[sample][mutation.name] = mutation.samples[sample]
+    writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
+    writer.writeheader()
+    writer.writerows(samples.values())
+
 
 def tabular_output(output_file: File, markers_per_sample) -> None:
     lines = []
