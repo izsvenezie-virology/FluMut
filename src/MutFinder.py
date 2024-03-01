@@ -81,7 +81,8 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     conn.close()
 
     if matrix_output:
-        OutputWriter.matrix_output(matrix_output, itertools.chain.from_iterable(mutations.values()))
+        header, data = OutputWriter.matrix_format(itertools.chain.from_iterable(mutations.values()))
+        OutputWriter.write_csv(tabular_output, header, data)
 
     if tabular_output:
         OutputWriter.tabular_output(tabular_output, markers_per_sample)

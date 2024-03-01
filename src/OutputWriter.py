@@ -1,10 +1,11 @@
 import csv
+from typing import Dict, List, Tuple
 from click.types import File
 
 from DataClass import Mutation
 
 
-def matrix_output(output_file: File, mutations: list[Mutation]):
+def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
     samples = {}
     header = ['Sample']
     for mutation in mutations:
@@ -14,9 +15,7 @@ def matrix_output(output_file: File, mutations: list[Mutation]):
             if sample not in samples:
                 samples[sample] = {'Sample': sample}
             samples[sample][mutation.name] = mutation.samples[sample]
-    writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
-    writer.writeheader()
-    writer.writerows(samples.values())
+    return header, samples.values()
 
 
 def tabular_output(output_file: File, markers_per_sample) -> None:
@@ -31,3 +30,8 @@ def tabular_output(output_file: File, markers_per_sample) -> None:
 
     output_file.encoding = 'utf-8'
     output_file.write(out_str)
+
+def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
+    writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
+    writer.writeheader()
+    writer.writerows(data)    
