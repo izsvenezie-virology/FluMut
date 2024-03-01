@@ -7,8 +7,5 @@
         "test_*.py"
     ],
     "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true,
-    "python.analysis.extraPaths": [
-        "./src/MutFinder"
-    ]
+    "python.testing.unittestEnabled": true
 }

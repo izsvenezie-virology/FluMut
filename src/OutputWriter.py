@@ -1,7 +1,7 @@
 from collections import defaultdict
 from click.types import File
 
-from MutFinder import Mutation
+from DataClass import Mutation
 
 
 def matrix_output(output_file: File, mutations: list[Mutation]):

@@ -13,6 +13,7 @@ import click
 from Bio.Align import PairwiseAligner
 from click import File
 import OutputWriter
+from DataClass import Mutation
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
@@ -20,17 +21,6 @@ SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 __version__ = '0.2.3'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
-
-
-class Mutation:
-    def __init__(self, name: str, type: str, ref: str, alt: str, pos: int) -> None:
-        self.name: str = name
-        self.type: str = type
-        self.ref: str = ref
-        self.alt: str = alt
-        self.pos: int = pos
-        self.found: bool = False
-        self.samples: Dict[str, List] = {}
 
 
 @click.command()
