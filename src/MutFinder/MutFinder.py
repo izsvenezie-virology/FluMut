@@ -28,6 +28,7 @@ class Mutation:
         self.ref: str = ref
         self.alt: str = alt
         self.pos: int = pos
+        self.samples: Dict[str, List] = {}
 
 
 @click.command()
@@ -78,7 +79,7 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
             sample_aa = translate(sample_coding)
 
             muts_per_sample[sample] += find_mutations(
-                ref_aa, sample_aa, mutations[protein])
+                ref_aa, sample_aa, sample, mutations[protein])
 
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
@@ -164,10 +165,11 @@ def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str
     (name, sequence), = references.items()
     return name, sequence
 
-def find_mutations(ref_aa, sample_aa, mutations: List[Mutation]):
+def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutations: List[Mutation]):
     found_mutations = []
     for mutation in mutations:
         pos = adjust_position(ref_aa, mutation.pos)
+        mutation.samples[sample_name] = sample_aa[pos]
         if mutation.alt in sample_aa[pos]:
             found_mutations.append(mutation)
     return found_mutations
