@@ -12,7 +12,7 @@ import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
-import OutputWriter
+import OutputFormatter
 from DataClass import Mutation
 
 PRINT_ALIGNMENT = False
@@ -81,11 +81,11 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     conn.close()
 
     if matrix_output:
-        header, data = OutputWriter.matrix_format(itertools.chain.from_iterable(mutations.values()))
-        OutputWriter.write_csv(tabular_output, header, data)
+        header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
+        OutputFormatter.write_csv(tabular_output, header, data)
 
     if tabular_output:
-        OutputWriter.tabular_output(tabular_output, markers_per_sample)
+        OutputFormatter.tabular_output(tabular_output, markers_per_sample)
 
 
 def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[Mutation]]:
