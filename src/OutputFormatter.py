@@ -27,8 +27,6 @@ def tabular_output(output_file: File, markers_per_sample) -> None:
             string = '\t'.join(lst)
             lines.append(string)
     out_str = '\n'.join(lines)
-
-    output_file.encoding = 'utf-8'
     output_file.write(out_str)
 
 def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
