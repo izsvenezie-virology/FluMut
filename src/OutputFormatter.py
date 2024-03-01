@@ -20,7 +20,7 @@ def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, 
 
 def tabular_output(output_file: File, markers_per_sample) -> None:
     lines = []
-    lines.append('Sample\teffect\tpaper\tsubtype\tfound_mutations\tmarker_mutations')
+    lines.append('Sample\tMarker mutations\tFound mutations\tEffect\tPapers\tSubtype')
     for sample in markers_per_sample:
         for marker in markers_per_sample[sample]:
             lst = [sample] + list(marker.values())
