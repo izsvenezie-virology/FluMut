@@ -6,7 +6,7 @@ import re
 import sys
 from collections import defaultdict
 from io import TextIOWrapper
-from typing import Dict, Generator, List, Tuple
+from typing import Dict, Generator, List, Optional, Tuple
 from importlib.resources import files
 import sqlite3
 import click
@@ -41,7 +41,7 @@ class Mutation:
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.argument('samples-fasta', type=File('r'))
 def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
-         strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool):
+         strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
     '''
@@ -99,7 +99,7 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
     output.write(out_str)
 
 
-def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[str]]:
+def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[Mutation]]:
     mutations = defaultdict(list)
     res = cur.execute("""SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
                       FROM mutations_characteristics
@@ -124,7 +124,7 @@ def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int,
     return ann
 
 
-def match_markers(muts, cur: sqlite3.Cursor, strict: str):
+def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> List[Dict[str, str]]:
     muts_str = ','.join([f"'{mut}'" for mut in muts])
     res = cur.execute(f"""
     WITH markers_tbl AS (SELECT marker_id,
@@ -186,7 +186,7 @@ def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
     return alignment[0], alignment[1]
 
 
-def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
+def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
     for line in fasta_file:
@@ -257,7 +257,7 @@ def translate_codon(codon: List[str]) -> str:
     return ''.join(sorted(set(aas)))
 
 
-def find_next_nucl(seq: List[str], start: int):
+def find_next_nucl(seq: List[str], start: int) -> Optional[int]:
     '''Returns the position of the next non deleted nucleotide'''
     for i in range(start + 3, len(seq)):
         if not seq[i] == '-':
@@ -265,7 +265,7 @@ def find_next_nucl(seq: List[str], start: int):
     return None
 
 
-def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]):
+def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]) -> Tuple[str, str]:
     '''Cut and assemble the nucleotide sequences based on positions given by the cds'''
     cds.sort(key=lambda x: x[0])
     ref_nucl = ''
