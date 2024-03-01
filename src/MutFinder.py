@@ -30,10 +30,10 @@ __contact__ = 'egiussani@izsvenezie.it'
 @click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
-@click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
+@click.option('-t', '--tabular-output', type=File('w'), default='-', help='The output file [default: stdout]')
 @click.option('-m', '--matrix-output', type=File('w'), default=None, help='Report of sequences found in each mutation')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, output: File, samples_fasta: File, db_file: str, matrix_output: File,
+def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File,
          strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -49,8 +49,8 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str, matri
     annotations = load_annotations(cur)
     conn.close()
 
-    muts_per_sample = defaultdict(list)
-    markers_per_sample = defaultdict(list)
+    muts_per_sample: Dict[str, List] = defaultdict(list)
+    markers_per_sample: Dict[str, List] = defaultdict(list)
 
     # Per sequence analysis
     for name, seq in read_fasta(samples_fasta):
@@ -83,17 +83,8 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str, matri
     if matrix_output:
         OutputWriter.matrix_output(matrix_output, itertools.chain.from_iterable(mutations.values()))
 
-
-    lines = []
-    lines.append('Sample\teffect\tpaper\tsubtype\tfound_mutations\tmarker_mutations')
-    for sample in markers_per_sample:
-        for marker in markers_per_sample[sample]:
-            lst = [sample] + list(marker.values())
-            string = '\t'.join(lst)
-            lines.append(string)
-    out_str = '\n'.join(lines)
-    output.encoding = 'utf-8'
-    output.write(out_str)
+    if tabular_output:
+        OutputWriter.tabular_output(tabular_output, markers_per_sample)
 
 
 def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[Mutation]]:
