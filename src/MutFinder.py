@@ -30,8 +30,8 @@ __contact__ = 'egiussani@izsvenezie.it'
 @click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
-@click.option('-t', '--tabular-output', type=File('w'), default='-', help='The output file [default: stdout]')
-@click.option('-m', '--matrix-output', type=File('w'), default=None, help='Report of sequences found in each mutation')
+@click.option('-t', '--tabular-output', type=File('w', 'utf-8'), default='-', help='The output file [default: stdout]')
+@click.option('-m', '--matrix-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
 @click.argument('samples-fasta', type=File('r'))
 def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File,
          strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
@@ -126,7 +126,7 @@ def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> Lis
     SELECT  markers_summary.all_mutations AS 'Marker mutations',
             markers_tbl.found_mutations AS 'Found mutations',
             markers_effects.effect_name AS 'Effect', 
-            markers_effects.paper_id AS 'Paper', 
+            group_concat(markers_effects.paper_id, '; ') AS 'Papers', 
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
@@ -134,16 +134,16 @@ def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> Lis
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
         FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
-    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.paper_id, markers_effects.subtype
+    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """)
     found_markers = []
-    for marker_mutations, found_mutations,  effect, paper, subtype in res:
+    for marker_mutations, found_mutations,  effect, papers, subtype in res:
         found_markers.append({
-            'marker_mutations': marker_mutations,
-            'found_mutations': found_mutations,
-            'effect': effect,
-            'paper' : paper,
-            'subtype': subtype
+            'Marker mutations': marker_mutations,
+            'Found mutations': found_mutations,
+            'Effect': effect,
+            'Papers' : papers,
+            'Subtype': subtype
         })
     return found_markers
 
