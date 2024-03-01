@@ -16,7 +16,7 @@ from click import File
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
@@ -135,17 +135,16 @@ def match_markers(muts, cur: sqlite3.Cursor, strict: str):
 
     SELECT  markers_summary.all_mutations AS 'Marker mutations',
             markers_tbl.found_mutations AS 'Found mutations',
-            effects.name AS 'Effect', 
+            markers_effects.effect_name AS 'Effect', 
             markers_effects.paper_id AS 'Paper', 
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
-    JOIN effects ON effects.id = markers_effects.effect_id
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
         FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
-    GROUP BY markers_effects.marker_id, effects.id, markers_effects.paper_id, markers_effects.subtype
+    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.paper_id, markers_effects.subtype
     """)
     found_markers = []
     for marker_mutations, found_mutations,  effect, paper, subtype in res:
