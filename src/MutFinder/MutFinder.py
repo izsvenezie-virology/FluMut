@@ -12,6 +12,7 @@ import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
+import OutputWriter
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
@@ -28,6 +29,7 @@ class Mutation:
         self.ref: str = ref
         self.alt: str = alt
         self.pos: int = pos
+        self.found: bool = False
         self.samples: Dict[str, List] = {}
 
 
@@ -39,8 +41,9 @@ class Mutation:
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
 @click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
+@click.option('-m', '--matrix-output', type=File('w'), default=None, help='Report of sequences found in each mutation')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
+def main(name_regex: str, output: File, samples_fasta: File, db_file: str, matrix_output: File,
          strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -86,6 +89,10 @@ def main(name_regex: str, output: File, samples_fasta: File, db_file: str,
     for sample in muts_per_sample:
         markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], cur, strict)
     conn.close()
+
+    if matrix_output:
+        OutputWriter.matrix_output(matrix_output, itertools.chain.from_iterable(mutations.values()))
+
 
     lines = []
     lines.append('Sample\teffect\tpaper\tsubtype\tfound_mutations\tmarker_mutations')
@@ -171,6 +178,7 @@ def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutation
         pos = adjust_position(ref_aa, mutation.pos)
         mutation.samples[sample_name] = sample_aa[pos]
         if mutation.alt in sample_aa[pos]:
+            mutation.found = True
             found_mutations.append(mutation)
     return found_mutations
 

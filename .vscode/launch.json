@@ -11,7 +11,7 @@
             "program": "src/MutFinder/MutFinder.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["-o", "manual_tests/feedback_flumut_numero_2.tsv", "-n", "(?P<sample>.+)_(?P<segment>.+)", "manual_tests/feedback_flumut_numero_2.fa"]
+            "args": ["-m", "manual_tests/feedback_flumut_numero_2_matrix.tsv", "-o", "manual_tests/feedback_flumut_numero_2.tsv", "-n", "(?P<sample>.+)_(?P<segment>.+)", "manual_tests/feedback_flumut_numero_2.fa"]
         }
     ]
 }
