@@ -356,11 +356,9 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 355	NP:F313Y		Evade human BTN3A3 (a potent inhibitor of avian but not human influenza A viruses replication)								skype
 356	NP:F313V		Evade human BTN3A3 (a potent inhibitor of avian but not human influenza A viruses replication)								skype
 357	NA-1:S364N		Disruption of the second sialic acid binding site (2SBS)	H5N1							email
-358	NA-1:S369C		Disruption of the second sialic acid binding site (2SBS)	H5N1							email
 359	NA-1:T397A		Disruption of the second sialic acid binding site (2SBS)	H5N1							email
 360	PB2:M535I										da Bia via Skype. Sembra che sia stata trovata solo in volpi (Italy, Sweden, Northern Ireland, Finland)
 361	M2:V27I		Conferred Amantadine resistance								FluSurver
-362	NA-1:A369I		Disruption of the second sialic acid binding site (2SBS)								email
 363	NA-1:K432E		Disruption of the second sialic acid binding site (2SBS)								email
 364	NA-1:K432N		Disruption of the second sialic acid binding site (2SBS)								email
 365	NA-1:Q136R		Reduced inhibition to Oseltamivir;Highly reduced inhibition to Zanamivir								WHO
@@ -375,3 +373,6 @@ Id	Marker	Citations	Effects	Subtypes	Clades	Virus_tested	In_vivo	In_vitro	Statis
 374	NA-1:R371K	253	Reduced susceptibility to oseltamivir, zanamivir, peramivir, and laninamivir	H7N9							
 375	NA-1:E119V;NA-1:E222V	266	Reduced susceptibility to oseltamivir	H7N9							
 376	HA1-5:N189D	423	Increased virus binding to α2-6;Transmissible among ferrets	H5N1							
+377	NA-1:A369I	424	Decreased virus binding to α2-3	H5N1							
+378	NA-1:I396M	424	Decreased virus binding to α2-3	H5N1							
+379	NA-1:I396V	424	Decreased virus binding to α2-3	H5N1							
