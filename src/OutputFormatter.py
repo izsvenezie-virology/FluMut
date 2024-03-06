@@ -18,16 +18,15 @@ def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, 
     return header, samples.values()
 
 
-def tabular_output(output_file: File, markers_per_sample) -> None:
-    lines = []
-    lines.append('Sample\tMarker mutations\tFound mutations\tEffect\tPapers\tSubtype')
-    for sample in markers_per_sample:
-        for marker in markers_per_sample[sample]:
-            lst = [sample] + list(marker.values())
-            string = '\t'.join(lst)
-            lines.append(string)
-    out_str = '\n'.join(lines)
-    output_file.write(out_str)
+def tabular_output(markers_per_sample) -> None:
+    header = ['Sample', 'Marker mutations', 'Found mutations', 'Effect', 'Subtype', 'Papers']
+    data = []
+    for sample, markers in markers_per_sample.items():
+        for marker in markers:
+            marker['Sample'] = sample
+            data.append(marker)
+    return header, data
+
 
 def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
     writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')

@@ -85,7 +85,8 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
         OutputFormatter.write_csv(matrix_output, header, data)
 
     if tabular_output:
-        OutputFormatter.tabular_output(tabular_output, markers_per_sample)
+        header, data = OutputFormatter.tabular_output(markers_per_sample)
+        OutputFormatter.write_csv(tabular_output, header, data)
 
 
 def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[Mutation]]:
