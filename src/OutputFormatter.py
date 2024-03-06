@@ -6,8 +6,8 @@ from DataClass import Mutation
 
 
 def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
-    samples = {}
     header = ['Sample']
+    samples = {}
     for mutation in mutations:
         if mutation.found and mutation.name not in header:
             header.append(mutation.name)
@@ -18,7 +18,7 @@ def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, 
     return header, samples.values()
 
 
-def tabular_output(markers_per_sample) -> None:
+def tabular_output(markers_per_sample: Dict[str, List[Dict[str, str]]]) -> Tuple[List[str], List[Dict[str, str]]]:
     header = ['Sample', 'Marker mutations', 'Found mutations', 'Effect', 'Subtype', 'Papers']
     data = []
     for sample, markers in markers_per_sample.items():
