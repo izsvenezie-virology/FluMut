@@ -12,6 +12,7 @@ import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
+from DbReader import close_connection, execute_query, open_connection
 import OutputFormatter
 from DataClass import Mutation
 
@@ -42,12 +43,11 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     # Initialization
     pattern = re.compile(name_regex)
     
-    conn = sqlite3.connect(db_file)
-    cur = conn.cursor()
-    segments = load_segments(cur)
-    mutations = load_mutations(cur)
-    annotations = load_annotations(cur)
-    conn.close()
+    open_connection(db_file)
+    segments = load_segments()
+    mutations = load_mutations()
+    annotations = load_annotations()
+    close_connection()
 
     muts_per_sample: Dict[str, List] = defaultdict(list)
     markers_per_sample: Dict[str, List] = defaultdict(list)
@@ -74,49 +74,47 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
             muts_per_sample[sample] += find_mutations(
                 ref_aa, sample_aa, sample, mutations[protein])
 
-    conn = sqlite3.connect(db_file)
-    cur = conn.cursor()
-    for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers(muts_per_sample[sample], cur, strict)
-    conn.close()
-
     if matrix_output:
         header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
         OutputFormatter.write_csv(matrix_output, header, data)
 
     if tabular_output:
+        open_connection(db_file)
+        for sample in muts_per_sample:
+            markers_per_sample[sample] = match_markers(muts_per_sample[sample], strict)
+        close_connection()
         header, data = OutputFormatter.tabular_output(markers_per_sample)
         OutputFormatter.write_csv(tabular_output, header, data)
 
 
-def load_mutations(cur: sqlite3.Cursor) -> Dict[str, List[Mutation]]:
+def load_mutations() -> Dict[str, List[Mutation]]:
     mutations = defaultdict(list)
-    res = cur.execute("""SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
-                      FROM mutations_characteristics
-                      JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
+    res = execute_query(""" SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
+                            FROM mutations_characteristics
+                            JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
     for mut in res:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
-def load_segments(cur: sqlite3.Cursor) -> Dict[str, Dict[str, str]]:
-    res = cur.execute("SELECT segment_name, name, sequence FROM 'references'")
+def load_segments() -> Dict[str, Dict[str, str]]:
+    res = execute_query("SELECT segment_name, name, sequence FROM 'references'")
     segments = defaultdict(dict)
     for segment, name, sequence in res:
         segments[segment][name] = sequence
     return segments
 
 
-def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
-    res = cur.execute("SELECT reference_name, protein_name, start, end FROM 'annotations'")
+def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    res = execute_query("SELECT reference_name, protein_name, start, end FROM 'annotations'")
     ann = defaultdict(lambda: defaultdict(list))
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann
 
 
-def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> List[Dict[str, str]]:
+def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
     muts_str = ','.join([f"'{mut.name}'" for mut in muts])
-    res = cur.execute(f"""
+    res = execute_query(f"""
     WITH markers_tbl AS (SELECT marker_id,
                                 group_concat(mutation_name) AS found_mutations,
                                 count(mutation_name) AS found_mutations_count
