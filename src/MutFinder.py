@@ -12,7 +12,7 @@ import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
-from DbReader import close_connection, execute_query, open_connection
+from DbReader import close_connection, execute_query, open_connection, to_dict
 import OutputFormatter
 from DataClass import Mutation
 
@@ -134,17 +134,8 @@ def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
         SELECT markers_tbl.marker_id 
         FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
     GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
-    """)
-    found_markers = []
-    for marker_mutations, found_mutations,  effect, papers, subtype in res:
-        found_markers.append({
-            'Marker mutations': marker_mutations,
-            'Found mutations': found_mutations,
-            'Effect': effect,
-            'Papers' : papers,
-            'Subtype': subtype
-        })
-    return found_markers
+    """, to_dict)
+    return res.fetchall()
 
 
 def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str]:

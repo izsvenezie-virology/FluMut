@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Any, Callable, Dict
 
 
 _connection: sqlite3.Connection
@@ -17,5 +18,12 @@ def close_connection() -> None:
     _connection = None
     _cursor = None
 
-def execute_query(query: str):
+def execute_query(query: str, row_factory: Callable = None):
+    _cursor.row_factory = row_factory
     return _cursor.execute(query)
+
+def to_dict(cursor: sqlite3.Cursor, row: sqlite3.Row) -> Dict[str, Any]:
+    result = {}
+    for idx, col in enumerate(cursor.description):
+        result[col[0]] = row[idx]
+    return result
