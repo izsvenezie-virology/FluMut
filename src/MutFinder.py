@@ -82,7 +82,7 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
 
     if matrix_output:
         header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
-        OutputFormatter.write_csv(tabular_output, header, data)
+        OutputFormatter.write_csv(matrix_output, header, data)
 
     if tabular_output:
         OutputFormatter.tabular_output(tabular_output, markers_per_sample)
@@ -126,7 +126,7 @@ def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> Lis
     SELECT  markers_summary.all_mutations AS 'Marker mutations',
             markers_tbl.found_mutations AS 'Found mutations',
             markers_effects.effect_name AS 'Effect', 
-            group_concat(markers_effects.paper_id) AS 'Papers', 
+            group_concat(markers_effects.paper_id, '; ') AS 'Papers', 
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
@@ -134,7 +134,7 @@ def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> Lis
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
         FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
-    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.paper_id, markers_effects.subtype
+    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """)
     found_markers = []
     for marker_mutations, found_mutations,  effect, papers, subtype in res:
