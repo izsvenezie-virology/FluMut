@@ -77,7 +77,7 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
     for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers([mut.name for mut in muts_per_sample[sample]], cur, strict)
+        markers_per_sample[sample] = match_markers(muts_per_sample[sample], cur, strict)
     conn.close()
 
     if matrix_output:
@@ -114,7 +114,7 @@ def load_annotations(cur: sqlite3.Cursor) -> Dict[str, Dict[str, List[Tuple[int,
 
 
 def match_markers(muts: List[Mutation], cur: sqlite3.Cursor, strict: str) -> List[Dict[str, str]]:
-    muts_str = ','.join([f"'{mut}'" for mut in muts])
+    muts_str = ','.join([f"'{mut.name}'" for mut in muts])
     res = cur.execute(f"""
     WITH markers_tbl AS (SELECT marker_id,
                                 group_concat(mutation_name) AS found_mutations,
