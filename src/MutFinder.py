@@ -62,13 +62,12 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
             samples[sample] = Sample(sample)
 
         reference_name, reference_sequence = select_reference(segments[segment], seq)
-        ref_nucl, sample_nucl = pairwise_alignment(reference_sequence, seq)
+        ref_align, sample_align = pairwise_alignment(reference_sequence, seq)
 
         for protein, cds in annotations[reference_name].items():
-            ref_coding, sample_coding = get_coding_sequences(
-                ref_nucl, sample_nucl, cds)
-            ref_aa = ''.join(translate(ref_coding))
-            sample_aa = translate(sample_coding)
+            ref_cds, sample_cds = get_cds(ref_align, sample_align, cds)
+            ref_aa = ''.join(translate(ref_cds))
+            sample_aa = translate(sample_cds)
 
             samples[sample].mutations += find_mutations(
                 ref_aa, sample_aa, sample, mutations[protein])
@@ -144,6 +143,7 @@ def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str
         NotImplementedError('Selection for reference from segments with more than one is not yet implemented')
     (name, sequence), = references.items()
     return name, sequence
+
 
 def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutations: List[Mutation]):
     found_mutations = []
@@ -246,7 +246,7 @@ def find_next_nucl(seq: List[str], start: int) -> Optional[int]:
     return None
 
 
-def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]) -> Tuple[str, str]:
+def get_cds(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]) -> Tuple[str, str]:
     '''Cut and assemble the nucleotide sequences based on positions given by the cds'''
     cds.sort(key=lambda x: x[0])
     ref_nucl = ''
