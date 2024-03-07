@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-import csv
 import itertools
 import re
 import sys
@@ -8,7 +7,6 @@ from collections import defaultdict
 from io import TextIOWrapper
 from typing import Dict, Generator, List, Optional, Tuple
 from importlib.resources import files
-import sqlite3
 import click
 from Bio.Align import PairwiseAligner
 from click import File
