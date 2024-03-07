@@ -12,7 +12,7 @@ from Bio.Align import PairwiseAligner
 from click import File
 from DbReader import close_connection, execute_query, open_connection, to_dict
 import OutputFormatter
-from DataClass import Mutation
+from DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
@@ -39,16 +39,14 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     '''
 
     # Initialization
+    samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
-    
+
     open_connection(db_file)
     segments = load_segments()
     mutations = load_mutations()
     annotations = load_annotations()
     close_connection()
-
-    muts_per_sample: Dict[str, List] = defaultdict(list)
-    markers_per_sample: Dict[str, List] = defaultdict(list)
 
     # Per sequence analysis
     for name, seq in read_fasta(samples_fasta):
@@ -60,6 +58,9 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
             if skip_unknown_segments: continue
             sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
+        if sample not in samples:
+            samples[sample] = Sample(sample)
+
         reference_name, reference_sequence = select_reference(segments[segment], seq)
         ref_nucl, sample_nucl = pairwise_alignment(reference_sequence, seq)
 
@@ -69,19 +70,21 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
             ref_aa = ''.join(translate(ref_coding))
             sample_aa = translate(sample_coding)
 
-            muts_per_sample[sample] += find_mutations(
+            samples[sample].mutations += find_mutations(
                 ref_aa, sample_aa, sample, mutations[protein])
 
+    open_connection(db_file)
+    for sample in samples.values():
+        sample.markers = match_markers(sample.mutations, strict)
+    close_connection()
+
+    # Outputs
     if matrix_output:
         header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
         OutputFormatter.write_csv(matrix_output, header, data)
 
     if tabular_output:
-        open_connection(db_file)
-        for sample in muts_per_sample:
-            markers_per_sample[sample] = match_markers(muts_per_sample[sample], strict)
-        close_connection()
-        header, data = OutputFormatter.tabular_output(markers_per_sample)
+        header, data = OutputFormatter.tabular_output(samples.values())
         OutputFormatter.write_csv(tabular_output, header, data)
 
 

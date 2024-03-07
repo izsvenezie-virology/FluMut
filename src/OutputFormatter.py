@@ -2,10 +2,10 @@ import csv
 from typing import Dict, List, Tuple
 from click.types import File
 
-from DataClass import Mutation
+from DataClass import Mutation, Sample
 
 
-def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
+def matrix_format(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
     header = ['Sample']
     samples = {}
     for mutation in mutations:
@@ -18,12 +18,12 @@ def matrix_format(mutations: list[Mutation]) -> Tuple[List[str], List[Dict[str, 
     return header, samples.values()
 
 
-def tabular_output(markers_per_sample: Dict[str, List[Dict[str, str]]]) -> Tuple[List[str], List[Dict[str, str]]]:
+def tabular_output(samples: List[Sample]) -> Tuple[List[str], List[Dict[str, str]]]:
     header = ['Sample', 'Marker mutations', 'Found mutations', 'Effect', 'Subtype', 'Papers']
     data = []
-    for sample, markers in markers_per_sample.items():
-        for marker in markers:
-            marker['Sample'] = sample
+    for sample in samples:
+        for marker in sample.markers:
+            marker['Sample'] = sample.name
             data.append(marker)
     return header, data
 
