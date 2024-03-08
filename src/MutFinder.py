@@ -80,19 +80,19 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
 
     # Outputs
     if matrix_output:
-        header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
+        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
         OutputFormatter.write_csv(matrix_output, header, data)
 
     if tabular_output:
-        header, data = OutputFormatter.tabular_output(samples.values())
+        header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(tabular_output, header, data)
 
     if excel_output:
         wb = OutputFormatter.get_workbook()
-        header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
-        wb = OutputFormatter.write_excel(wb, 'Mutations', header, data)
-        header, data = OutputFormatter.tabular_output(samples.values())
-        wb = OutputFormatter.write_excel(wb, 'Markers', header, data)
+        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
+        wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
+        header, data = OutputFormatter.markers_dict(samples.values())
+        wb = OutputFormatter.write_excel_sheet(wb, 'Markers', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
 
 

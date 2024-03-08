@@ -9,7 +9,7 @@ from openpyxl.utils.cell import get_column_letter
 from DataClass import Mutation, Sample
 
 
-def matrix_format(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
+def mutations_dict(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
     header = ['Sample']
     samples = {}
     for mutation in mutations:
@@ -22,7 +22,7 @@ def matrix_format(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, 
     return header, samples.values()
 
 
-def tabular_output(samples: List[Sample]) -> Tuple[List[str], List[Dict[str, str]]]:
+def markers_dict(samples: List[Sample]) -> Tuple[List[str], List[Dict[str, str]]]:
     header = ['Sample', 'Marker mutations', 'Found mutations', 'Effect', 'Subtype', 'Papers']
     data = []
     for sample in samples:
@@ -45,14 +45,14 @@ def get_workbook() -> Workbook:
 def save_workbook(wb: Workbook, save_path: str) -> None:
     wb.save(save_path)
 
-def write_excel(wb: Workbook, sheet: str, header: List[str], data: List[Dict[str, str]]) -> Workbook:
+def write_excel_sheet(wb: Workbook, sheet: str, header: List[str], data: List[Dict[str, str]]) -> Workbook:
     ws = wb[sheet]
     ws.append(header)
     for row, values in enumerate(data):
         for col, col_name in enumerate(header):
             ws.cell(row=row+2, column=col+1, value=values.get(col_name, ''))
     table = Table(displayName=f'{sheet}Table', ref=f'A1:{get_column_letter(len(header))}{len(data) + 1}')
-    table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2", showFirstColumn=False,
-                       showLastColumn=False, showRowStripes=True, showColumnStripes=False)
+    table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2", showFirstColumn=False, showLastColumn=False,
+                                          showRowStripes=True, showColumnStripes=False)
     ws.add_table(table)
     return wb
