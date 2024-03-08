@@ -3,6 +3,8 @@ from importlib.resources import files
 from typing import Dict, List, Tuple
 from click.types import File
 from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.utils.cell import get_column_letter
 
 from DataClass import Mutation, Sample
 
@@ -36,17 +38,19 @@ def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) 
     writer.writerows(data)    
 
 def get_workbook() -> Workbook:
-    return Workbook()
+    return load_workbook(files('data').joinpath('mutfinder_output.xlsx'))
 
 def save_workbook(wb: Workbook, save_path: str) -> None:
     wb.save(save_path)
 
 def write_excel(wb: Workbook, sheet: str, header: List[str], data: List[Dict[str, str]]) -> Workbook:
-    wb.create_sheet(sheet)
     ws = wb[sheet]
-    for col, value in enumerate(header):
-        ws.cell(row=1, column=col+1, value=value)
+    ws.append(header)
     for row, values in enumerate(data):
         for col, col_name in enumerate(header):
             ws.cell(row=row+2, column=col+1, value=values.get(col_name, ''))
+    table = Table(displayName=f'{sheet}Table', ref=f'A1:{get_column_letter(len(header))}{len(data) + 1}')
+    table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2", showFirstColumn=False,
+                       showLastColumn=False, showRowStripes=True, showColumnStripes=False)
+    ws.add_table(table)
     return wb
