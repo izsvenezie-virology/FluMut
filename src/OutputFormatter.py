@@ -38,7 +38,9 @@ def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) 
     writer.writerows(data)    
 
 def get_workbook() -> Workbook:
-    return load_workbook(files('data').joinpath('mutfinder_output.xlsx'))
+    wb = load_workbook(files('data').joinpath('mutfinder_output.xlsx'))
+    wb['Markers per sample']._pivots[0].cache.refreshOnLoad = True
+    return wb
 
 def save_workbook(wb: Workbook, save_path: str) -> None:
     wb.save(save_path)
