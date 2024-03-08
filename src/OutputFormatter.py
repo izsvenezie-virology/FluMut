@@ -32,18 +32,26 @@ def markers_dict(samples: List[Sample]) -> Tuple[List[str], List[Dict[str, str]]
     return header, data
 
 
+def papers_dict(papers: List[Dict[str, str]]) -> Tuple[List[str], List[Dict[str, str]]]:
+    header = ['Short name', 'Title', 'Authors', 'Year', 'Journal', 'Link', 'DOI']
+    return header, papers
+
+
 def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
     writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
     writer.writeheader()
     writer.writerows(data)    
+
 
 def get_workbook() -> Workbook:
     wb = load_workbook(files('data').joinpath('mutfinder_output.xlsm'), keep_vba=True)
     wb['Markers per sample']._pivots[0].cache.refreshOnLoad = True
     return wb
 
+
 def save_workbook(wb: Workbook, save_path: str) -> None:
     wb.save(save_path)
+
 
 def write_excel_sheet(wb: Workbook, sheet: str, header: List[str], data: List[Dict[str, str]]) -> Workbook:
     ws = wb[sheet]

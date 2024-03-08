@@ -76,6 +76,7 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     open_connection(db_file)
     for sample in samples.values():
         sample.markers = match_markers(sample.mutations, strict)
+    papers = load_papers()
     close_connection()
 
     # Outputs
@@ -93,6 +94,8 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
         wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
         header, data = OutputFormatter.markers_dict(samples.values())
         wb = OutputFormatter.write_excel_sheet(wb, 'Markers', header, data)
+        header, data = OutputFormatter.papers_dict(papers)
+        wb = OutputFormatter.write_excel_sheet(wb, 'Papers', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
 
 
@@ -119,6 +122,16 @@ def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann
+
+def load_papers() -> List[Dict[str, str]]:
+    return execute_query("""SELECT  id AS 'Short name',
+                                    title AS 'Title',
+                                    authors AS 'Authors',
+                                    year AS 'Year',
+                                    journal AS 'Journal',
+                                    web_address AS 'Link',
+                                    doi AS 'DOI'
+                            FROM papers""", to_dict).fetchall()
 
 
 def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
