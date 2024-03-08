@@ -31,8 +31,9 @@ __contact__ = 'egiussani@izsvenezie.it'
 @click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
 @click.option('-t', '--tabular-output', type=File('w', 'utf-8'), default='-', help='The output file [default: stdout]')
 @click.option('-m', '--matrix-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
+@click.option('-x', '--excel-output', type=str, default=None, help='Excel report')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File,
+def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File, excel_output: str,
          strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
@@ -85,6 +86,14 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
     if tabular_output:
         header, data = OutputFormatter.tabular_output(samples.values())
         OutputFormatter.write_csv(tabular_output, header, data)
+
+    if excel_output:
+        wb = OutputFormatter.get_workbook()
+        header, data = OutputFormatter.matrix_format(itertools.chain.from_iterable(mutations.values()))
+        wb = OutputFormatter.write_excel(wb, 'Mutations', header, data)
+        header, data = OutputFormatter.tabular_output(samples.values())
+        wb = OutputFormatter.write_excel(wb, 'Markers', header, data)
+        wb = OutputFormatter.save_workbook(wb, excel_output)
 
 
 def load_mutations() -> Dict[str, List[Mutation]]:
