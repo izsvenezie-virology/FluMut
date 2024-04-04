@@ -28,7 +28,7 @@ __contact__ = 'egiussani@izsvenezie.it'
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
-@click.option('-D', '--db-file', type=str, default=files('data').joinpath('mutfinderDB.sqlite'), help='Source database')
+@click.option('-D', '--db-file', type=str, default=files('MutFinderData').joinpath('mutfinderDB.sqlite'), help='Source database')
 @click.option('-t', '--tabular-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
 @click.option('-m', '--matrix-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel report')
