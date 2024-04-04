@@ -6,7 +6,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils.cell import get_column_letter
 
-from DataClass import Mutation, Sample
+from MutFinder.DataClass import Mutation, Sample
 
 
 def mutations_dict(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:

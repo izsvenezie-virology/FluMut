@@ -1,5 +1,5 @@
 import unittest
-import src.MutFinder as mf
+import MutFinder.MutFinder as mf
 
 
 class TestPosition(unittest.TestCase):

@@ -10,9 +10,9 @@ from importlib.resources import files
 import click
 from Bio.Align import PairwiseAligner
 from click import File
-from DbReader import close_connection, execute_query, open_connection, to_dict
-import OutputFormatter
-from DataClass import Mutation, Sample
+from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict
+import MutFinder.OutputFormatter as OutputFormatter
+from MutFinder.DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
