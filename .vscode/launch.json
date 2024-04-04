@@ -8,11 +8,20 @@
             "name": "MutFinder",
             "type": "debugpy",
             "request": "launch",
-            "cwd": "${workspaceFolder}/src",
-            "program": "MutFinder/MutFinder.py",
+            "module": "MutFinder.MutFinder",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["-m", "../manual_tests/feedback_flumut_numero_2_matrix.tsv", "-x", "../manual_tests/feedback_flumut_numero_2.xlsm", "-t", "../manual_tests/feedback_flumut_numero_2.tsv", "-n", "(?P<sample>.+)_(?P<segment>.+)", "../manual_tests/feedback_flumut_numero_2.fa"]
+            "args": [
+                "-m",
+                "manual_tests/feedback_flumut_numero_2_matrix.tsv",
+                "-x",
+                "manual_tests/feedback_flumut_numero_2.xlsm",
+                "-t",
+                "manual_tests/feedback_flumut_numero_2.tsv",
+                "-n",
+                "(?P<sample>.+)_(?P<segment>.+)",
+                "manual_tests/feedback_flumut_numero_2.fa"
+            ]
         }
     ]
 }
