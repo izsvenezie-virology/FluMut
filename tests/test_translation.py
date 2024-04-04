@@ -1,5 +1,5 @@
 import unittest
-import MutFinder.MutFinder as mf
+import src.MutFinder as mf
 
 
 class TestTranslate(unittest.TestCase):
