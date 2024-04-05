@@ -42,7 +42,7 @@ The output file contains 5 sheets:
 - Samples per marker: report sample count for each marker
 - Mutations: contains [Matrix](#matrix) output
 - Markers: contains [Tabular](#tabular) output
-- Papers: contains the list of papers citing found markers
+- Papers: contains the list of papers from the database
 
 > **_NOTE:_** in "Markers per sample" and "Samples per marker" by double clicking a cell in "Markers mutations" or "Found mutations" columns you will be redirected to "Mutations" sheet.
 > Columns are filtered to display only mutations in the selected marker.
@@ -98,4 +98,4 @@ Here you can find some examples for the regular expression:
 
 - Option ```--skip-unknown-segments```: skip sequence and continue analysis when the segment found in FASTA header is not present in the database. By default exits with error. 
 
-> **_NOTE:_** to find the regular expression that better fits your data you can try [Regex101](https://regex101.com/) selecting ```Python``` as flavor.
+> **_NOTE:_** to find the regular expression that better fits your data you can try it on [Regex101](https://regex101.com/) selecting ```Python``` flavor.
