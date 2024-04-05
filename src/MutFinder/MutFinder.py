@@ -1,17 +1,20 @@
 #! /usr/bin/env python
 
-import itertools
 import re
 import sys
-from collections import defaultdict
-from io import TextIOWrapper
-from typing import Dict, Generator, List, Optional, Tuple
-from importlib.resources import files
 import click
-from Bio.Align import PairwiseAligner
+import itertools
+
+from io import TextIOWrapper
 from click import File
+from typing import Dict, Generator, List, Optional, Tuple
+
+from collections import defaultdict
+from importlib.resources import files
+from Bio.Align import PairwiseAligner
+
 from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict
-import MutFinder.OutputFormatter as OutputFormatter
+from MutFinder import OutputFormatter
 from MutFinder.DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
