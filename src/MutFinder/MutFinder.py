@@ -13,7 +13,7 @@ from collections import defaultdict
 from importlib.resources import files
 from Bio.Align import PairwiseAligner
 
-from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict
+from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
 from MutFinder import OutputFormatter
 from MutFinder.DataClass import Mutation, Sample
 
@@ -24,10 +24,16 @@ __version__ = '0.2.3'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
+def update(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    update_db(files('MutFinderData').joinpath('mutfinderDB.sqlite'))
+    ctx.exit()
 
 @click.command()
 @click.help_option('-h', '--help')
 @click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
+@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Updates the database to latest version and exits')
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
