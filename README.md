@@ -23,6 +23,13 @@ mutfinder -x excel_output.xlsm -t markers_output.tsv -m mutations_output.tsv you
 ```
 The above command parse ```your_fasta.fa``` file and produces all possible [outputs](#outputs).
 
+### Update database
+```
+mutfinder --update
+```
+This command updates to latetes version of marker's database from local NAS.
+In the future this command will download the database from a repository.
+
 ## Outputs
 MutFinder can produce 3 different outputs:
 - [Excel](#excel)
