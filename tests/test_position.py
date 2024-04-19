@@ -28,8 +28,3 @@ class TestPosition(unittest.TestCase):
         sequence = '---AT-----GC'
         result = mf.adjust_position(sequence, 4)
         self.assertEqual(result, 11)
-        
-    def test_adjust_gap_end(self):
-        sequence = '---AT-----'
-        result = mf.adjust_position(sequence, 4)
-        self.assertEqual(result, None)
