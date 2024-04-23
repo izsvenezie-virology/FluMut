@@ -1,4 +1,6 @@
 # MutFinder
+[![Latest Release](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/badges/release.svg)](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
+
 A tool to easly find mutations of interest in influenza viruses.
 
 ## Getting started
@@ -27,8 +29,19 @@ The above command parse ```your_fasta.fa``` file and produces all possible [outp
 ```
 mutfinder --update
 ```
-This command updates to latetes version of marker's database from local NAS.
+This command updates to latest version of marker's database from local NAS.
 In the future this command will download the database from a repository.
+
+## Input
+MutFinder takes a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file as input.
+Sequences must be nucleotidic and must contains only [IUPAC nucleotide codes](https://www.bioinformatics.org/sms/iupac.html).
+The file should contains all segments for each sample in order to find markers with mutations on different segments.
+MutFinder is capable to analyze multiple samples at once.
+
+If you have your samples or your segments splitted on multiple files you can perform analysis with something like:
+```
+cat *.fa | mutfinder -x excel_output.xlsm -
+```
 
 ## Outputs
 MutFinder can produce 3 different outputs:
