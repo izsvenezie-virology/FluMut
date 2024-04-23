@@ -8,7 +8,6 @@ _connection: sqlite3.Connection
 _cursor: sqlite3.Cursor
 
 def update_db(db_path: str) -> None:
-    os.remove(db_path)
     shutil.copyfile(r'\\nas1\SC6Seq-PDB\Biol.Molecolare SCS5\SEQUENZIAMENTO-FILOGENESI\EURL\FluMut\mutfinderDB.sqlite', db_path)
 
 def open_connection(db_path: str) -> None:
