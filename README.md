@@ -16,7 +16,10 @@ Before installing MutFinder you must have:
     ```
     pip install mutfinder.zip
     ```
-
+- Check installation:
+    ```
+    mutfinder --help
+    ```
 
 ## Usage
 ### Basic usage
@@ -31,6 +34,17 @@ mutfinder --update
 ```
 This command updates to latest version of marker's database from local NAS.
 In the future this command will download the database from a repository.
+
+### Try examples
+We provide two small datasets to try the program.
+
+```
+unzip mutfinder.zip
+cd mutfinder/examples
+mutfinder -t markers_output.tsv -m mutations_output.tsv single_sample.fa
+mutfinder -x excel_output.xlsm multiple_samples.fa 
+```
+These commands produces 2 text outputs for single_sample.fa and the Excel output for multiple_samples.fa.
 
 ## Input
 MutFinder takes a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file as input.
