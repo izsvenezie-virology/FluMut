@@ -1,135 +1,189 @@
 #! /usr/bin/env python
 
-import csv
-import itertools
 import re
 import sys
-from collections import defaultdict
-from io import TextIOWrapper
-from typing import Dict, Generator, List, Tuple
-from importlib.resources import files
-
 import click
-from Bio.Align import PairwiseAligner
+import itertools
+
+from io import TextIOWrapper
 from click import File
+from typing import Dict, Generator, List, Optional, Tuple
+
+from collections import defaultdict
+from importlib.resources import files
+from Bio.Align import PairwiseAligner
+
+from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
+from MutFinder import OutputFormatter
+from MutFinder.DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
+__version__ = '0.3.0'
+__author__ = 'Edoardo Giussani'
+__contact__ = 'egiussani@izsvenezie.it'
 
+def update(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    update_db(files('MutFinderData').joinpath('mutfinderDB.sqlite'))
+    ctx.exit()
 
 @click.command()
+@click.help_option('-h', '--help')
+@click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
+@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Updates the database to latest version and exits')
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
+@click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
-@click.option('-M', '--markers-file', type=File('r'), default=files('data').joinpath('markers.tsv'), help='Tab separated file containing all markers to be found')
-@click.option('-R', '--references-fasta', type=File('r'), default=files('data').joinpath('references.fa'), help='FASTA file containing all nucleotidic reference sequences')
-@click.option('-A', '--annotation-file', type=File('r'), default=files('data').joinpath('annotations.tsv'), help='Tab separated file containing annotation informations for all proteins')
-@click.option('-o', '--output', type=File('w'), default='-', help='The output file [default: stdout]')
+@click.option('-D', '--db-file', type=str, default=files('MutFinderData').joinpath('mutfinderDB.sqlite'), help='Source database')
+@click.option('-t', '--tabular-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
+@click.option('-m', '--matrix-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
+@click.option('-x', '--excel-output', type=str, default=None, help='Excel report')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, markers_file: File, references_fasta: File, annotation_file: File, output: File, samples_fasta: File,
-         skip_unmatch_names: bool, skip_unknown_segments: bool):
+def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File, excel_output: str,
+         strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
     '''
 
     # Initialization
+    samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
 
-    markers = load_markers(markers_file)
-    mutations = load_mutations(markers)
-    references = load_references(references_fasta)
-    annotations = load_annotations(annotation_file)
-
-    muts_per_sample = defaultdict(list)
-    markers_per_sample = defaultdict(list)
+    open_connection(db_file)
+    segments = load_segments()
+    mutations = load_mutations()
+    annotations = load_annotations()
+    close_connection()
 
     # Per sequence analysis
     for name, seq in read_fasta(samples_fasta):
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
             continue
-        if segment not in references:
+        if segment not in segments:
             print(f'Unknown segment {segment} found in {name}', file=sys.stderr)
             if skip_unknown_segments: continue
             sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
 
-        ref_nucl, sample_nucl = pairwise_alignment(references[segment], seq)
+        if sample not in samples:
+            samples[sample] = Sample(sample)
 
-        for protein, cds in annotations[segment].items():
-            ref_coding, sample_coding = get_coding_sequences(
-                ref_nucl, sample_nucl, cds)
-            ref_aa = ''.join(translate(ref_coding))
-            sample_aa = translate(sample_coding)
+        reference_name, reference_sequence = select_reference(segments[segment], seq)
+        ref_align, sample_align = pairwise_alignment(reference_sequence, seq)
 
-            muts_per_sample[sample] += find_mutations(
-                ref_aa, sample_aa, mutations[protein])
+        for protein, cds in annotations[reference_name].items():
+            ref_cds, sample_cds = get_cds(ref_align, sample_align, cds)
+            ref_aa = ''.join(translate(ref_cds))
+            sample_aa = translate(sample_cds)
 
-    for sample in muts_per_sample:
-        markers_per_sample[sample] = match_markers(
-            muts_per_sample[sample], markers)
+            samples[sample].mutations += find_mutations(
+                ref_aa, sample_aa, sample, mutations[protein])
 
-    lines = []
-    lines.append(
-        '\t'.join(['Sample'] + list(markers[0].keys()) + ['Mutations present']))
-    for sample in markers_per_sample:
-        for marker in markers_per_sample[sample]:
-            lst = [sample] + list(marker.values())
-            string = '\t'.join(lst)
-            lines.append(string)
-    print('\n'.join(lines), file=output)
+    open_connection(db_file)
+    for sample in samples.values():
+        sample.markers = match_markers(sample.mutations, strict)
+    papers = load_papers()
+    close_connection()
+
+    # Outputs
+    if matrix_output:
+        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
+        OutputFormatter.write_csv(matrix_output, header, data)
+
+    if tabular_output:
+        header, data = OutputFormatter.markers_dict(samples.values())
+        OutputFormatter.write_csv(tabular_output, header, data)
+
+    if excel_output:
+        wb = OutputFormatter.get_workbook()
+        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
+        wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
+        header, data = OutputFormatter.markers_dict(samples.values())
+        wb = OutputFormatter.write_excel_sheet(wb, 'Markers', header, data)
+        header, data = OutputFormatter.papers_dict(papers)
+        wb = OutputFormatter.write_excel_sheet(wb, 'Papers', header, data)
+        wb = OutputFormatter.save_workbook(wb, excel_output)
 
 
-def load_markers(makers_file: click.File) -> List[Dict[str, str]]:
-    return list(csv.DictReader(makers_file, delimiter='\t'))
-
-
-def load_mutations(markers: dict) -> Dict[str, List[str]]:
+def load_mutations() -> Dict[str, List[Mutation]]:
     mutations = defaultdict(list)
-    for marker in markers:
-        muts = marker['Marker'].split(';')
-        for mut in muts:
-            segment = mut.split(':')[0]
-            if mut not in mutations[segment]:
-                mutations[segment].append(mut)
+    res = execute_query(""" SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
+                            FROM mutations_characteristics
+                            JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
+    for mut in res:
+        mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
+def load_segments() -> Dict[str, Dict[str, str]]:
+    res = execute_query("SELECT segment_name, name, sequence FROM 'references'")
+    segments = defaultdict(dict)
+    for segment, name, sequence in res:
+        segments[segment][name] = sequence
+    return segments
 
-def load_references(ref_fasta: File) -> Dict[str, str]:
-    return {name: seq for name, seq in read_fasta(ref_fasta)}
 
-
-def load_annotations(annotation_file: File) -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
+    res = execute_query("SELECT reference_name, protein_name, start, end FROM 'annotations'")
     ann = defaultdict(lambda: defaultdict(list))
-    for line in annotation_file:
-        if line.startswith('#'):
-            continue
-        info = line.split('\t')
-        ann[info[0]][info[1]].append((int(info[2]), int(info[3])))
+    for ref, prot, start, end in res:
+        ann[ref][prot].append((start, end))
     return ann
 
-
-def match_markers(muts, markers):
-    found_markers = []
-    for marker in markers:
-        found_muts = []
-        for mut in marker['Marker'].split(';'):
-            if mut in muts:
-                found_muts.append(mut)
-        if found_muts:
-            mrk = marker.copy()
-            mrk['FoundMutations'] = ';'.join(found_muts)
-            found_markers.append(mrk)
-    return found_markers
+def load_papers() -> List[Dict[str, str]]:
+    return execute_query("""SELECT  id AS 'Short name',
+                                    title AS 'Title',
+                                    authors AS 'Authors',
+                                    year AS 'Year',
+                                    journal AS 'Journal',
+                                    web_address AS 'Link',
+                                    doi AS 'DOI'
+                            FROM papers""", to_dict).fetchall()
 
 
-def find_mutations(ref_aa, sample_aa, mutations):
+def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
+    muts_str = ','.join([f"'{mut.name}'" for mut in muts])
+    res = execute_query(f"""
+    WITH markers_tbl AS (SELECT marker_id,
+                                group_concat(mutation_name) AS found_mutations,
+                                count(mutation_name) AS found_mutations_count
+                            FROM markers_mutations
+                            WHERE mutation_name IN ({muts_str})
+                            GROUP BY markers_mutations.marker_id)
+
+    SELECT  markers_summary.all_mutations AS 'Marker mutations',
+            markers_tbl.found_mutations AS 'Found mutations',
+            markers_effects.effect_name AS 'Effect', 
+            group_concat(markers_effects.paper_id, '; ') AS 'Papers', 
+            markers_effects.subtype AS 'Subtype'
+    FROM markers_effects
+    JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
+    JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
+    WHERE markers_effects.marker_id IN (
+        SELECT markers_tbl.marker_id 
+        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
+    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
+    """, to_dict)
+    return res.fetchall()
+
+
+def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str]:
+    if len(references) > 1:
+        NotImplementedError('Selection for reference from segments with more than one is not yet implemented')
+    (name, sequence), = references.items()
+    return name, sequence
+
+
+def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutations: List[Mutation]):
     found_mutations = []
-    pattern = re.compile(r'^.+:.(?P<pos>\d+)(?P<alt>.)$')
     for mutation in mutations:
-        match = pattern.match(mutation)
-        pos = adjust_position(ref_aa, int(match.group('pos')))
-        if match.group('alt') in sample_aa[pos]:
+        pos = adjust_position(ref_aa, mutation.pos)
+        mutation.samples[sample_name] = sample_aa[pos]
+        if mutation.alt in sample_aa[pos]:
+            mutation.found = True
             found_mutations.append(mutation)
     return found_mutations
 
@@ -145,7 +199,7 @@ def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
     return alignment[0], alignment[1]
 
 
-def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, str, None]:
+def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
     for line in fasta_file:
@@ -216,7 +270,7 @@ def translate_codon(codon: List[str]) -> str:
     return ''.join(sorted(set(aas)))
 
 
-def find_next_nucl(seq: List[str], start: int):
+def find_next_nucl(seq: List[str], start: int) -> Optional[int]:
     '''Returns the position of the next non deleted nucleotide'''
     for i in range(start + 3, len(seq)):
         if not seq[i] == '-':
@@ -224,7 +278,7 @@ def find_next_nucl(seq: List[str], start: int):
     return None
 
 
-def get_coding_sequences(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]):
+def get_cds(ref_seq: str, sample_seq: str, cds: List[Tuple[int, int]]) -> Tuple[str, str]:
     '''Cut and assemble the nucleotide sequences based on positions given by the cds'''
     cds.sort(key=lambda x: x[0])
     ref_nucl = ''
