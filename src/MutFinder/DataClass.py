@@ -9,6 +9,8 @@ class Mutation:
         self.ref: str = ref
         self.alt: str = alt
         self.pos: int = pos
+        
+        self.protein: str = self.name.split(':')[0]
         self.found: bool = False
         self.samples: Dict[str, List[str]] = {}
 
