@@ -105,7 +105,7 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
         header, data = OutputFormatter.markers_dict(samples.values())
         wb = OutputFormatter.write_excel_sheet(wb, 'Markers', header, data)
         header, data = OutputFormatter.papers_dict(papers)
-        wb = OutputFormatter.write_excel_sheet(wb, 'Papers', header, data)
+        wb = OutputFormatter.write_excel_sheet(wb, 'Literature', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
 
 
@@ -154,10 +154,10 @@ def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
                             WHERE mutation_name IN ({muts_str})
                             GROUP BY markers_mutations.marker_id)
 
-    SELECT  markers_summary.all_mutations AS 'Marker mutations',
-            markers_tbl.found_mutations AS 'Found mutations',
+    SELECT  markers_summary.all_mutations AS 'Marker',
+            markers_tbl.found_mutations AS 'Mutations in your sample',
             markers_effects.effect_name AS 'Effect', 
-            group_concat(markers_effects.paper_id, '; ') AS 'Papers', 
+            group_concat(markers_effects.paper_id, '; ') AS 'Literature', 
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
