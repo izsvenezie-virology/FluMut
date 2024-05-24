@@ -21,7 +21,7 @@ from MutFinder.DataClass import Mutation, Sample
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
