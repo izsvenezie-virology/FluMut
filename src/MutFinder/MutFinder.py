@@ -3,6 +3,7 @@
 import re
 import sys
 import click
+import operator
 import itertools
 
 from io import TextIOWrapper
@@ -20,7 +21,7 @@ from MutFinder.DataClass import Mutation, Sample
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-__version__ = '0.3.0'
+__version__ = '0.4.1'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
@@ -36,15 +37,16 @@ def update(ctx, param, value):
 @click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Updates the database to latest version and exits')
 @click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
-@click.option('-s', '--strict', is_flag=True, help='Reports only markers where all mutations are found in sample')
+@click.option('-r', '--relaxed', is_flag=True, help='Reports also markers where at least one mutation is found')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
 @click.option('-D', '--db-file', type=str, default=files('MutFinderData').joinpath('mutfinderDB.sqlite'), help='Source database')
-@click.option('-t', '--tabular-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
-@click.option('-m', '--matrix-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
+@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
+@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel report')
 @click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: str, matrix_output: File, excel_output: str,
-         strict: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+def main(name_regex: str, samples_fasta: File, db_file: str, 
+         markers_output: File, mutations_output: File, excel_output: str,
+         relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Search for markers of interest in the SAMPLES-FASTA file.
     '''
@@ -85,27 +87,29 @@ def main(name_regex: str, tabular_output: File, samples_fasta: File, db_file: st
 
     open_connection(db_file)
     for sample in samples.values():
-        sample.markers = match_markers(sample.mutations, strict)
+        sample.markers = match_markers(sample.mutations, relaxed)
     papers = load_papers()
     close_connection()
+    found_mutations = list(itertools.chain.from_iterable(mutations.values()))
+    found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
 
     # Outputs
-    if matrix_output:
-        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
-        OutputFormatter.write_csv(matrix_output, header, data)
+    if mutations_output:
+        header, data = OutputFormatter.mutations_dict(found_mutations)
+        OutputFormatter.write_csv(mutations_output, header, data)
 
-    if tabular_output:
+    if markers_output:
         header, data = OutputFormatter.markers_dict(samples.values())
-        OutputFormatter.write_csv(tabular_output, header, data)
+        OutputFormatter.write_csv(markers_output, header, data)
 
     if excel_output:
         wb = OutputFormatter.get_workbook()
-        header, data = OutputFormatter.mutations_dict(itertools.chain.from_iterable(mutations.values()))
+        header, data = OutputFormatter.mutations_dict(found_mutations)
         wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
         header, data = OutputFormatter.markers_dict(samples.values())
         wb = OutputFormatter.write_excel_sheet(wb, 'Markers', header, data)
         header, data = OutputFormatter.papers_dict(papers)
-        wb = OutputFormatter.write_excel_sheet(wb, 'Papers', header, data)
+        wb = OutputFormatter.write_excel_sheet(wb, 'Literature', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
 
 
@@ -144,7 +148,7 @@ def load_papers() -> List[Dict[str, str]]:
                             FROM papers""", to_dict).fetchall()
 
 
-def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
+def match_markers(muts: List[Mutation], relaxed: bool) -> List[Dict[str, str]]:
     muts_str = ','.join([f"'{mut.name}'" for mut in muts])
     res = execute_query(f"""
     WITH markers_tbl AS (SELECT marker_id,
@@ -154,17 +158,17 @@ def match_markers(muts: List[Mutation], strict: bool) -> List[Dict[str, str]]:
                             WHERE mutation_name IN ({muts_str})
                             GROUP BY markers_mutations.marker_id)
 
-    SELECT  markers_summary.all_mutations AS 'Marker mutations',
-            markers_tbl.found_mutations AS 'Found mutations',
+    SELECT  markers_summary.all_mutations AS 'Marker',
+            markers_tbl.found_mutations AS 'Mutations in your sample',
             markers_effects.effect_name AS 'Effect', 
-            group_concat(markers_effects.paper_id, '; ') AS 'Papers', 
+            group_concat(markers_effects.paper_id, '; ') AS 'Literature', 
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
-        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if strict else '' }
+        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else '' }
     GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """, to_dict)
     return res.fetchall()

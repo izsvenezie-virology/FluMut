@@ -23,7 +23,7 @@ def mutations_dict(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str,
 
 
 def markers_dict(samples: List[Sample]) -> Tuple[List[str], List[Dict[str, str]]]:
-    header = ['Sample', 'Marker mutations', 'Found mutations', 'Effect', 'Subtype', 'Papers']
+    header = ['Sample', 'Marker', 'Mutations in your sample', 'Effect', 'Subtype', 'Literature']
     data = []
     for sample in samples:
         for marker in sample.markers:

@@ -12,12 +12,12 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "-m",
-                "examples/multiple_samples_matrix.tsv",
+                "-M",
+                "examples/multiple_samples_mutations.tsv",
                 "-x",
                 "examples/multiple_samples.xlsm",
-                "-t",
-                "examples/multiple_samples.tsv",
+                "-m",
+                "examples/multiple_samples_markers.tsv",
                 "-n",
                 "(?P<sample>.+)_(?P<segment>.+)",
                 "examples/multiple_samples.fa"
