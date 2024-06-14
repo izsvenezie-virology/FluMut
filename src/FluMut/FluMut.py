@@ -34,21 +34,21 @@ def update(ctx, param, value):
 @click.command()
 @click.help_option('-h', '--help')
 @click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
-@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Updates the database to latest version and exits')
-@click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
-@click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
-@click.option('-r', '--relaxed', is_flag=True, help='Reports also markers where at least one mutation is found')
-@click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
-@click.option('-D', '--db-file', type=str, default=files('FluMutData').joinpath('flumut_db.sqlite'), help='Source database')
-@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
-@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
-@click.option('-x', '--excel-output', type=str, default=None, help='Excel report')
-@click.argument('samples-fasta', type=File('r'))
-def main(name_regex: str, samples_fasta: File, db_file: str, 
+@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Update the database to the latest version and exit.')
+@click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skip sequences with name that does not match the regular expression pattern.')
+@click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skip sequences with segment not present in the database.')
+@click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
+@click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Set regular expression to parse sequence name.')
+@click.option('-D', '--db-file', type=str, default=files('FluMutData').joinpath('flumut_db.sqlite'), help='Set source database.')
+@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
+@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
+@click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
+@click.argument('fasta-file', type=File('r'))
+def main(name_regex: str, fasta_file: File, db_file: str, 
          markers_output: File, mutations_output: File, excel_output: str,
          relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
-    Search for markers of interest in the SAMPLES-FASTA file.
+    Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
 
     # Initialization
@@ -62,7 +62,7 @@ def main(name_regex: str, samples_fasta: File, db_file: str,
     close_connection()
 
     # Per sequence analysis
-    for name, seq in read_fasta(samples_fasta):
+    for name, seq in read_fasta(fasta_file):
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
             continue
