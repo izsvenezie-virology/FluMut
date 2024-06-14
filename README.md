@@ -1,5 +1,5 @@
 # FluMut
-[![Latest Release](https://gitlab.izsvenezie.it/biv/flumut/flumut/-/badges/release.svg)](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
+![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut)
 
 A command line tool to find markers of interest in H5N1 avian influenza viruses.
 
@@ -8,7 +8,7 @@ A command line tool to find markers of interest in H5N1 avian influenza viruses.
 ## Getting started
 
 ### Prerequisites
-FluMut is available for Windows, Linux and iOS.
+FluMut is available for Windows, Linux and macOS.
 Before installing FluMut you must have:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/)
