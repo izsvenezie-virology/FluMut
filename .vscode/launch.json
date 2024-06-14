@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "MutFinder",
+            "name": "FluMut",
             "type": "debugpy",
             "request": "launch",
-            "module": "MutFinder.MutFinder",
+            "module": "FluMut.FluMut",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
