@@ -14,9 +14,9 @@ from collections import defaultdict
 from importlib.resources import files
 from Bio.Align import PairwiseAligner
 
-from MutFinder.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
-from MutFinder import OutputFormatter
-from MutFinder.DataClass import Mutation, Sample
+from FluMut.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
+from FluMut import OutputFormatter
+from FluMut.DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
@@ -28,7 +28,7 @@ __contact__ = 'egiussani@izsvenezie.it'
 def update(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    update_db(files('MutFinderData').joinpath('mutfinderDB.sqlite'))
+    update_db(files('FluMutData').joinpath('flumut_db.sqlite'))
     ctx.exit()
 
 @click.command()
@@ -39,7 +39,7 @@ def update(ctx, param, value):
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skips sequences with name that does not match the pattern')
 @click.option('-r', '--relaxed', is_flag=True, help='Reports also markers where at least one mutation is found')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Regular expression to parse sequence name')
-@click.option('-D', '--db-file', type=str, default=files('MutFinderData').joinpath('mutfinderDB.sqlite'), help='Source database')
+@click.option('-D', '--db-file', type=str, default=files('FluMutData').joinpath('flumut_db.sqlite'), help='Source database')
 @click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='The output file [default: stdout]')
 @click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='Report of sequences found in each mutation')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel report')

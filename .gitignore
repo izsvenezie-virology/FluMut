@@ -1,4 +1,4 @@
-# MutFinder specific
+# FluMut specific
 examples/*[^.fa]
 
 # Byte-compiled / optimized / DLL files

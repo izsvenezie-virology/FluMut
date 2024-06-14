@@ -1,5 +1,5 @@
-# MutFinder
-[![Latest Release](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/badges/release.svg)](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
+# FluMut
+[![Latest Release](https://gitlab.izsvenezie.it/biv/flumut/flumut/-/badges/release.svg)](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
 
 A command line tool to find markers of interest in H5N1 avian influenza viruses.
 
@@ -8,32 +8,32 @@ A command line tool to find markers of interest in H5N1 avian influenza viruses.
 ## Getting started
 
 ### Prerequisites
-Mutfinder is available for Windows, Linux and iOS.
-Before installing MutFinder you must have:
+FluMut is available for Windows, Linux and iOS.
+Before installing FluMut you must have:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/)
 
 ### Installation
-- Download latest release zip from [MutFinder repository](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
+- Download latest release zip from [FluMut repository](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
 - Install using pip:
     ```
-    pip install mutfinder-*.zip
+    pip install flumut-*.zip
     ```
 - Check installation:
     ```
-    mutfinder --help
+    flumut --help
     ```
 
 ## Usage
 ### Basic usage
 ```
-mutfinder -x excel_output.xlsm -m markers_output.tsv -M mutations_output.tsv your_fasta.fa
+flumut -x excel_output.xlsm -m markers_output.tsv -M mutations_output.tsv your_fasta.fa
 ```
 The above command parse `your_fasta.fa` file and produces all possible [outputs](#outputs).
 
 ### Update database
 ```
-mutfinder --update
+flumut --update
 ```
 This command updates to latest version of marker's database from local NAS.
 In the future this command will download the database from a repository.
@@ -42,15 +42,15 @@ In the future this command will download the database from a repository.
 We provide two small datasets to try the program.
 
 ```
-unzip mutfinder.zip
-cd mutfinder/examples
-mutfinder -m markers_output.tsv -M mutations_output.tsv single_sample.fa
-mutfinder -x excel_output.xlsm multiple_samples.fa 
+unzip flumut.zip
+cd flumut/examples
+flumut -m markers_output.tsv -M mutations_output.tsv single_sample.fa
+flumut -x excel_output.xlsm multiple_samples.fa 
 ```
 These commands produces 2 text outputs for single_sample.fa and the Excel output for multiple_samples.fa.
 
 ## Input
-MutFinder takes a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file as input.
+FluMut takes a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file as input.
 Sequences must be nucleotidic and must contains only [IUPAC nucleotide codes](https://www.bioinformatics.org/sms/iupac.html).
 There is no need for sequences to start from ATG.
 Partial sequences can be analyzed.
@@ -59,28 +59,28 @@ The file should contains all segments for each sample.
 If some segments are missing it's still possible to analyze your data,
 but you may loose information on markers with mutations on different segments.
 
-MutFinder is capable to analyze multiple samples at once.
+FluMut is capable to analyze multiple samples at once.
 Samples must contains a unique ID consistent among segments.
 
 If you have your samples or your segments splitted on multiple files you can perform analysis with something like:
 ```
-cat *.fa | mutfinder -x excel_output.xlsm -
+cat *.fa | flumut -x excel_output.xlsm -
 ```
 
 ## Outputs
-MutFinder can produce 3 different outputs:
+FluMut can produce 3 different outputs:
 - [Excel](#excel)
 - [Tabular](#tabular)
 - [Matrix](#matrix)
 
-By default MutFinder reports only markers where all mutations are found.
+By default FluMut reports only markers where all mutations are found.
 You can report all markers where at least one mutation is found using option `-r`/`--relaxed`.
 
 ### Excel
 Options: `-x FILENAME`/`--excel-output FILENAME`
 ```
-mutfinder -x excel_output.xlsm your_fasta.fa
-mutfinder --excel-output excel_output.xlsm your_fasta.fa
+flumut -x excel_output.xlsm your_fasta.fa
+flumut --excel-output excel_output.xlsm your_fasta.fa
 ```
 
 This is the most user-friendly output and contains both [Tabular](#tabular) and [Matrix](#matrix) outputs.
@@ -100,8 +100,8 @@ The output file contains 5 sheets:
 ### Tabular
 Options: `-m FILENAME`/`--markers-output FILENAME`
 ```
-mutfinder -m markers_output.tsv your_fasta.fa
-mutfinder --markers-output markers_output.tsv your_fasta.fa
+flumut -m markers_output.tsv your_fasta.fa
+flumut --markers-output markers_output.tsv your_fasta.fa
 ```
 
 Outputs a tab-separeted file with the following columns:
@@ -115,15 +115,15 @@ Outputs a tab-separeted file with the following columns:
 ### Matrix
 Options: `-M FILENAME`/`--mutations-output FILENAME`
 ```
-mutfinder -M mutations_output.tsv your_fasta.fa
-mutfinder --mutations-output mutations_output.tsv your_fasta.fa
+flumut -M mutations_output.tsv your_fasta.fa
+flumut --mutations-output mutations_output.tsv your_fasta.fa
 ```
 
 Outputs amino acids present for each sample in each position of any mutation found in the analysis.
 The output file is a tab-separated matrix with samples on rows and mutations on columns.
 
 ## FASTA header parsing
-To assign a FASTA sequence to a specific segment MutFinder relies on the FASTA header.
+To assign a FASTA sequence to a specific segment FluMut relies on the FASTA header.
 In the header must be present both a sample ID (consistent among segments of the same sample),
 and the segment name as reported in the database (eg. for avian influenza possible segments are `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`).
 By default the program expects the sample ID first and then the segment name separated by an undrescore and nothing else (eg. `my_sample_PB2`)
