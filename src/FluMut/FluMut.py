@@ -116,8 +116,8 @@ def main(name_regex: str, fasta_file: File, db_file: str,
 def load_mutations() -> Dict[str, List[Mutation]]:
     mutations = defaultdict(list)
     res = execute_query(""" SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
-                            FROM mutations_characteristics
-                            JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
+                            FROM mutation_mappings
+                            JOIN mutations ON mutation_mappings.mutation_name = mutations.name""")
     for mut in res:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
