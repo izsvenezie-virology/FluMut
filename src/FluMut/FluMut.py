@@ -21,6 +21,7 @@ from FluMut.DataClass import Mutation, Sample
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
+DB_FILE = files('FluMutData').joinpath('flumut_db.sqlite')
 __version__ = '0.5.0'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
@@ -28,7 +29,7 @@ __contact__ = 'egiussani@izsvenezie.it'
 def update(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    update_db(files('FluMutData').joinpath('flumut_db.sqlite'))
+    update_db(DB_FILE)
     ctx.exit()
 
 @click.command()
@@ -39,7 +40,7 @@ def update(ctx, param, value):
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skip sequences with segment not present in the database.')
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Set regular expression to parse sequence name.')
-@click.option('-D', '--db-file', type=str, default=files('FluMutData').joinpath('flumut_db.sqlite'), help='Set source database.')
+@click.option('-D', '--db-file', type=str, default=DB_FILE, help='Set source database.')
 @click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
 @click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
