@@ -43,10 +43,11 @@ def update(ctx, param, value):
 @click.option('-D', '--db-file', type=str, default=DB_FILE, help='Set source database.')
 @click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
 @click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
+@click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
 @click.argument('fasta-file', type=File('r'))
 def main(name_regex: str, fasta_file: File, db_file: str, 
-         markers_output: File, mutations_output: File, excel_output: str,
+         markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
          relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
@@ -102,6 +103,10 @@ def main(name_regex: str, fasta_file: File, db_file: str,
     if markers_output:
         header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(markers_output, header, data)
+    
+    if literature_output:
+        header, data = OutputFormatter.papers_dict(papers)
+        OutputFormatter.write_csv(literature_output, header, data)
 
     if excel_output:
         wb = OutputFormatter.get_workbook(excel_output.endswith('.xlsm'))
