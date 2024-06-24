@@ -2,13 +2,12 @@
 
 FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
 
-For the complete documentation please visit [FluMut site](TODO).
+For the complete documentation please visit [FluMut site](https://izsvenezie-virology.github.io/FluMut/).
 
 ## Installation
 
 ### Prerequisites
 FluMut is available for Windows, Linux and macOS.
-
 
 #### Pip
 FluMut is available on [PyPI](https://pypi.org/flumut).
@@ -39,7 +38,7 @@ You can get the output file in an [Excel format](#excel) (user-friendly) running
 ```
 flumut -x excel_output.xlsm your_fasta.fa
 ```
-If you prefer the [text outputs](TODO) (machine-readable format) run:
+If you prefer the [text outputs](#text-outputs) (machine-readable format) run:
 ```
 flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
 ```
@@ -64,7 +63,7 @@ An example of input file  can be downloaded [here](TODO).
 ## Outputs
 FluMut can produce an Excel output or text outputs:
 - [Excel](#excel)
-- [Text outputs](TODO)
+- [Text outputs](#text-outputs)
 
 By default FluMut reports only markers where all mutations are found.
 You can report all markers where at least one mutation is found using option `-r`/`--relaxed`.
@@ -72,7 +71,7 @@ You can report all markers where at least one mutation is found using option `-r
 ### Excel
 This is the most user-friendly and complete output. 
 You can obtain this output using the `-x`/`--excel-output` option.
-Find out more [here](TODO).
+Find out more [here](https://izsvenezie-virology.github.io/FluMut/docs/output#excel-output).
 
 >**_IMPORTANT:_** To enable the navigation feature the exstension of the Excel file must be `.xlsm`.
 >If you don't care about navigation, you can use `.xlsx` exstension.
@@ -82,9 +81,9 @@ Find out more [here](TODO).
 You can obtain 3 different text outputs:
 | Option | Output | Desctription |
 | -- | -- | -- |
-| `-m`/`--markers-output` | [Markers output](TODO) | List of detected markers |
-| `-M`/`--mutations-output` | [Mutations output](TODO) | List of amino acids present in the positions of mutations of interest for each sample |
-| `-l`/`--literature-output` | [Literature output](TODO) | List of all papers present in the database |
+| `-m`/`--markers-output` | [Markers output](https://izsvenezie-virology.github.io/FluMut/docs/output#markers-output) | List of detected markers |
+| `-M`/`--mutations-output` | [Mutations output](https://izsvenezie-virology.github.io/FluMut/docs/output#mutations-output) | List of amino acids present in the positions of mutations of interest for each sample |
+| `-l`/`--literature-output` | [Literature output](https://izsvenezie-virology.github.io/FluMut/docs/output#literature-output) | List of all papers present in the database |
 
 ## Cite FluMut
 We are currently writing the paper. 
