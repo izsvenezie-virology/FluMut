@@ -263,7 +263,8 @@ def get_codon(seq: List[str], start: int, is_first: bool) -> List[str]:
         return codon
     codon = [n for n in codon if n != '-']
     while len(codon) < 3:
-        if not (next_nucl := find_next_nucl(seq, start)):
+        next_nucl = find_next_nucl(seq, start)
+        if not next_nucl:
             break
         codon.append(seq[next_nucl])
         seq[next_nucl] = '-'
@@ -308,7 +309,8 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     dashes = 0
     adj_pos = pos
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
-        adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
+        dashes = ref_seq.count('-', 0, adj_pos + 1)
+        adj_pos = pos + dashes
     return adj_pos
 
 
