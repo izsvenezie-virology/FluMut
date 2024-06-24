@@ -11,7 +11,7 @@ from click import File
 from typing import Dict, Generator, List, Optional, Tuple
 
 from collections import defaultdict
-from importlib.resources import files
+from importlib_resources import files
 from Bio.Align import PairwiseAligner
 
 from FluMut.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
@@ -22,7 +22,7 @@ PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
 DB_FILE = files('FluMutData').joinpath('flumut_db.sqlite')
-__version__ = '0.5.0'
+__version__ = '0.5.2'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 

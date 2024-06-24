@@ -1,5 +1,5 @@
 import csv
-from importlib.resources import files
+from importlib_resources import files
 from typing import Dict, List, Tuple
 from click.types import File
 from openpyxl import Workbook, load_workbook
