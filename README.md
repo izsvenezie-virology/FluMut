@@ -1,148 +1,102 @@
 # FluMut
-![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut)
 
-A command line tool to find markers of interest in H5N1 avian influenza viruses.
+FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
 
+For the complete documentation please visit [FluMut site](TODO).
 
-
-## Getting started
+## Installation
 
 ### Prerequisites
 FluMut is available for Windows, Linux and macOS.
-Before installing FluMut you must have:
-- [Python](https://www.python.org/downloads/)
-- [Pip](https://pypi.org/project/pip/)
 
-### Installation
-- Download latest release zip from [FluMut repository](https://gitlab.izsvenezie.it/biv/flumut/mutfinder/-/releases)
-- Install using pip:
-    ```
-    pip install flumut-*.zip
-    ```
-- Check installation:
-    ```
-    flumut --help
-    ```
+
+#### Pip
+FluMut is available on [PyPI](https://pypi.org/flumut).
+Before installing FluMut via Pip you need:
+- [Python](https://www.python.org/downloads/)
+- [Pip](https://pypi.org/project/pip/) (often packed with Python)
+
+Then, you can install FluMut with this command:
+```
+pip install flumut
+```
+
+#### Bioconda
+FluMut is also available on [Bioconda](https://bioconda.github.io/flumut).
+You can install using Conda or Mamba.
+- [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
+```
+mamba install -c bioconda flumut
+```
+- [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
+```
+conda install -c bioconda flumut
+```
 
 ## Usage
 ### Basic usage
+You can get the output file in an [Excel format](#excel) (user-friendly) running:
 ```
-flumut -x excel_output.xlsm -m markers_output.tsv -M mutations_output.tsv your_fasta.fa
+flumut -x excel_output.xlsm your_fasta.fa
 ```
-The above command parse `your_fasta.fa` file and produces all possible [outputs](#outputs).
+If you prefer the [text outputs](TODO) (machine-readable format) run:
+```
+flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
+```
 
 ### Update database
+You should always use the latest version of our database and you can do it just by running this command:
 ```
 flumut --update
 ```
-This command updates to latest version of marker's database from local NAS.
-In the future this command will download the database from a repository.
-
-### Try examples
-We provide two small datasets to try the program.
-
-```
-unzip flumut.zip
-cd flumut/examples
-flumut -m markers_output.tsv -M mutations_output.tsv single_sample.fa
-flumut -x excel_output.xlsm multiple_samples.fa 
-```
-These commands produces 2 text outputs for single_sample.fa and the Excel output for multiple_samples.fa.
 
 ## Input
-FluMut takes a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file as input.
-Sequences must be nucleotidic and must contains only [IUPAC nucleotide codes](https://www.bioinformatics.org/sms/iupac.html).
-There is no need for sequences to start from ATG.
-Partial sequences can be analyzed.
+FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
+It can handle partial and complete genome sequences of multiple samples.
+You must provide a single file containing all the nucleotide sequences in FASTA format.
+Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
 
-The file should contains all segments for each sample.
-If some segments are missing it's still possible to analyze your data,
-but you may loose information on markers with mutations on different segments.
+FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
+For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
 
-FluMut is capable to analyze multiple samples at once.
-Samples must contains a unique ID consistent among segments.
-
-If you have your samples or your segments splitted on multiple files you can perform analysis with something like:
-```
-cat *.fa | flumut -x excel_output.xlsm -
-```
+An example of input file  can be downloaded [here](TODO).
 
 ## Outputs
-FluMut can produce 3 different outputs:
+FluMut can produce an Excel output or text outputs:
 - [Excel](#excel)
-- [Tabular](#tabular)
-- [Matrix](#matrix)
+- [Text outputs](TODO)
 
 By default FluMut reports only markers where all mutations are found.
 You can report all markers where at least one mutation is found using option `-r`/`--relaxed`.
 
 ### Excel
-Options: `-x FILENAME`/`--excel-output FILENAME`
-```
-flumut -x excel_output.xlsm your_fasta.fa
-flumut --excel-output excel_output.xlsm your_fasta.fa
-```
+This is the most user-friendly and complete output. 
+You can obtain this output using the `-x`/`--excel-output` option.
+Find out more [here](TODO).
 
-This is the most user-friendly output and contains both [Tabular](#tabular) and [Matrix](#matrix) outputs.
-The output file contains 5 sheets:
-- Markers per sample: report of markers for each sample
-- Samples per marker: report sample count for each marker
-- Mutations: contains [Matrix](#matrix) output
-- Markers: contains [Tabular](#tabular) output
-- Papers: contains the list of papers from the database
+>**_IMPORTANT:_** To enable the navigation feature the exstension of the Excel file must be `.xlsm`.
+>If you don't care about navigation, you can use `.xlsx` exstension.
+>Other exstensions lead to unreadable files.
 
-> **_NOTE:_** in "Markers per sample" and "Samples per marker" by double clicking a cell in "Markers mutations" or "Found mutations" columns you will be redirected to "Mutations" sheet.
-> Columns are filtered to display only mutations in the selected marker.
->
-> By double clicking a cell in "Papers" column you will be redirected to "Papers" sheet. 
-> Rows are filtered to display only papers in selected effect.
+### Text outputs
+You can obtain 3 different text outputs:
+| Option | Output | Desctription |
+| -- | -- | -- |
+| `-m`/`--markers-output` | [Markers output](TODO) | List of detected markers |
+| `-M`/`--mutations-output` | [Mutations output](TODO) | List of amino acids present in the positions of mutations of interest for each sample |
+| `-l`/`--literature-output` | [Literature output](TODO) | List of all papers present in the database |
 
-### Tabular
-Options: `-m FILENAME`/`--markers-output FILENAME`
-```
-flumut -m markers_output.tsv your_fasta.fa
-flumut --markers-output markers_output.tsv your_fasta.fa
-```
+## Cite FluMut
+We are currently writing the paper. 
+Until the publication please cite the GitHub repository:
 
-Outputs a tab-separeted file with the following columns:
-- Sample: the sample ID
-- Marker mutations: list of mutations making up the marker
-- Found mutations: list of mutations making up the marker actually found in the sample
-- Effect: reported effect for the specific marker
-- Subtype: subtype on which the effect was studied
-- Papers: list of papers IDs (separated by ";") that reports the effect in the subtype for the marker
+[https://github.com/izsvenezie-virology/FluMut](https://github.com/izsvenezie-virology/FluMut)
 
-### Matrix
-Options: `-M FILENAME`/`--mutations-output FILENAME`
-```
-flumut -M mutations_output.tsv your_fasta.fa
-flumut --mutations-output mutations_output.tsv your_fasta.fa
-```
+## License
+FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 
-Outputs amino acids present for each sample in each position of any mutation found in the analysis.
-The output file is a tab-separated matrix with samples on rows and mutations on columns.
+# Fundings
 
-## FASTA header parsing
-To assign a FASTA sequence to a specific segment FluMut relies on the FASTA header.
-In the header must be present both a sample ID (consistent among segments of the same sample),
-and the segment name as reported in the database (eg. for avian influenza possible segments are `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`).
-By default the program expects the sample ID first and then the segment name separated by an undrescore and nothing else (eg. `my_sample_PB2`)
+This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
 
-If your sequences have a different pattern in your name you can specify it with the option `-n`/`--name-regex`.
-It works with 2 capture groups, the first one for the sample and the second one for the segment.
-Named groups (respectively `sample` and `segment`) can be used to invert groups order.
-Here you can find some examples for the regular expression:
-| FASTA header                  | regular expression                |
-| ----------------------------- | --------------------------------- |
-| my_sample_PB2                 | `(.+)_(.+)`                       |
-| my_sample\|PB2                | `(.+)\\|(.+)`                     |
-| my_sample-PB2                 | `(.+)-(.+)`                       |
-| my_sample-PB2_something_else  | `(.+)-(.+?)_`                     |
-| PB2_my_sample                 | `(?P<segment>.+?)_(?P<sample>.+)` |
-
-
-- Option `--skip-unmatch-names`: skip sequence and continue analysis when a FASTA header does not match the regular expression provided. By default exit with error.
-
-- Option `--skip-unknown-segments`: skip sequence and continue analysis when the segment found in FASTA header is not present in the database. By default exits with error. 
-
-> **_NOTE:_** to find the regular expression that better fits your data you can try it on [Regex101](https://regex101.com/) selecting `Python` flavor.
+![](docs/images/Logo-Flu-Switch.png) ![](docs/images/Logo-Inf-act.jpg) ![](docs/images/Logo-eu.png)

@@ -1,0 +1,21 @@
+title: FluMut documentation
+description: Documentation for FluMut and FluMut-GUI
+theme: just-the-docs
+
+url: https://github.com/EdoardoGiussani/ghpages_test/FluMut
+
+aux_links:
+  FluMut Repository: https://github.com/izsvenezie-virology/FluMut
+  FluMutDB Repository: https://github.com/izsvenezie-virology/FluMutDB
+
+callouts:
+  note:
+    title: Note
+    color: blue
+  warning:
+    title: Warning
+    color: red
+  important:
+    title: Important
+    color: blue
+  

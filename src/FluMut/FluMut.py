@@ -11,7 +11,7 @@ from click import File
 from typing import Dict, Generator, List, Optional, Tuple
 
 from collections import defaultdict
-from importlib.resources import files
+from importlib_resources import files
 from Bio.Align import PairwiseAligner
 
 from FluMut.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
@@ -21,14 +21,15 @@ from FluMut.DataClass import Mutation, Sample
 PRINT_ALIGNMENT = False
 SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
 SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-__version__ = '0.5.0'
+DB_FILE = files('FluMutData').joinpath('flumut_db.sqlite')
+__version__ = '0.5.2'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
 def update(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    update_db(files('FluMutData').joinpath('flumut_db.sqlite'))
+    update_db(DB_FILE)
     ctx.exit()
 
 @click.command()
@@ -39,13 +40,14 @@ def update(ctx, param, value):
 @click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skip sequences with segment not present in the database.')
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
 @click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Set regular expression to parse sequence name.')
-@click.option('-D', '--db-file', type=str, default=files('FluMutData').joinpath('flumut_db.sqlite'), help='Set source database.')
+@click.option('-D', '--db-file', type=str, default=DB_FILE, help='Set source database.')
 @click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
 @click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
+@click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
 @click.argument('fasta-file', type=File('r'))
 def main(name_regex: str, fasta_file: File, db_file: str, 
-         markers_output: File, mutations_output: File, excel_output: str,
+         markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
          relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
@@ -101,9 +103,13 @@ def main(name_regex: str, fasta_file: File, db_file: str,
     if markers_output:
         header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(markers_output, header, data)
+    
+    if literature_output:
+        header, data = OutputFormatter.papers_dict(papers)
+        OutputFormatter.write_csv(literature_output, header, data)
 
     if excel_output:
-        wb = OutputFormatter.get_workbook()
+        wb = OutputFormatter.get_workbook(excel_output.endswith('.xlsm'))
         header, data = OutputFormatter.mutations_dict(found_mutations)
         wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
         header, data = OutputFormatter.markers_dict(samples.values())
@@ -116,8 +122,8 @@ def main(name_regex: str, fasta_file: File, db_file: str,
 def load_mutations() -> Dict[str, List[Mutation]]:
     mutations = defaultdict(list)
     res = execute_query(""" SELECT reference_name, protein_name, name, type, ref_seq, alt_seq, position
-                            FROM mutations_characteristics
-                            JOIN mutations ON mutations_characteristics.mutation_name = mutations.name""")
+                            FROM mutation_mappings
+                            JOIN mutations ON mutation_mappings.mutation_name = mutations.name""")
     for mut in res:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
@@ -257,7 +263,8 @@ def get_codon(seq: List[str], start: int, is_first: bool) -> List[str]:
         return codon
     codon = [n for n in codon if n != '-']
     while len(codon) < 3:
-        if not (next_nucl := find_next_nucl(seq, start)):
+        next_nucl = find_next_nucl(seq, start)
+        if not next_nucl:
             break
         codon.append(seq[next_nucl])
         seq[next_nucl] = '-'
@@ -302,7 +309,8 @@ def adjust_position(ref_seq: str, pos: int) -> int:
     dashes = 0
     adj_pos = pos
     while ref_seq.count('-', 0, adj_pos + 1) != dashes:
-        adj_pos = pos + (dashes := ref_seq.count('-', 0, adj_pos + 1))
+        dashes = ref_seq.count('-', 0, adj_pos + 1)
+        adj_pos = pos + dashes
     return adj_pos
 
 
