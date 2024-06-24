@@ -2,7 +2,7 @@
 
 FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
 
-For the complete documentation please visit [FluMut site](TODO)
+For the complete documentation please visit [FluMut site](TODO).
 
 ## Installation
 
@@ -11,7 +11,7 @@ FluMut is available for Windows, Linux and macOS.
 
 
 #### Pip
-FluMut is available on [PyPI](https://pypi.org/flumutTODO).
+FluMut is available on [PyPI](https://pypi.org/flumut).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)
@@ -22,7 +22,7 @@ pip install flumut
 ```
 
 #### Bioconda
-FluMut is also available on [Bioconda](https://bioconda.github.io/TODO).
+FluMut is also available on [Bioconda](https://bioconda.github.io/flumut).
 You can install using Conda or Mamba.
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
 ```
