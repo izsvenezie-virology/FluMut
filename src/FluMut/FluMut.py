@@ -104,7 +104,7 @@ def main(name_regex: str, fasta_file: File, db_file: str,
         OutputFormatter.write_csv(markers_output, header, data)
 
     if excel_output:
-        wb = OutputFormatter.get_workbook()
+        wb = OutputFormatter.get_workbook(excel_output.endswith('.xlsm'))
         header, data = OutputFormatter.mutations_dict(found_mutations)
         wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
         header, data = OutputFormatter.markers_dict(samples.values())

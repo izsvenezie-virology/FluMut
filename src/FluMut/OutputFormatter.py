@@ -43,8 +43,8 @@ def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) 
     writer.writerows(data)    
 
 
-def get_workbook() -> Workbook:
-    wb = load_workbook(files('FluMutData').joinpath('flumut_output.xlsm'), keep_vba=True)
+def get_workbook(vba: bool) -> Workbook:
+    wb = load_workbook(files('FluMutData').joinpath('flumut_output.xlsm'), keep_vba=vba)
     wb['Markers per sample']._pivots[0].cache.refreshOnLoad = True
     return wb
 
