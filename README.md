@@ -10,7 +10,7 @@ For the complete documentation please visit [FluMut site](https://izsvenezie-vir
 FluMut is available for Windows, Linux and macOS.
 
 #### Pip
-FluMut is available on [PyPI](https://pypi.org/flumut).
+FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)

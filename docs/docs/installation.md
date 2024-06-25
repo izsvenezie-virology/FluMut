@@ -9,7 +9,7 @@ permalink: docs/installation
 FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation
 
 ## Pip
-FluMut is available on [PyPI](https://pypi.org/flumut).
+FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)
