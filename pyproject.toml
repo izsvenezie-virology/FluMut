@@ -27,7 +27,7 @@ file = "LICENSE"
 content-type = "text-markdown"
 
 [project.urls]
-Homepage = "https://github.com/izsvenezie-virology/FluMut"
+Home-page = "https://github.com/izsvenezie-virology/FluMut"
 
 [project.scripts]
 flumut = "flumut.flumut:main"
