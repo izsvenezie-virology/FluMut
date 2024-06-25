@@ -8,7 +8,7 @@
             "name": "FluMut",
             "type": "debugpy",
             "request": "launch",
-            "module": "FluMut.FluMut",
+            "module": "flumut.flumut",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -23,6 +23,17 @@
                 "-n",
                 "(?P<sample>.+)_(?P<segment>.+)",
                 "examples/multiple_samples.fa"
+            ]
+        },
+        {
+            "name": "FluMutUpdate",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "flumut.flumut",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--update"
             ]
         }
     ]

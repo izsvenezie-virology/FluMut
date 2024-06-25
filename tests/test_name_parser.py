@@ -1,5 +1,5 @@
 import unittest
-import FluMut.FluMut as fm
+import flumut.flumut as fm
 import re
 
 

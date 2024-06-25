@@ -9,7 +9,7 @@ permalink: docs/installation
 FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation
 
 ## Pip
-FluMut is available on [PyPI](https://pypi.org/flumutTODO).
+FluMut is available on [PyPI](https://pypi.org/flumut).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)
@@ -23,7 +23,7 @@ pip install flumut
 When installing via Pip it's strongly recommended to install it in a [virtual environment](https://docs.python.org/3/library/venv.html).
 
 ## Bioconda
-FluMut is also available on [Bioconda](https://bioconda.github.io/TODO).
+FluMut is also available on [Bioconda](https://bioconda.github.io/recipes/flumut/README.html).
 You can install using Conda or Mamba.
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
 ```
