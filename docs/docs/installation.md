@@ -23,7 +23,7 @@ pip install flumut
 When installing via Pip it's strongly recommended to install it in a [virtual environment](https://docs.python.org/3/library/venv.html).
 
 ## Bioconda
-FluMut is also available on [Bioconda](https://bioconda.github.io/TODO).
+FluMut is also available on [Bioconda](https://bioconda.github.io/recipes/flumut/README.html).
 You can install using Conda or Mamba.
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
 ```

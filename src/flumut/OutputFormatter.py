@@ -6,7 +6,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils.cell import get_column_letter
 
-from FluMut.DataClass import Mutation, Sample
+from flumut.DataClass import Mutation, Sample
 
 
 def mutations_dict(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
@@ -44,7 +44,7 @@ def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) 
 
 
 def get_workbook(vba: bool) -> Workbook:
-    wb = load_workbook(files('FluMutData').joinpath('flumut_output.xlsm'), keep_vba=vba)
+    wb = load_workbook(files('flumutdata').joinpath('flumut_output.xlsm'), keep_vba=vba)
     wb['Markers per sample']._pivots[0].cache.refreshOnLoad = True
     return wb
 

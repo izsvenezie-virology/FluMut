@@ -58,7 +58,7 @@ Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iup
 FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
 For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
 
-An example of input file  can be downloaded [here](TODO).
+An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
 
 ## Outputs
 FluMut can produce an Excel output or text outputs:
@@ -99,3 +99,6 @@ FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
 
 ![](docs/images/Logo-Flu-Switch.png) ![](docs/images/Logo-Inf-act.jpg) ![](docs/images/Logo-eu.png)
+
+>Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA). 
+>Neither the European Union nor the granting authority can be held responsible for them

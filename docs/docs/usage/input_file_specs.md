@@ -9,7 +9,7 @@ permalink: docs/usage/input-file
 # Input File
 FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
 It can handle partial and complete genome sequences of multiple samples.
-You must provide a single file containing all the nucleotide sequences in FASTA format (an example can be downloaded [here](TODO)).
+You must provide a single file containing all the nucleotide sequences in FASTA format (an example can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa)).
 Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
 FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
 For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
