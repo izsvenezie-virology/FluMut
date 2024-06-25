@@ -1,4 +1,4 @@
-name: Create release
+name: Create new FluMut release
 
 on: 
   push:
