@@ -14,6 +14,7 @@ from Bio.Align import PairwiseAligner
 from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
+from flumut.Exceptions import UnmatchNameException, UnknownSegmentExeption, UnknownNucleotideExeption
 
 PRINT_ALIGNMENT = False
 
@@ -40,9 +41,12 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
         if sample is None or segment is None:
             continue
         if segment not in segments:
-            print(f'Unknown segment {segment} found in {name}', file=sys.stderr)
-            if skip_unknown_segments: continue
-            sys.exit('To force execution use "--skip-unknown-segments" option.')
+            ex = UnknownSegmentExeption(name, pattern.pattern, segment)
+            if not skip_unknown_segments:
+                raise ex
+            print(ex.message, file=sys.stderr)
+            continue
+
 
         if sample not in samples:
             samples[sample] = Sample(sample)
@@ -202,9 +206,11 @@ def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
         sample = match.groupdict().get('sample', match.group(1))
         seg = match.groupdict().get('segment', match.group(2))
     except (IndexError, AttributeError):
-        print(f'Failed to parse "{name}" with pattern "{pattern.pattern}".', file=sys.stderr)
-        if force: return None, None
-        sys.exit('To force execution and skip this sequence use "--skip-unmatch-names" option.')
+        ex = UnmatchNameException(name, pattern.pattern)
+        if not force:
+            raise ex
+        print(ex.message, file=sys.stderr)
+        return None, None
     else:
         return sample, seg
 
@@ -246,7 +252,10 @@ def translate_codon(codon: List[str]) -> str:
     '''Translate a codon into a set of AAs, containing all possible combinations in case of degenerations'''
     if 'N' in codon:
         return '?'
-    undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
+    try:
+        undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
+    except KeyError:
+        raise UnknownNucleotideExeption(''.join(codon))
     codons = list(itertools.product(*undegenerated_codon))
     aas = [translation_dict.get(''.join(c), '?') for c in codons]
     return ''.join(sorted(set(aas)))
