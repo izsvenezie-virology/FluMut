@@ -8,7 +8,7 @@
             "name": "FluMut",
             "type": "debugpy",
             "request": "launch",
-            "module": "flumut.flumut",
+            "module": "flumut.cli",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -29,7 +29,7 @@
             "name": "FluMutUpdate",
             "type": "debugpy",
             "request": "launch",
-            "module": "flumut.flumut",
+            "module": "flumut.cli",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [

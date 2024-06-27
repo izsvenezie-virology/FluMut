@@ -10,7 +10,6 @@ FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flum
 
 ## Pip
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
-This installation is available for all OS.
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)
@@ -25,7 +24,6 @@ When installing via Pip it's strongly recommended to use a [virtual environment]
 
 ## Bioconda
 FluMut is also available on [Bioconda](https://bioconda.github.io/recipes/flumut/README.html).
-This installation is available only on Linux and MacOS.
 You can install using Conda or Mamba.
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
 ```
@@ -35,9 +33,6 @@ mamba install -c bioconda flumut
 ```
 conda install -c bioconda flumut
 ```
-
-{: .warning}
-This installation method is not available on Windows.
 
 # FluMut-GUI
 

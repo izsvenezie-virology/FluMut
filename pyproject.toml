@@ -8,6 +8,7 @@ description = "A tool to search for molecular markers with potential impact on t
 requires-python = ">=3.7"
 dependencies = [
     "click >=8.0.0",
+    "flumutdb >=5.1",
     "biopython >=1.81",
     "openpyxl >= 3.1.2",
     "importlib-resources >= 1.3",
@@ -30,7 +31,7 @@ content-type = "text-markdown"
 Home-page = "https://github.com/izsvenezie-virology/FluMut"
 
 [project.scripts]
-flumut = "flumut.flumut:main"
+flumut = "flumut.cli:cli"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -44,4 +45,4 @@ namespaces = true
 flumutdata = ["*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "flumut.flumut.__version__"}
+version = {attr = "flumut.__version__"}

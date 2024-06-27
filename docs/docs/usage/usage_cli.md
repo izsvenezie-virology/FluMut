@@ -32,6 +32,7 @@ flumut --update
 # Options
 
 - `-v`/`--version`: print FluMut version.
+- `-V`/`--all-versions`: print FluMut and database version.
 - `--update`: update the database to the latest version.
 - `--skip-unmatch-names`: when a FASTA header does not match the pattern of the regular expression FluMut skips this sequence and continues the analysis. By default, FluMut exits with an error.
 - `--skip-unknown-segments`: when the segment name is not present in the database (eg. `>yoursample_P3`) FluMut skips the sequence and continues the analysis. By default, FluMut exits with an error.
