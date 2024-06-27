@@ -2,52 +2,23 @@
 
 import re
 import sys
-import click
 import operator
 import itertools
 
 from io import TextIOWrapper
-from click import File
 from typing import Dict, Generator, List, Optional, Tuple
 
 from collections import defaultdict
-from importlib_resources import files
 from Bio.Align import PairwiseAligner
 
-from flumut.DbReader import close_connection, execute_query, open_connection, to_dict, update_db
+from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
 
 PRINT_ALIGNMENT = False
-SKIP_UNMATCH_NAMES_OPT = '--skip-unmatch-names'
-SKIP_UNKNOWN_SEGMENTS_OPT = '--skip-unknown-segments'
-DB_FILE = files('flumutdata').joinpath('flumut_db.sqlite')
-__version__ = '0.5.3'
-__author__ = 'Edoardo Giussani'
-__contact__ = 'egiussani@izsvenezie.it'
 
-def update(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    update_db(DB_FILE)
-    ctx.exit()
-
-@click.command()
-@click.help_option('-h', '--help')
-@click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
-@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Update the database to the latest version and exit.')
-@click.option(SKIP_UNMATCH_NAMES_OPT, is_flag=True, default=False, help='Skip sequences with name that does not match the regular expression pattern.')
-@click.option(SKIP_UNKNOWN_SEGMENTS_OPT, is_flag=True, default=False, help='Skip sequences with segment not present in the database.')
-@click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
-@click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Set regular expression to parse sequence name.')
-@click.option('-D', '--db-file', type=str, default=DB_FILE, help='Set source database.')
-@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
-@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
-@click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
-@click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
-@click.argument('fasta-file', type=File('r'))
-def main(name_regex: str, fasta_file: File, db_file: str, 
-         markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
+def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str, 
+         markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
          relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
@@ -71,7 +42,7 @@ def main(name_regex: str, fasta_file: File, db_file: str,
         if segment not in segments:
             print(f'Unknown segment {segment} found in {name}', file=sys.stderr)
             if skip_unknown_segments: continue
-            sys.exit(f'To force execution use {SKIP_UNKNOWN_SEGMENTS_OPT} option.')
+            sys.exit('To force execution use "--skip-unknown-segments" option.')
 
         if sample not in samples:
             samples[sample] = Sample(sample)
@@ -233,7 +204,7 @@ def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
     except (IndexError, AttributeError):
         print(f'Failed to parse "{name}" with pattern "{pattern.pattern}".', file=sys.stderr)
         if force: return None, None
-        sys.exit(f'To force execution and skip this sequence use {SKIP_UNMATCH_NAMES_OPT} option.')
+        sys.exit('To force execution and skip this sequence use "--skip-unmatch-names" option.')
     else:
         return sample, seg
 
@@ -333,7 +304,3 @@ degeneration_dict = {
     'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['C', 'G', 'T'], 'D': ['A', 'G', 'T'],
     'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
 }
-
-
-if __name__ == '__main__':
-    main()
