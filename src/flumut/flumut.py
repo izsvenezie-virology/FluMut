@@ -29,7 +29,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
 
-    open_connection(db_file)
+    open_connection()
     segments = load_segments()
     mutations = load_mutations()
     annotations = load_annotations()
@@ -62,7 +62,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
             samples[sample].mutations += find_mutations(
                 ref_aa, sample_aa, sample, mutations[protein])
 
-    open_connection(db_file)
+    open_connection()
     for sample in samples.values():
         sample.markers = match_markers(sample.mutations, relaxed)
     papers = load_papers()
