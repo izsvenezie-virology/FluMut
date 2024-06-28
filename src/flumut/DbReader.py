@@ -1,19 +1,25 @@
 import sqlite3
-import urllib.request
+from importlib_resources import files
 from typing import Any, Callable, Dict
 
-
+_db_file: str = files('flumutdb').joinpath('flumut_db.sqlite')
 _connection: sqlite3.Connection
 _cursor: sqlite3.Cursor
 
-def update_db(db_path: str) -> None:
-    url = 'https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/FluMutDB.sqlite3'
-    _, _ = urllib.request.urlretrieve(url, db_path)
+def set_db_file(db_path: str) -> None:
+    global _db_file
+    _db_file = db_path
 
-def open_connection(db_path: str) -> None:
+def get_db_version():
+    open_connection()
+    major, minor, date = _cursor.execute('SELECT * FROM db_version').fetchone()
+    close_connection()
+    return major, minor, date
+
+def open_connection() -> None:
     global _connection
     global _cursor
-    _connection = sqlite3.connect(db_path)
+    _connection = sqlite3.connect(_db_file)
     _cursor = _connection.cursor()
 
 def close_connection() -> None:

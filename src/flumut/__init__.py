@@ -13,7 +13,7 @@ def versions() -> Dict[str, str]:
     versions : `Dict[str, str]`
             Versions for FluMut and FluMutDB packages.
     """
-    from flumutdb import get_db_version
+    from flumut.DbReader import get_db_version
     major, minor, date = get_db_version()
     return {
         'FluMut': __version__,
@@ -59,9 +59,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
 
     if name_regex is None:
         name_regex = r'(?P<sample>.+)_(?P<segment>.+)'
-    if db_file is None:
-        from flumutdb import get_db_file
-        db_file = get_db_file()
+    if db_file is not None:
+        from flumut.DbReader import set_db_file
+        set_db_file(db_file)
 
     import flumut.flumut
     flumut.flumut.analyze(name_regex=name_regex, 
