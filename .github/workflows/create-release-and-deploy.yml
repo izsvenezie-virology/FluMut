@@ -1,0 +1,116 @@
+name: Create release and deploy FluMut
+run-name: ${{ github.actor }} is releasing ${{ github.ref }}
+
+on: 
+  push:
+    tags:
+      - "v.*"
+
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    name: Build FluMut
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      - name: Build FluMut
+        run: python -m build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+
+
+  create-examples:
+    name: Create FluMut examples files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Install FluMut
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+      - name: Run FluMut
+        run: | 
+          cp examples/multiple_samples.fa examples/fasta_input_example.fa
+          flumut --update
+          flumut -x examples/excel_output_example.xlsm examples/multiple_samples.fa
+      - name: Upload examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: examples
+          path: |
+            examples/excel_output_example.xlsm
+            examples/fasta_input_example.fa
+          if-no-files-found: error
+
+
+  release:
+    name: Create release on GitHub
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [build, create-examples]
+
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Download examples
+        uses: actions/download-artifact@v4
+        with:
+          name: examples
+          path: examples
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            examples/excel_output_example.xlsm
+            examples/fasta_input_example.fa
+            dist/*
+
+
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: pypi-release
+    needs: release
+
+    steps:
+    - name: Download dist artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
