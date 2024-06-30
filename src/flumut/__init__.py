@@ -1,4 +1,4 @@
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
@@ -27,6 +27,12 @@ def update() -> None:
     import flumut.Updater 
     flumut.Updater.update()
 
+
+def update_db_file() -> None:
+    """Updates FluMutDB database without updating 
+    """
+    import flumut.Updater
+    flumut.Updater.update_db_file()
 
 def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str, 
          markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,

@@ -36,7 +36,7 @@ conda install -c bioconda flumut
 
 # FluMut-GUI
 
-Download the compiled version for your OS and just double click on it:
-- [Windows](TODO)
-- [MacOS](TODO)
-- [Linux](TODO)
+Download the compiled version for your OS, double click on it and follow instructions to install FluMutGUI:
+- [Windows](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUIInstaller.exe)
+- MacOS (available soon)
+- Linux (available soon)
