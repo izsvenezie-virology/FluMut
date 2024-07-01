@@ -1,5 +1,13 @@
 # FluMut
 
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut?label=FluMut)](https://github.com/izsvenezie-virology/FluMut/releases/latest/)
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutDB?label=FluMutDB)](https://github.com/izsvenezie-virology/FluMutDB/releases/latest/)
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutGUI?label=FluMutGUI)](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/)
+
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/flumut/README.html)
+[![install with pip](https://img.shields.io/badge/install%20with-pip-brightgreen.svg)](https://pypi.org/project/flumut/)
+
+
 FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
 
 For the complete documentation please visit [FluMut site](https://izsvenezie-virology.github.io/FluMut/).
@@ -9,7 +17,7 @@ For the complete documentation please visit [FluMut site](https://izsvenezie-vir
 ### Prerequisites
 FluMut is available for Windows, Linux and macOS.
 
-#### Pip
+### Pip
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
@@ -20,7 +28,7 @@ Then, you can install FluMut with this command:
 pip install flumut
 ```
 
-#### Bioconda
+### Bioconda
 FluMut is also available on [Bioconda](https://bioconda.github.io/flumut).
 You can install using Conda or Mamba.
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
@@ -31,6 +39,11 @@ mamba install -c bioconda flumut
 ```
 conda install -c bioconda flumut
 ```
+
+### FluMutGUI
+The graphical version is available only for Windows OS.
+[Download](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUIInstaller.exe) the installer and follow the instructions.
+Check out how to use it on [complete documentation](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-gui#basic-usage).
 
 ## Usage
 ### Basic usage
