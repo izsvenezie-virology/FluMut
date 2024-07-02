@@ -14,7 +14,7 @@ from Bio.Align import PairwiseAligner
 from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
-from flumut.Exceptions import UnmatchNameException, UnknownSegmentExeption, UnknownNucleotideExeption
+from flumut.Exceptions import UnmatchNameException, UnknownSegmentExeption, UnknownNucleotideExeption, MalformedFastaExeption
 
 PRINT_ALIGNMENT = False
 
@@ -196,7 +196,10 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
             name = line[1:].strip()
             seq = []
         else:
-            seq.append(line.strip())
+            try:
+                seq.append(line.strip())
+            except UnboundLocalError:
+                raise MalformedFastaExeption()
     if name is not None:
         yield name, ''.join(seq).upper()
 

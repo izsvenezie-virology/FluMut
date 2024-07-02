@@ -20,3 +20,8 @@ class UnknownNucleotideExeption(Exception):
         self.codon = codon
         self.message = f'Unexpected nucleotide in codon "{codon}".'
         super().__init__(self.message)
+
+class MalformedFastaExeption(Exception):
+    def __init__(self, ) -> None:
+        self.message = 'Provided FASTA file does not start whit ">"'
+        super().__init__(self.message)
