@@ -14,13 +14,14 @@ from Bio.Align import PairwiseAligner
 from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
-from flumut.Exceptions import UnmatchNameException, UnknownSegmentExeption, UnknownNucleotideExeption
+from flumut.Exceptions import UnmatchNameException, UnknownSegmentException, UnknownNucleotideException, MalformedFastaException
 
 PRINT_ALIGNMENT = False
 
-def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str, 
-         markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-         relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+
+def analyze(name_regex: str, fasta_file: TextIOWrapper,
+            markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
+            relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
@@ -28,6 +29,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     # Initialization
     samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
+    counter = 0
 
     open_connection()
     segments = load_segments()
@@ -37,16 +39,19 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
 
     # Per sequence analysis
     for name, seq in read_fasta(fasta_file):
+        if verbose:
+            print(f'Processed sequences : {counter}', file=sys.stderr)
+        counter += 1
+
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
             continue
         if segment not in segments:
-            ex = UnknownSegmentExeption(name, pattern.pattern, segment)
+            ex = UnknownSegmentException(name, pattern.pattern, segment)
             if not skip_unknown_segments:
                 raise ex
             print(ex.message, file=sys.stderr)
             continue
-
 
         if sample not in samples:
             samples[sample] = Sample(sample)
@@ -70,6 +75,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     found_mutations = list(itertools.chain.from_iterable(mutations.values()))
     found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
 
+    if verbose:
+        print('Writing outputs', file=sys.stderr)
+
     # Outputs
     if mutations_output:
         header, data = OutputFormatter.mutations_dict(found_mutations)
@@ -78,7 +86,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     if markers_output:
         header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(markers_output, header, data)
-    
+
     if literature_output:
         header, data = OutputFormatter.papers_dict(papers)
         OutputFormatter.write_csv(literature_output, header, data)
@@ -103,6 +111,7 @@ def load_mutations() -> Dict[str, List[Mutation]]:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
+
 def load_segments() -> Dict[str, Dict[str, str]]:
     res = execute_query("SELECT segment_name, name, sequence FROM 'references'")
     segments = defaultdict(dict)
@@ -117,6 +126,7 @@ def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann
+
 
 def load_papers() -> List[Dict[str, str]]:
     return execute_query("""SELECT  id AS 'Short name',
@@ -194,7 +204,10 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
             name = line[1:].strip()
             seq = []
         else:
-            seq.append(line.strip())
+            try:
+                seq.append(line.strip())
+            except UnboundLocalError:
+                raise MalformedFastaException() from None
     if name is not None:
         yield name, ''.join(seq).upper()
 
@@ -208,7 +221,7 @@ def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
     except (IndexError, AttributeError):
         ex = UnmatchNameException(name, pattern.pattern)
         if not force:
-            raise ex
+            raise ex from None
         print(ex.message, file=sys.stderr)
         return None, None
     else:
@@ -255,7 +268,7 @@ def translate_codon(codon: List[str]) -> str:
     try:
         undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
     except KeyError:
-        raise UnknownNucleotideExeption(''.join(codon))
+        raise UnknownNucleotideException(''.join(codon))
     codons = list(itertools.product(*undegenerated_codon))
     aas = [translation_dict.get(''.join(c), '?') for c in codons]
     return ''.join(sorted(set(aas)))

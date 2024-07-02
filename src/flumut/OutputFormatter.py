@@ -7,6 +7,7 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils.cell import get_column_letter
 
 from flumut.DataClass import Mutation, Sample
+from flumut.Exceptions import PermissionDeniedException
 
 
 def mutations_dict(mutations: List[Mutation]) -> Tuple[List[str], List[Dict[str, str]]]:
@@ -38,9 +39,12 @@ def papers_dict(papers: List[Dict[str, str]]) -> Tuple[List[str], List[Dict[str,
 
 
 def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
-    writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
-    writer.writeheader()
-    writer.writerows(data)    
+    try:
+        writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(data)
+    except PermissionError:
+        raise PermissionDeniedException(output_file) from None
 
 
 def get_workbook(vba: bool) -> Workbook:
@@ -49,8 +53,11 @@ def get_workbook(vba: bool) -> Workbook:
     return wb
 
 
-def save_workbook(wb: Workbook, save_path: str) -> None:
-    wb.save(save_path)
+def save_workbook(wb: Workbook, output_file: str) -> None:
+    try:
+        wb.save(output_file)
+    except PermissionError:
+        raise PermissionDeniedException(output_file) from None
 
 
 def write_excel_sheet(wb: Workbook, sheet: str, header: List[str], data: List[Dict[str, str]]) -> Workbook:
