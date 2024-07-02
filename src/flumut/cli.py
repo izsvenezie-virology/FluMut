@@ -8,7 +8,13 @@ from flumut import __version__, __author__, __contact__
 def update(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
+    old_version = flumut.versions()['FluMutDB']
     flumut.update()
+    new_version = flumut.versions()['FluMutDB']
+    if old_version == new_version:
+        print(f'Already using latest FluMutDB version ({new_version})')
+    else:
+        print(f'Updated FluMutDB to version {new_version}')
     ctx.exit()
 
 def versions(ctx, param, value):
