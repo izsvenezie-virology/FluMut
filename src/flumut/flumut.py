@@ -21,7 +21,7 @@ PRINT_ALIGNMENT = False
 
 def analyze(name_regex: str, fasta_file: TextIOWrapper,
             markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-            relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+            relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
@@ -29,6 +29,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
     # Initialization
     samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
+    counter = 0
 
     open_connection()
     segments = load_segments()
@@ -38,6 +39,10 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
 
     # Per sequence analysis
     for name, seq in read_fasta(fasta_file):
+        if verbose:
+            print(f'Processed sequences : {counter}', file=sys.stderr)
+        counter += 1
+
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
             continue
@@ -69,6 +74,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
     close_connection()
     found_mutations = list(itertools.chain.from_iterable(mutations.values()))
     found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
+
+    if verbose:
+        print('Writing outputs', file=sys.stderr)
 
     # Outputs
     if mutations_output:

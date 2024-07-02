@@ -40,10 +40,12 @@ def versions(ctx, param, value):
 @click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
 @click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
+@click.option('--debug', is_flag=True, hidden=True, help='Output errors with traceback')
+@click.option('--verbose', is_flag=True, hidden=True)
 @click.argument('fasta-file', type=File('r'))
 def cli(name_regex: str, fasta_file: File, db_file: str,
         markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
-        relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+        relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, debug: bool, verbose: bool) -> None:
     flumut.analyze(**locals())
 
 

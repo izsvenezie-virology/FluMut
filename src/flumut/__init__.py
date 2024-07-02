@@ -3,6 +3,7 @@ __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
 from io import TextIOWrapper
+import sys
 from typing import Dict
 
 
@@ -37,7 +38,8 @@ def update_db_file() -> None:
 
 def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
             markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-            relaxed: bool = False, skip_unmatch_names: bool = False, skip_unknown_segments: bool = False) -> None:
+            relaxed: bool = False, skip_unmatch_names: bool = False, skip_unknown_segments: bool = False, 
+            debug: bool = False, verbose: bool = False) -> None:
     """Runs the FluMut analysis.
 
     Args:
@@ -63,6 +65,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
             When `True`, unknown segments do not raise exceptions
     """
 
+    if not debug:
+        sys.tracebacklimit = 0
+
     if name_regex is None:
         name_regex = r'(?P<sample>.+)_(?P<segment>.+)'
     if db_file is not None:
@@ -78,4 +83,5 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
                           excel_output=excel_output,
                           relaxed=relaxed,
                           skip_unmatch_names=skip_unmatch_names,
-                          skip_unknown_segments=skip_unknown_segments)
+                          skip_unknown_segments=skip_unknown_segments,
+                          verbose=verbose)
