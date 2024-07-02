@@ -14,6 +14,7 @@ class UnknownSegmentExeption(Exception):
         self.message = f'Unrecognized segment "{segment}", found in "{name}" parsed with "{regex}".'
         super().__init__(self.message)
 
+
 class UnknownNucleotideExeption(Exception):
     def __init__(self, codon) -> None:
         self.codon = codon

@@ -17,12 +17,14 @@ def update(ctx, param, value):
         print(f'Updated FluMutDB to version {new_version}')
     ctx.exit()
 
+
 def versions(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     for package, version in flumut.versions().items():
         print(f'{package}: {version}')
     ctx.exit()
+
 
 @click.command()
 @click.help_option('-h', '--help')
@@ -39,9 +41,9 @@ def versions(ctx, param, value):
 @click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
 @click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
 @click.argument('fasta-file', type=File('r'))
-def cli(name_regex: str, fasta_file: File, db_file: str, 
-         markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
-         relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+def cli(name_regex: str, fasta_file: File, db_file: str,
+        markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
+        relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     flumut.analyze(**locals())
 
 

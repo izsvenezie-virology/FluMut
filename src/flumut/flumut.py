@@ -18,9 +18,10 @@ from flumut.Exceptions import UnmatchNameException, UnknownSegmentExeption, Unkn
 
 PRINT_ALIGNMENT = False
 
-def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str, 
-         markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-         relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
+
+def analyze(name_regex: str, fasta_file: TextIOWrapper,
+            markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
+            relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
@@ -46,7 +47,6 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
                 raise ex
             print(ex.message, file=sys.stderr)
             continue
-
 
         if sample not in samples:
             samples[sample] = Sample(sample)
@@ -78,7 +78,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     if markers_output:
         header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(markers_output, header, data)
-    
+
     if literature_output:
         header, data = OutputFormatter.papers_dict(papers)
         OutputFormatter.write_csv(literature_output, header, data)
@@ -103,6 +103,7 @@ def load_mutations() -> Dict[str, List[Mutation]]:
         mutations[mut[1]].append(Mutation(*mut[2:]))
     return mutations
 
+
 def load_segments() -> Dict[str, Dict[str, str]]:
     res = execute_query("SELECT segment_name, name, sequence FROM 'references'")
     segments = defaultdict(dict)
@@ -117,6 +118,7 @@ def load_annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann
+
 
 def load_papers() -> List[Dict[str, str]]:
     return execute_query("""SELECT  id AS 'Short name',

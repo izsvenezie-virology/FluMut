@@ -40,7 +40,7 @@ def papers_dict(papers: List[Dict[str, str]]) -> Tuple[List[str], List[Dict[str,
 def write_csv(output_file: File, header: List[str], data: List[Dict[str, str]]) -> None:
     writer = csv.DictWriter(output_file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
     writer.writeheader()
-    writer.writerows(data)    
+    writer.writerows(data)
 
 
 def get_workbook(vba: bool) -> Workbook:
