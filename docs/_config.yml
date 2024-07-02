@@ -2,7 +2,7 @@ title: FluMut documentation
 description: Documentation for FluMut and FluMut-GUI
 theme: just-the-docs
 
-url: https://izsvenezie-virology.github.io/FluMut/
+url: https://izsvenezie-virology.github.io
 plugins:
   - jekyll-sitemap
 
