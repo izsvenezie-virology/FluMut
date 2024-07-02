@@ -10,6 +10,9 @@ def set_db_file(db_path: str) -> None:
     global _db_file
     _db_file = db_path
 
+def get_db_file() -> str:
+    return _db_file
+
 def get_db_version():
     open_connection()
     major, minor, date = _cursor.execute('SELECT * FROM db_version').fetchone()
