@@ -29,6 +29,8 @@ Here we provide some examples with most common cases:
 | my_sample-PB2_something_else  | `(.+)-(.+?)_`                     |
 | PB2_my_sample                 | `(?P<segment>.+?)_(?P<sample>.+)` |
  
->**_NOTE:_** to find the regular expression that better fits your FASTA header you can try it on [Regex101](https://regex101.com/) selecting `Python` flavor.
+{: .note}
+To find the regular expression that better fits your FASTA header you can try it on [Regex101](https://regex101.com/) selecting `Python` flavor.
 
->**_NOTE:_** if in your fasta headers the segment label is located before the sample ID you can use [named groups](https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups) (`sample` and `segment`) as shown in the last row of the table.
+{: .note}
+If in your fasta headers the segment label is located before the sample ID you can use [named groups](https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups) (`sample` and `segment`) as shown in the last row of the table.

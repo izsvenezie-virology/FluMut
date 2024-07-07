@@ -16,7 +16,8 @@ If you prefer the [text outputs](../output#markers-output) (machine-readable for
 flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
 ```
 
->**_Note_**: you should always [update](#update-marker-database) the database before any analysis to be sure to use the latest version available.
+{: .note}
+You should always [update](#update-marker-database) the database before any analysis to be sure to use the latest version available.
 
 # Update marker database
 FluMut uses a SQLite based database containing all information needed to perform the analysis.
