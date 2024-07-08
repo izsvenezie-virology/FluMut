@@ -26,10 +26,14 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
 
+    if verbose:
+        print('LOG: Initializing FluMut...', file=sys.stderr)
     # Initialization
     samples: Dict[str, Sample] = {}
     pattern = re.compile(name_regex)
-    counter = 0
+
+    if verbose:
+        print('LOG: Loading data from FluMutDB...', file=sys.stderr)
 
     open_connection()
     segments = load_segments()
@@ -40,8 +44,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
     # Per sequence analysis
     for name, seq in read_fasta(fasta_file):
         if verbose:
-            print(f'Processed sequences : {counter}', file=sys.stderr)
-        counter += 1
+            print(f'LOG: Processing {name}', file=sys.stderr)
 
         sample,  segment = parse_name(name, pattern, skip_unmatch_names)
         if sample is None or segment is None:
@@ -67,6 +70,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
             samples[sample].mutations += find_mutations(
                 ref_aa, sample_aa, sample, mutations[protein])
 
+    if verbose:
+        print(f'LOG: Collecting markers...', file=sys.stderr)
+
     open_connection()
     for sample in samples.values():
         sample.markers = match_markers(sample.mutations, relaxed)
@@ -76,7 +82,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
     found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
 
     if verbose:
-        print('Writing outputs', file=sys.stderr)
+        print('LOG: Writing outputs...', file=sys.stderr)
 
     # Outputs
     if mutations_output:
