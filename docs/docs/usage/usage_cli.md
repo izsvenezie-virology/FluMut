@@ -2,7 +2,7 @@
 title: CLI usage
 layout: default
 parent: Usage
-nav_order: 1
+nav_order: 2
 permalink: docs/usage/usage-cli
 ---
 

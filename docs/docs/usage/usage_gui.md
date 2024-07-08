@@ -2,7 +2,7 @@
 title: GUI usage
 layout: default
 parent: Usage
-nav_order: 2
+nav_order: 3
 permalink: docs/usage/usage-gui
 ---
 

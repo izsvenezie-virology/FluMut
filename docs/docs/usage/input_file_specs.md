@@ -2,7 +2,7 @@
 title: Input file
 layout: default
 parent: Usage
-nav_order: 3
+nav_order: 1
 permalink: docs/usage/input-file
 ---
 
