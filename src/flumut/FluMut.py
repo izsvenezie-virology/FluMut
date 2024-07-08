@@ -19,7 +19,7 @@ from flumut.Exceptions import UnmatchNameException, UnknownSegmentException, Unk
 PRINT_ALIGNMENT = False
 
 
-def analyze(name_regex: str, fasta_file: TextIOWrapper,
+def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
             markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
             relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
     '''
@@ -78,26 +78,35 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
         sample.markers = match_markers(sample.mutations, relaxed)
     papers = load_papers()
     close_connection()
+
+    if verbose:
+        print('LOG: Preparing outputs...', file=sys.stderr)
     found_mutations = list(itertools.chain.from_iterable(mutations.values()))
     found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
 
-    if verbose:
-        print('LOG: Writing outputs...', file=sys.stderr)
 
     # Outputs
     if mutations_output:
+        if verbose:
+            print(f'LOG: Writing "{mutations_output.name}"...', file=sys.stderr)
         header, data = OutputFormatter.mutations_dict(found_mutations)
         OutputFormatter.write_csv(mutations_output, header, data)
 
     if markers_output:
+        if verbose:
+            print(f'LOG: Writing "{markers_output.name}"...', file=sys.stderr)
         header, data = OutputFormatter.markers_dict(samples.values())
         OutputFormatter.write_csv(markers_output, header, data)
 
     if literature_output:
+        if verbose:
+            print(f'LOG: Writing "{literature_output.name}"...', file=sys.stderr)
         header, data = OutputFormatter.papers_dict(papers)
         OutputFormatter.write_csv(literature_output, header, data)
 
     if excel_output:
+        if verbose:
+            print(f'LOG: Writing "{excel_output}"...', file=sys.stderr)
         wb = OutputFormatter.get_workbook(excel_output.endswith('.xlsm'))
         header, data = OutputFormatter.mutations_dict(found_mutations)
         wb = OutputFormatter.write_excel_sheet(wb, 'Mutations', header, data)
@@ -106,6 +115,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper,
         header, data = OutputFormatter.papers_dict(papers)
         wb = OutputFormatter.write_excel_sheet(wb, 'Literature', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
+    
+    if verbose:
+        print(f'LOG: Analysis complete.', file=sys.stderr)
 
 
 def load_mutations() -> Dict[str, List[Mutation]]:
