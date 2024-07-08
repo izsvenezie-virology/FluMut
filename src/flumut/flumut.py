@@ -268,7 +268,7 @@ def translate_codon(codon: List[str]) -> str:
     try:
         undegenerated_codon = [degeneration_dict[nucl] for nucl in codon]
     except KeyError:
-        raise UnknownNucleotideException(''.join(codon))
+        raise UnknownNucleotideException(''.join(codon)) from None
     codons = list(itertools.product(*undegenerated_codon))
     aas = [translation_dict.get(''.join(c), '?') for c in codons]
     return ''.join(sorted(set(aas)))
