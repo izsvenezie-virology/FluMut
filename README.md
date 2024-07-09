@@ -47,6 +47,18 @@ We plan to release it also for MacOS and Linux.
 Check out how to use it on [complete documentation](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-gui#basic-usage).
 
 ## Usage
+
+## Input
+FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
+It can handle partial and complete genome sequences of multiple samples.
+You must provide a single file containing all the nucleotide sequences in FASTA format.
+Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
+
+FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
+For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
+
+An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
+
 ### Basic usage
 You can get the output file in an [Excel format](#excel) (user-friendly) running:
 ```
@@ -62,17 +74,6 @@ You should always use the latest version of our database and you can do it just 
 ```
 flumut --update
 ```
-
-## Input
-FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
-It can handle partial and complete genome sequences of multiple samples.
-You must provide a single file containing all the nucleotide sequences in FASTA format.
-Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
-
-FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
-For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
-
-An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
 
 ## Outputs
 FluMut can produce an Excel output or text outputs:
