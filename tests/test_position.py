@@ -1,5 +1,5 @@
 import unittest
-import flumut.flumut as fm
+import flumut.FluMut as fm
 
 
 class TestPosition(unittest.TestCase):

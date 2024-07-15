@@ -1,6 +1,7 @@
-import unittest
-import flumut.flumut as fm
 import re
+import unittest
+import flumut.FluMut as fm
+import flumut.Exceptions as ex
 
 
 class TestNameParser(unittest.TestCase):
@@ -26,7 +27,7 @@ class TestNameParser(unittest.TestCase):
     def test_unmatching_pattern(self):
         pattern = re.compile(r'unmatching_pattern')
         name = 'my_sample_name_PB1'
-        with self.assertRaises(SystemExit) as ar:
+        with self.assertRaises(ex.UnmatchNameException) as ar:
             result = fm.parse_name(name, pattern, False)
     
     def test_unmatching_pattern_force(self):
@@ -38,7 +39,7 @@ class TestNameParser(unittest.TestCase):
     def test_no_groups(self):
         pattern = re.compile(r'.+')
         name = 'my_sample_name_PB1'
-        with self.assertRaises(SystemExit) as ar:
+        with self.assertRaises(ex.UnmatchNameException) as ar:
             result = fm.parse_name(name, pattern, False)
     
     def test_no_groups_force(self):
