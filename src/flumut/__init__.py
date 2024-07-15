@@ -1,10 +1,14 @@
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
-from io import TextIOWrapper
 import sys
 from typing import Dict
+from io import TextIOWrapper
+
+from flumut import Updater
+from flumut.FluMut import start_analysis
+from flumut.DbReader import get_db_version, set_db_file
 
 
 def versions() -> Dict[str, str]:
@@ -14,7 +18,7 @@ def versions() -> Dict[str, str]:
     versions : `Dict[str, str]`
             Versions for FluMut and FluMutDB packages.
     """
-    from flumut.DbReader import get_db_version
+
     major, minor, date = get_db_version()
     return {
         'FluMut': __version__,
@@ -25,20 +29,18 @@ def versions() -> Dict[str, str]:
 def update() -> None:
     """Updates FluMutDB package using Pip.
     """
-    import flumut.Updater
-    flumut.Updater.update()
+    Updater.update()
 
 
 def update_db_file() -> None:
-    """Updates FluMutDB database without updating 
+    """Updates FluMutDB database without updating FluMutDB
     """
-    import flumut.Updater
-    flumut.Updater.update_db_file()
+    Updater.update_db_file()
 
 
 def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
             markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-            relaxed: bool = False, skip_unmatch_names: bool = False, skip_unknown_segments: bool = False, 
+            relaxed: bool = False, skip_unmatch_names: bool = False, skip_unknown_segments: bool = False,
             debug: bool = False, verbose: bool = False) -> None:
     """Runs the FluMut analysis.
 
@@ -71,17 +73,15 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     if name_regex is None:
         name_regex = r'(?P<sample>.+)_(?P<segment>.+)'
     if db_file is not None:
-        from flumut.DbReader import set_db_file
         set_db_file(db_file)
 
-    import flumut.flumut
-    flumut.flumut.analyze(name_regex=name_regex,
-                          fasta_file=fasta_file,
-                          markers_output=markers_output,
-                          mutations_output=mutations_output,
-                          literature_output=literature_output,
-                          excel_output=excel_output,
-                          relaxed=relaxed,
-                          skip_unmatch_names=skip_unmatch_names,
-                          skip_unknown_segments=skip_unknown_segments,
-                          verbose=verbose)
+    start_analysis(name_regex=name_regex,
+                   fasta_file=fasta_file,
+                   markers_output=markers_output,
+                   mutations_output=mutations_output,
+                   literature_output=literature_output,
+                   excel_output=excel_output,
+                   relaxed=relaxed,
+                   skip_unmatch_names=skip_unmatch_names,
+                   skip_unknown_segments=skip_unknown_segments,
+                   verbose=verbose)
