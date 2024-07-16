@@ -20,7 +20,7 @@ When it finishes check the messages and then you can close the program.
 
 ![](../../images/GUI-usage-done.png)
 
-{: .important}
->FluMutGUI has the [`--skip-unmatch-names`](./usage-cli#options) and [`--skip-unknown-segments`](./usage-cli#options) options flagged by default.
->
->Read the log for a list of skipped sequences.
+# Advanced options
+You can use all [advanced options](./usage-cli#options) from FluMut checking the `Advanced options` flag.
+
+![](../../images/GUI-options.png)
