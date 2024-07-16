@@ -14,7 +14,7 @@ Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iup
 FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
 For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
 
-By default, the tool expects the sample ID followed by an underscore and the segment name (e.g. `my_sample_PB2`). FluMut-GUI works only with this FASTA header structure.
+By default, the tool expects the sample ID followed by an underscore and the segment name (e.g. `my_sample_PB2`).
 
 # Custom FASTA header parsing
 If your sequences have a different FASTA header composition, you can use the option `--name-regex`.

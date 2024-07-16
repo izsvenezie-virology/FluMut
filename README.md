@@ -44,7 +44,7 @@ conda install -c bioconda flumut
 The graphical version at the moment is available only for Windows OS.
 We plan to release it also for MacOS and Linux.
 [Download](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI_Installer.exe) the installer and follow the instructions.
-Check out how to use it on [complete documentation](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-gui#basic-usage).
+Check out how to use it on [complete documentation](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-gui).
 
 ## Usage
 
