@@ -5,8 +5,17 @@ nav_order: 2
 permalink: docs/installation
 ---
 
+# FluMut-GUI
+FluMut-GUI is the graphical interface of FluMut, easy to use and easy to install.
+If you need the CLI version, check [FluMut installation](#flumut).
+Download the compiled version for your OS, double click on it and follow instructions to install FluMutGUI:
+- [Windows](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI_Installer.exe)
+- MacOS (available soon)
+- Linux (available soon)
+
+
 # FluMut
-FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation
+FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation.
 
 ## Pip
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
@@ -33,10 +42,3 @@ mamba install -c bioconda flumut
 ```
 conda install -c bioconda flumut
 ```
-
-# FluMut-GUI
-
-Download the compiled version for your OS, double click on it and follow instructions to install FluMutGUI:
-- [Windows](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI_Installer.exe)
-- MacOS (available soon)
-- Linux (available soon)
