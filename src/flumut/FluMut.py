@@ -213,15 +213,18 @@ def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
 def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
     '''Create a Fasta reading a file in Fasta format'''
     name = None
-    for line in fasta_file:
+    for raw_line in fasta_file:
+        line = raw_line.strip()
+        if not line:
+            continue
         if line.startswith('>'):
             if name is not None:
                 yield name, ''.join(seq).upper()
-            name = line[1:].strip()
+            name = line[1:]
             seq = []
         else:
             try:
-                seq.append(line.strip())
+                seq.append(line)
             except UnboundLocalError:
                 raise MalformedFastaException() from None
     if name is not None:
