@@ -75,7 +75,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     if db_file is not None:
         set_db_file(db_file)
 
-    start_analysis(name_regex=name_regex,
+    start_analysis(header_pattern=name_regex,
                    fasta_file=fasta_file,
                    markers_output=markers_output,
                    mutations_output=mutations_output,

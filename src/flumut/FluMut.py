@@ -10,15 +10,16 @@ from typing import Dict, Generator, List, Optional, Tuple
 from collections import defaultdict
 from Bio.Align import PairwiseAligner
 
+from flumut.Fasta import read
 from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
-from flumut.Exceptions import UnmatchNameException, UnknownSegmentException, UnknownNucleotideException, MalformedFastaException
+from flumut.Exceptions import UnmatchHeaderException, UnknownSegmentException, UnknownNucleotideException, MalformedFastaException
 
 PRINT_ALIGNMENT = True
 
 
-def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
+def start_analysis(header_pattern: str, fasta_file: TextIOWrapper,
             markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
             relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
     '''
@@ -29,7 +30,6 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
         print('LOG: Initializing FluMut...', file=sys.stderr)
     # Initialization
     samples: Dict[str, Sample] = {}
-    pattern = re.compile(name_regex)
 
     if verbose:
         print('LOG: Loading data from FluMutDB...', file=sys.stderr)
@@ -40,27 +40,37 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
     annotations = load_annotations()
     close_connection()
 
+    try:
+        fasta = read(fasta_file)
+    except:
+        raise
+
     # Per sequence analysis
-    for name, seq in read_fasta(fasta_file):
-        if verbose:
-            print(f'LOG: Processing {name}', file=sys.stderr)
+    for seq in fasta:
+        if verbose: 
+            print(f'LOG: Processing {seq.header}', file=sys.stderr)
+        
+        try:
+            seq.parse_header(header_pattern)
+        except UnmatchHeaderException as e:
+            if skip_unmatch_names:
+                print(e.message, file=sys.stderr)
+                continue
+            raise e from None
 
-        sample,  segment = parse_name(name, pattern, skip_unmatch_names)
-        if sample is None or segment is None:
-            continue
-        if segment not in segments:
-            ex = UnknownSegmentException(name, pattern.pattern, segment)
-            if not skip_unknown_segments:
-                raise ex
-            print(ex.message, file=sys.stderr)
-            continue
+        if seq.segment not in segments:
+            ex = UnknownSegmentException(header, header_pattern, seq.segment)
+            if skip_unknown_segments:
+                print(ex.message, file=sys.stderr)
+                continue
+            raise ex from None
 
-        if sample not in samples:
-            samples[sample] = Sample(sample)
+        if seq.sample not in samples:
+            samples[seq.sample] = Sample(seq.sample)
 
-        reference_name, ref_align, sample_align = select_reference(segments[segment], seq)
+        seq.align(segments[seq.segment])
 
-        for protein, cds in annotations[reference_name].items():
+        for protein, cds in annotations[seq.reference_name].items():
             ref_cds, sample_cds = get_cds(ref_align, sample_align, cds)
             ref_aa = ''.join(translate(ref_cds))
             sample_aa = translate(sample_cds)
@@ -214,43 +224,6 @@ def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
     if PRINT_ALIGNMENT:
         print(alignment, file=sys.stderr)
     return alignment[0], alignment[1]
-
-
-def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
-    '''Create a Fasta reading a file in Fasta format'''
-    name = None
-    for raw_line in fasta_file:
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.startswith('>'):
-            if name is not None:
-                yield name, ''.join(seq).upper()
-            name = line[1:]
-            seq = []
-        else:
-            try:
-                seq.append(line)
-            except UnboundLocalError:
-                raise MalformedFastaException() from None
-    if name is not None:
-        yield name, ''.join(seq).upper()
-
-
-def parse_name(name: str, pattern: re.Pattern, force: bool) -> Tuple[str, str]:
-    '''Get sample and segment information by sequence name'''
-    match = pattern.match(name)
-    try:
-        sample = match.groupdict().get('sample', match.group(1))
-        seg = match.groupdict().get('segment', match.group(2))
-    except (IndexError, AttributeError):
-        ex = UnmatchNameException(name, pattern.pattern)
-        if not force:
-            raise ex from None
-        print(ex.message, file=sys.stderr)
-        return None, None
-    else:
-        return sample, seg
 
 
 def translate(seq: str) -> List[str]:
