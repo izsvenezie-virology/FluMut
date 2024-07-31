@@ -1,10 +1,10 @@
 import sys
 
-class UnmatchHeaderException(Exception):
-    def __init__(self, header, regex) -> None:
-        self.name = header
+class UnmatchNameException(Exception):
+    def __init__(self, name, regex) -> None:
+        self.name = name
         self.regex = regex
-        self.message = f'Unable to parse "{header}" with regular expression "{regex}".'
+        self.message = f'Unable to parse "{name}" with regular expression "{regex}".'
         super().__init__(self.message)
 
 

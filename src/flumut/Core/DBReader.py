@@ -15,8 +15,8 @@ class DBReaderClass:
 
     @db_path.setter
     def db_path(self, db_path: str) -> None:
-        self._db_path = db_path
         self.close_db()
+        self._db_path = db_path
 
     @property
     def connection_string(self) -> str:

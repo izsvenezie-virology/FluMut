@@ -26,21 +26,6 @@
             ]
         },
         {
-            "name": "FluMutMultiReference",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "flumut.cli",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "-x",
-                "examples/multiple_samples.xlsm",
-                "--db-file",
-                "examples/flumut_db_multiple.sqlite",
-                "examples/multiple_samples_HA.fa"
-            ]
-        },
-        {
             "name": "FluMutUpdate",
             "type": "debugpy",
             "request": "launch",
