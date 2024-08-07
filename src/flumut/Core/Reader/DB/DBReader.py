@@ -1,13 +1,18 @@
 import sqlite3
-from typing import Callable
+from typing import Callable, Self
 
 from importlib_resources import files
 
 
-class DBReaderClass:
+class DBReader:
     def __init__(self) -> None:
         self._db_path: str = files('flumutdb').joinpath('flumut_db.sqlite')
         self._connection: sqlite3.Connection = None
+
+    def __new__(cls) -> Self:
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(DBReader, cls).__new__(cls)
+        return cls.instance
 
     @property
     def db_path(self) -> str:
@@ -40,6 +45,3 @@ class DBReaderClass:
         if self._connection is not None:
             self._connection.close()
             self._connection = None
-
-
-DBReader = DBReaderClass()
