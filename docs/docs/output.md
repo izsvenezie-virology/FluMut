@@ -9,7 +9,7 @@ permalink: docs/output
 # Excel output
 This is the most user-friendly and complete output. 
 You can obtain this output using the [`--excel-output` option](usage/usage-cli#options).
-You can download the example file [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/excel_output_example.xlsx).
+You can download the example file [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/excel_output_example.xlsm).
 
 It contains 5 sheets:
 - [Markers per sample](#markers-per-sample-sheet)
