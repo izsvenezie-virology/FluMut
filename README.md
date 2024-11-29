@@ -1,4 +1,10 @@
-# FluMut
+<p align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/flumut_logo_w.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/images/flumut_logo_b.png">
+      <img alt="FluMut logo." src="docs/images/flumut_logo_b.png">
+    </picture>
+</p>
 
 [![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut?label=FluMut)](https://github.com/izsvenezie-virology/FluMut/releases/latest/)
 [![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutDB?label=FluMutDB)](https://github.com/izsvenezie-virology/FluMutDB/releases/latest/)
@@ -113,7 +119,11 @@ FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 
 This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
 
-![](docs/images/Logo-Flu-Switch.png) ![](docs/images/Logo-Inf-act.jpg) ![](docs/images/Logo-eu.png)
+<p align="center" margin="10px">
+    <img src="docs/images/Logo-Flu-Switch.png"/>
+    <img src="docs/images/Logo-Inf-act.jpg"/>
+    <img src="docs/images/Logo-eu.png"/>
+</p>
 
 >Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA). 
 >Neither the European Union nor the granting authority can be held responsible for them
