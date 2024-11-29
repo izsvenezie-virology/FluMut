@@ -61,9 +61,9 @@ Rows are filtered to display only papers describing the selected effect.
 This sheet shows the amino acid presents in the positions of mutations of interest for each sample.
 The mutations are ordered alphabetically by protein name, then by position and then by amino acid mutation.
 
-| blank cell              | no sequence available |
-| `-`                     | deletion              |
-| `?`                     | undefined amino acid  |
+| blank cell              | no sequence available for the protein |
+| `-`                     | deletion |
+| `?`                     | undefined amino acid (at least one N nucleotide in the triplet) |
 | two or more amino acids | codon codes for alternative amino acids (nucleotide degeneration within the codon causing a nonsynonymous mutation) |
 
 

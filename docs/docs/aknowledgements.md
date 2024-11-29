@@ -16,7 +16,11 @@ Until the publication please cite the GitHub repository:
 
 This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
 
-| ![](../images/Logo-Flu-Switch.png) | ![](../images/Logo-Inf-act.jpg) | ![](../images/Logo-eu.png) |
+<div style="text-align:center;">
+    <img src="../images/Logo-Flu-Switch.png" style="margin:10px"/>
+    <img src="../images/Logo-Inf-act.jpg" style="margin:10px"/>
+    <img src="../images/Logo-eu.png" style="margin:10px"/>
+</div>
 
 {: .note-title}
 Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA). 

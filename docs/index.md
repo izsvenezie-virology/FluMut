@@ -5,6 +5,12 @@ nav_order: 1
 permalink: /
 ---
 
+![](images/flumut_logo_b.svg)
+
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut?label=FluMut)](https://github.com/izsvenezie-virology/FluMut/releases/latest/)
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutDB?label=FluMutDB)](https://github.com/izsvenezie-virology/FluMutDB/releases/latest/)
+[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutGUI?label=FluMutGUI)](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/)
+
 FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
 
 A marker is defined as a set of amino acid mutations (one or more mutations located in the same or different proteins) for which a phenotypic effect has been demonstrated.
@@ -19,7 +25,7 @@ For each marker identified within the submitted sequences, the tool provides inf
 - the position of the mutations composing the marker
 - the effect of the marker as described in the literature
 - the influenza subtype in which the marker was observed or tested
-- the corresponding bibliographic references.
+- the corresponding bibliographic references
 
 In addition, the tool generates an Excel workbook for a better visualisation of the results, as described in the [outputs section](docs/output#excel-output).
 
