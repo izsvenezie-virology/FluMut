@@ -117,7 +117,7 @@ FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 
 # Fundings
 
-This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
+This work was partially supported by the FLU-SWITCH Era-Net ICRAD (grant agreement No. 862605), by EU funding under the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project No. PE00000007, INF-ACT), and by KAPPA-FLU HORIZON-CL6-2022-FARM2FORK-02-03 (grant agreement No. 101084171).
 
 <p align="center" margin="10px">
     <img style="height:80px;margin:8px" alt="Logo supporter, FLU-SWITCH" src="docs/images/Logo-Flu-Switch.png"/>
