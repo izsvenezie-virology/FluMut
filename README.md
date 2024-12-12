@@ -120,9 +120,10 @@ FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 This work was supported by FLU-SWITCH Era-Net ICRAD (grant agreement No 862605) and by the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project no. PE00000007, INF-ACT)
 
 <p align="center" margin="10px">
-    <img src="docs/images/Logo-Flu-Switch.png"/>
-    <img src="docs/images/Logo-Inf-act.jpg"/>
-    <img src="docs/images/Logo-eu.png"/>
+    <img style="height:80px;margin:8px" alt="Logo supporter, FLU-SWITCH" src="docs/images/Logo-Flu-Switch.png"/>
+    <img style="height:80px;margin:8px" alt="Logo supporter, INF-ACT" src="docs/images/Logo-Inf-act.jpg"/>
+    <img style="height:80px;margin:8px" alt="Logo supporter, European Union" src="docs/images/Logo-eu.png"/>
+    <img style="height:80px;margin:8px" alt="Logo supporter, KAPPA-FLU" src="docs/images/logo-kappa-flu.jpg"/>
 </p>
 
 >Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA). 
