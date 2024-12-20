@@ -13,7 +13,7 @@ In the issue you should report:
 - the mutations composing the marker
 - the effect reported in the literature
 
-[Suggest a marker](https://github.com/izsvenezie-virology/FluMutDB/issues/new){: .btn .btn-purple}
+[Suggest a marker](https://github.com/izsvenezie-virology/FluMutDB/issues/new?assignees=&labels=&projects=&template=new-marker-request.md&title=){: .btn .btn-purple}
 
 # Other suggestions
 

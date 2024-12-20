@@ -47,6 +47,14 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Create markers table
+        run: |
+          wget https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/flumut_db.sqlite
+          .github/scripts/create_markers_markdown.py
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
