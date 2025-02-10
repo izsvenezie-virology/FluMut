@@ -27,7 +27,7 @@ FluMut is available for Windows, Linux and macOS.
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 - [Python](https://www.python.org/downloads/)
-- [Pip](https://pypi.org/project/pip/) (often packed with Python)
+- [Pip](https://pypi.org/project/pip/) (often packaged with Python)
 
 Then, you can install FluMut with this command:
 ```
@@ -61,7 +61,7 @@ You must provide a single file containing all the nucleotide sequences in FASTA 
 Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
 
 FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
-For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
+For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
 
 An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
 
