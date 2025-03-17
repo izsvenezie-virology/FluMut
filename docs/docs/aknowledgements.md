@@ -7,10 +7,10 @@ permalink: docs/aknowledgements
 
 # How to cite FluMut
 
-We are currently writing the paper. 
-Until the publication please cite the GitHub repository:
+If you use FluMut, please cite:
 
-[https://github.com/izsvenezie-virology/FluMut](https://github.com/izsvenezie-virology/FluMut)
+{: .note-title}
+Giussani, E., Sartori, A. et al. (2025). FluMut: a tool for mutation surveillance in highly pathogenic H5N1 genomes. Virus Evolution, [10.1093/ve/veaf011](https://doi.org/10.1093/ve/veaf011).
 
 # Fundings
 
@@ -24,5 +24,5 @@ This work was partially supported by the FLU-SWITCH Era-Net ICRAD (grant agreeme
 </div>
 
 {: .note-title}
-Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA). 
+Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Health and Digital Executive Agency (HEDEA).
 Neither the European Union nor the granting authority can be held responsible for them.
