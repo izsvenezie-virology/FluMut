@@ -15,12 +15,12 @@ from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
 from flumut.Exceptions import UnmatchNameException, UnknownSegmentException, UnknownNucleotideException, MalformedFastaException
 
-PRINT_ALIGNMENT = True
+PRINT_ALIGNMENT = False
 
 
 def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
-            markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
-            relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
+                   markers_output: TextIOWrapper, mutations_output: TextIOWrapper, literature_output: TextIOWrapper, excel_output: str,
+                   relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, verbose: bool) -> None:
     '''
     Find markers of zoonotic interest in H5N1 avian influenza viruses.
     '''
@@ -82,7 +82,6 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
     found_mutations = list(itertools.chain.from_iterable(mutations.values()))
     found_mutations.sort(key=operator.attrgetter('protein', 'pos', 'alt'))
 
-
     # Outputs
     if mutations_output:
         if verbose:
@@ -113,7 +112,7 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
         header, data = OutputFormatter.papers_dict(papers)
         wb = OutputFormatter.write_excel_sheet(wb, 'Literature', header, data)
         wb = OutputFormatter.save_workbook(wb, excel_output)
-    
+
     if verbose:
         print(f'LOG: Analysis complete.', file=sys.stderr)
 
@@ -175,7 +174,7 @@ def match_markers(muts: List[Mutation], relaxed: bool) -> List[Dict[str, str]]:
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id 
-        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else '' }
+        FROM markers_tbl) {'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else ''}
     GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """, to_dict)
     return res.fetchall()
@@ -208,8 +207,13 @@ def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutation
 def pairwise_alignment(ref_seq: str, sample_seq: str) -> Tuple[str, str]:
     '''Align sequence against a reference'''
     aligner = PairwiseAligner()
-    aligner.open_gap_score = -10
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -5
     aligner.extend_gap_score = -1
+    aligner.query_left_open_gap_score = 1
+    aligner.query_right_open_gap_score = 1
+    aligner.target_left_open_gap_score = 1
+    aligner.target_right_open_gap_score = 1
     alignment = aligner.align(ref_seq, sample_seq)[0]
     if PRINT_ALIGNMENT:
         print(alignment, file=sys.stderr)
@@ -274,7 +278,9 @@ def get_codon(seq: List[str], start: int, is_first: bool) -> List[str]:
     if codon == ['-', '-', '-']:  # If the codon is a deletion
         return codon
     # If the codon starts from mid codon (to avoid frameshifts in truncated sequences):
-    if is_first and codon[0] == '-':
+    if is_first and '-' in codon:
+        return codon
+    if 'N' in codon:
         return codon
     codon = [n for n in codon if n != '-']
     while len(codon) < 3:
