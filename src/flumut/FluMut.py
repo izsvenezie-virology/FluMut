@@ -4,7 +4,6 @@ import operator
 import itertools
 
 from io import TextIOWrapper
-from difflib import SequenceMatcher
 from typing import Dict, Generator, List, Optional, Tuple
 
 from collections import defaultdict
@@ -58,7 +57,8 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
         if sample not in samples:
             samples[sample] = Sample(sample)
 
-        reference_name, ref_align, sample_align = select_reference(segments[segment], seq)
+        reference_name, reference_sequence = select_reference(segments[segment], seq)
+        ref_align, sample_align = pairwise_alignment(reference_sequence, seq)
 
         for protein, cds in annotations[reference_name].items():
             ref_cds, sample_cds = get_cds(ref_align, sample_align, cds)
@@ -180,17 +180,11 @@ def match_markers(muts: List[Mutation], relaxed: bool) -> List[Dict[str, str]]:
     return res.fetchall()
 
 
-def select_reference(references: Dict[str, str], seq: str) -> Tuple[str, str, str]:
-    higher_similarity = -1
-    for ref_name, ref_seq in references.items():
-        aligned_ref_seq, aligned_seq = pairwise_alignment(ref_seq, seq)
-        similarity = SequenceMatcher(None, aligned_ref_seq, aligned_seq, False).ratio()
-        if similarity > higher_similarity:
-            higher_similarity = similarity
-            best_ref_name = ref_name
-            best_ref_aligned = aligned_ref_seq
-            best_seq_aligned = aligned_seq
-    return best_ref_name, best_ref_aligned, best_seq_aligned
+def select_reference(references: Dict[str, str], ref_seq: str) -> Tuple[str, str]:
+    if len(references) > 1:
+        NotImplementedError('Selection for reference from segments with more than one is not yet implemented')
+    (name, sequence), = references.items()
+    return name, sequence
 
 
 def find_mutations(ref_aa: str, sample_aa: List[str], sample_name: str, mutations: List[Mutation]):
