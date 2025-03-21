@@ -223,7 +223,7 @@ def read_fasta(fasta_file: TextIOWrapper) -> Generator[str, None, None]:
             continue
         if line.startswith('>'):
             if name is not None:
-                yield name, ''.join(seq).upper()
+                yield name, ''.join(seq).replace('-', '').upper()
             name = line[1:]
             seq = []
         else:
