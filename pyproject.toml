@@ -5,6 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flumut"
 description = "A tool to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype."
+authors = [
+    {name = "Edoardo Giussani", email = "egiussani@izsvenezie.it"},
+    {name = "Alessandro Sartori", email = "asartori@izsvenezie.it"},
+]
+keywords = [ "flumut", "molecular markers", "Influenza A Virus", "AIV"]
+dynamic = ["version"]
+
 requires-python = ">=3.7"
 dependencies = [
     "click >=8.0.0",
@@ -13,11 +20,6 @@ dependencies = [
     "openpyxl >= 3.1.2",
     "importlib-resources >= 1.3",
 ]
-authors = [
-    {name = "Edoardo Giussani", email = "egiussani@izsvenezie.it"},
-    {name = "Alessandro Sartori", email = "asartori@izsvenezie.it"},
-]
-dynamic = ["version"]
 
 [project.readme]
 file = "README.md"
@@ -28,7 +30,9 @@ file = "LICENSE"
 content-type = "text-markdown"
 
 [project.urls]
-Home-page = "https://github.com/izsvenezie-virology/FluMut"
+"Homepage" = "https://izsvenezie-virology.github.io/FluMut"
+"Bug Reports" = "https://github.com/izsvenezie-virology/FluMut/issues"
+"Source" = "https://github.com/izsvenezie-virology/FluMut"
 
 [project.scripts]
 flumut = "flumut.cli:cli"

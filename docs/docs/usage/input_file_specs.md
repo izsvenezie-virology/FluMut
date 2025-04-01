@@ -7,6 +7,7 @@ permalink: docs/usage/input-file
 ---
 
 # Input File
+
 FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
 It can handle partial and complete genome sequences of multiple samples.
 You must provide a single file containing all the nucleotide sequences in FASTA format (an example can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa)).
@@ -16,19 +17,20 @@ For this reason, the header must contain both a sample ID (consistent among sequ
 
 By default, the tool expects the sample ID followed by an underscore and the segment name (e.g. `my_sample_PB2`).
 
-# Custom FASTA header parsing
+## Custom FASTA header parsing
+
 If your sequences have a different FASTA header composition, you can use the option `--name-regex`.
 This works with Python regular expressions, using a first capture group to find the sample and a second capture group to find the segment.
 Here we provide some examples with most common cases:
 
-| FASTA Header                  | Regular Expression                |
-| ----------------------------- | --------------------------------- |
-| my_sample_PB2                 | `(.+)_(.+)`                       |
-| my_sample\|PB2                | `(.+)\|(.+)`                      |
-| my_sample-PB2                 | `(.+)-(.+)`                       |
-| my_sample-PB2_something_else  | `(.+)-(.+?)_`                     |
-| PB2_my_sample                 | `(?P<segment>.+?)_(?P<sample>.+)` |
- 
+| FASTA Header                 | Regular Expression                |
+| ---------------------------- | --------------------------------- |
+| my_sample_PB2                | `(.+)_(.+)`                       |
+| my_sample\|PB2               | `(.+)\|(.+)`                      |
+| my_sample-PB2                | `(.+)-(.+)`                       |
+| my_sample-PB2_something_else | `(.+)-(.+?)_`                     |
+| PB2_my_sample                | `(?P<segment>.+?)_(?P<sample>.+)` |
+
 {: .note}
 To find the regular expression that better fits your FASTA header you can try it on [Regex101](https://regex101.com/) selecting `Python` flavor.
 

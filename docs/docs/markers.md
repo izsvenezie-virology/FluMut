@@ -6,6 +6,8 @@ permalink: docs/markers
 datatable: true
 ---
 
+# Markers
+
 This is the list of all markers present in [![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutDB?label=FluMutDB)](https://github.com/izsvenezie-virology/FluMutDB/releases/latest/).
 
 {: .note}
