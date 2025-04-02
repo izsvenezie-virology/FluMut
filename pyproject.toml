@@ -27,7 +27,7 @@ content-type = "text/markdown"
 
 [project.license]
 file = "LICENSE"
-content-type = "text-markdown"
+content-type = "text/plain"
 
 [project.urls]
 "Homepage" = "https://izsvenezie-virology.github.io/FluMut"
@@ -43,10 +43,9 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-namespaces = true
 
 [tool.setuptools.package-data]
-flumutdata = ["*"]
+"*" = ["*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "flumut.__version__"}
