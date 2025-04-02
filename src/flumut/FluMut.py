@@ -9,7 +9,7 @@ from typing import Dict, Generator, List, Optional, Tuple
 from collections import defaultdict
 from Bio.Align import PairwiseAligner
 
-from flumut.DbReader import close_connection, execute_query, open_connection, to_dict
+from flumut.db_utility.db_connection import execute_query, to_dict
 from flumut import OutputFormatter
 from flumut.DataClass import Mutation, Sample
 from flumut.Exceptions import UnmatchNameException, UnknownSegmentException, UnknownNucleotideException, MalformedFastaException
@@ -33,11 +33,9 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
     if verbose:
         print('LOG: Loading data from FluMutDB...', file=sys.stderr)
 
-    open_connection()
     segments = load_segments()
     mutations = load_mutations()
     annotations = load_annotations()
-    close_connection()
 
     # Per sequence analysis
     for name, seq in read_fasta(fasta_file):
@@ -71,11 +69,9 @@ def start_analysis(name_regex: str, fasta_file: TextIOWrapper,
     if verbose:
         print(f'LOG: Collecting markers...', file=sys.stderr)
 
-    open_connection()
     for sample in samples.values():
         sample.markers = match_markers(sample.mutations, relaxed)
     papers = load_papers()
-    close_connection()
 
     if verbose:
         print('LOG: Preparing outputs...', file=sys.stderr)

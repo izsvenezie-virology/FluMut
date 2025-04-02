@@ -8,7 +8,7 @@ from io import TextIOWrapper
 
 from flumut import Updater
 from flumut.FluMut import start_analysis
-from flumut.DbReader import get_db_version, set_db_file
+from flumut.db_utility.db_connection import DBConnection
 
 
 def versions() -> Dict[str, str]:
@@ -19,7 +19,7 @@ def versions() -> Dict[str, str]:
             Versions for FluMut and FluMutDB packages.
     """
 
-    major, minor, date = get_db_version()
+    major, minor, date = DBConnection().version
     return {
         'FluMut': __version__,
         'FluMutDB': f'{major}.{minor}, released on {date}'
@@ -73,7 +73,7 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
     if name_regex is None:
         name_regex = r'(?P<sample>.+)_(?P<segment>.+)'
     if db_file is not None:
-        set_db_file(db_file)
+        DBConnection().db_file = db_file
 
     start_analysis(name_regex=name_regex,
                    fasta_file=fasta_file,

@@ -1,7 +1,7 @@
 import sys
 import subprocess
 from urllib.request import urlretrieve
-from flumut.DbReader import get_db_file
+from flumut.db_utility.db_connection import DBConnection
 
 
 def update():
@@ -10,5 +10,5 @@ def update():
 
 def update_db_file() -> None:
     url = 'https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/flumut_db.sqlite'
-    db_path = get_db_file()
+    db_path = DBConnection().db_file
     _ = urlretrieve(url, db_path)
