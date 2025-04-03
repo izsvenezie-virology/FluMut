@@ -109,15 +109,37 @@ def markers_by_mutations(mutations: List[Mutation], relaxed: bool) -> List[Dict[
 
     SELECT  markers_summary.all_mutations AS 'Marker',
             markers_tbl.found_mutations AS 'Mutations in your sample',
-            markers_effects.effect_name AS 'Effect', 
-            group_concat(markers_effects.paper_id, '; ') AS 'Literature', 
+            markers_effects.effect_name AS 'Effect',
+            group_concat(markers_effects.paper_id, '; ') AS 'Literature',
             markers_effects.subtype AS 'Subtype'
     FROM markers_effects
     JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
-        SELECT markers_tbl.marker_id 
+        SELECT markers_tbl.marker_id
         FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else '' }
     GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """, to_dict)
+    return res.fetchall()
+
+
+def literature_by_ids(ids: List[str]) -> List[Dict[str, str]]:
+    '''
+    Retrieve all literature records with ID present in a list of IDs.
+
+    :param `List[str]` ids: The list of ids to retrieve.
+    :return `List[Dict[str, str]]`: The list of literature records matched. Keys are the name of the property, values are their value.
+    '''
+    id_list = ','.join(map(lambda x: f"'{x}'", ids))
+    res = execute_query(f"""
+                        SELECT id AS 'Short name',
+                               title AS 'Title',
+                               authors AS 'Authors',
+                               year AS 'Year',
+                               journal AS 'Journal',
+                               web_address AS 'Link',
+                               doi AS 'DOI'
+                        FROM papers
+                        WHERE id IN ({id_list})
+                        """, to_dict)
     return res.fetchall()
