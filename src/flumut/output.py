@@ -2,6 +2,7 @@
 
 import csv
 from io import TextIOWrapper
+import logging
 from typing import Callable, Dict, List, Set, Tuple, Union
 
 from importlib_resources import files
@@ -14,21 +15,22 @@ from flumut.sequence_utility.models import Sample
 
 _outputs: Dict[str, TextIOWrapper] = {}
 '''
-    List of output files to save.
-    Keys are the file type, must correspond to keys in `_output_types`.
+List of output files to save.
+Keys are the file type, must correspond to keys in `_output_types`.
 '''
 
 
-def set_output_file(type: str, file: Union[TextIOWrapper, str]) -> None:
+def set_output_file(type: str, file: TextIOWrapper) -> None:
     '''
     Store the output files to save.
 
     :param `str` type: Output type. Accepted values are `mutations_output`, `markers_output`, `literature_output`, `excel_output`.
     `None` is a valid value and is not stored.
-    :param `TextIOWrapper`|`str` file: File path or opened file.
+    :param `TextIOWrapper` file: The opened file.
     '''
     if file is None:
         return
+    logging.debug(f'Output type {type} will be saved into {file.name}')
     _outputs[type] = file
 
 
@@ -40,6 +42,7 @@ def write_outputs(samples: List[Sample]) -> None:
     Samples must be completely analyzed.
     '''
     for type, file in _outputs.items():
+        logging.debug(f'Writing {type} into {file.name}')
         _outputs_type[type](samples, file)
 
 
@@ -87,7 +90,7 @@ def write_excel_output(samples: List[Sample], output_file: TextIOWrapper) -> Non
     marker_header, marker_values = _prepare_markers_output(samples)
     literature_header, literature_values = _prepare_literature_output(samples)
 
-    wb = _open_workbook((output_file.endswith('.xlsm')))
+    wb = _open_workbook((output_file.name.endswith('.xlsm')))
     _write_excel_sheet(wb, 'Mutations', mutation_header, mutation_values)
     _write_excel_sheet(wb, 'Markers', marker_header, marker_values)
     _write_excel_sheet(wb, 'Literature', literature_header, literature_values)
