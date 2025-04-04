@@ -1,3 +1,4 @@
+import logging
 from Bio.Align import PairwiseAligner, Alignment
 
 from flumut.db_utility.db_data import references_by_segment
@@ -22,6 +23,9 @@ def align(sequence: str, segment: str) -> NucleotideSequence:
             best_referecence = ReferenceSequence(reference.segment, reference.name, alignment[0])
             best_alignment = NucleotideSequence(alignment[1], best_referecence, alignment.score)
             best_score = alignment.score
+        logging.debug(f'Best reference: {best_referecence.name} (segment {best_referecence.segment})')
+        logging.debug(f'reference: {alignment[0]}')
+        logging.debug(f'sample:    {alignment[1]}')
     return best_alignment
 
 
