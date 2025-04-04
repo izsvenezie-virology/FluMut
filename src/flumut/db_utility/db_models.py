@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Dict
 
@@ -13,6 +11,17 @@ class Reference:
     '''Name of the reference.'''
     sequence: str
     '''Nucleotide sequence.'''
+
+
+@dataclass
+class MutationMapping:
+    '''Mutations data specific of a reference sequence.'''
+    reference_name: str
+    '''Name of the reference sequence.'''
+    position: int
+    '''Position of the mutation on the reference sequence.'''
+    mutation_sequence: str
+    '''Sequence of the mutation.'''
 
 
 @dataclass
@@ -32,16 +41,3 @@ class Mutation:
 
     def __hash__(self):
         return hash(self.name)
-
-
-@dataclass
-class MutationMapping:
-    '''Mutations data specific of a reference sequence.'''
-    mutation: Mutation
-    '''Parent mutation.'''
-    reference_name: str
-    '''Name of the reference sequence.'''
-    position: int
-    '''Position of the mutation on the reference sequence.'''
-    mutation_sequence: str
-    '''Sequence of the mutation.'''

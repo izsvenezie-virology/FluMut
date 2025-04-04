@@ -50,7 +50,7 @@ def mutations() -> Dict[str, List[Mutation]]:
         res_map = execute_query(
             f"SELECT reference_name, position, ref_seq, alt_seq FROM mutation_mappings WHERE mutation_name = '{name}'")
         for reference_name, position, ref_seq, alt_seq in res_map:
-            mutation.mappings[reference_name] = MutationMapping(mutation, reference_name, position, alt_seq)
+            mutation.mappings[reference_name] = MutationMapping(reference_name, position, alt_seq)
     return mutations
 
 
