@@ -17,7 +17,7 @@ def align(sequence: str, segment: str) -> NucleotideSequence:
     '''
     sequence = sequence.replace('-', '')
     references = references_by_segment(segment)
-    best_score = 0
+    best_score = -100000
 
     for reference in references:
         alignment = _pairwise_alignment(reference.sequence, sequence)
@@ -26,8 +26,8 @@ def align(sequence: str, segment: str) -> NucleotideSequence:
             best_alignment = NucleotideSequence(alignment[1], best_referecence, alignment.score)
             best_score = alignment.score
     logging.debug(f'Best reference: {best_referecence.name} (segment {best_referecence.segment})')
-    logging.debug(f'reference: {alignment[0]}')
-    logging.debug(f'sample:    {alignment[1]}')
+    logging.debug(f'reference: {best_referecence.sequence}')
+    logging.debug(f'sample:    {best_alignment.sequence}')
     return best_alignment
 
 
@@ -40,10 +40,12 @@ def _pairwise_alignment(reference: str, sample: str) -> Alignment:
     :return `Alignment`: Best alignment.
     '''
     aligner = PairwiseAligner()
-    aligner.mismatch_score = 0
+    aligner.mismatch_score = -1
     aligner.open_gap_score = -5
-    aligner.extend_gap_score = -2
+    aligner.extend_gap_score = -1
     aligner.query_left_open_gap_score = 1
     aligner.query_right_open_gap_score = 1
+    aligner.target_left_open_gap_score = 1
+    aligner.target_right_open_gap_score = 1
 
     return aligner.align(reference, sample)[0]
