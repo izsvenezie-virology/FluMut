@@ -67,7 +67,7 @@ def set_dbfile(ctx, param, value):
 @click.option('-m', '--markers-output', callback=set_output, expose_value=False, type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
 @click.option('-M', '--mutations-output', callback=set_output, expose_value=False, type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
 @click.option('-l', '--literature-output', callback=set_output, expose_value=False, type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
-@click.option('-x', '--excel-output', callback=set_output, expose_value=False, type=str, default=None, help='Excel complete report.')
+@click.option('-x', '--excel-output', callback=set_output, expose_value=False, type=File('w', lazy=False), default=None, help='Excel complete report.')
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
 def cli(fasta_files: File, relaxed: bool, skip_unmatch_names: bool) -> None:

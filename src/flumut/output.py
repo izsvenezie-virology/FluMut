@@ -12,11 +12,10 @@ from flumut.db_utility.db_data import literature_by_ids
 from flumut.db_utility.db_models import Mutation
 from flumut.sequence_utility.models import Sample
 
-_outputs: Dict[str, Union[TextIOWrapper, str]] = {}
+_outputs: Dict[str, TextIOWrapper] = {}
 '''
     List of output files to save.
     Keys are the file type, must correspond to keys in `_output_types`.
-    Values are `str` for Excel output or `TextIOWrapper` for text outputs.
 '''
 
 
@@ -77,12 +76,12 @@ def write_literature_output(samples: List[Sample], output_file: TextIOWrapper) -
     _write_tsv(output_file, header, values)
 
 
-def write_excel_output(samples: List[Sample], output_file: str) -> None:
+def write_excel_output(samples: List[Sample], output_file: TextIOWrapper) -> None:
     '''
     Write complete Excel output.
 
     :param `List[Sample]` samples: Samples to write in the output.
-    :param `str` output_file: Path for the output file.
+    :param `TextIOWrapper` output_file: Path for the output file.
     '''
     mutation_header, mutation_values = _prepare_mutation_output(samples)
     marker_header, marker_values = _prepare_markers_output(samples)
@@ -191,14 +190,15 @@ def _write_excel_sheet(wb: Workbook, sheet_name: str, header: List[str], values:
     ws.add_table(table)
 
 
-def _save_workbook(wb: Workbook, output_file: str) -> None:
+def _save_workbook(wb: Workbook, output_file: TextIOWrapper) -> None:
     '''
     Save the workbook in the specified path.
 
     :param `Workbook` wb: The workbook to save.
     :param `str` output_file: The path where save the workbook.
     '''
-    wb.save(output_file)
+    output_file.close()
+    wb.save(output_file.name)
 
 
 _outputs_type: Dict[str, Callable] = {
