@@ -1,7 +1,12 @@
+import logging
 import sqlite3
+import sys
 from typing import Any, Callable, Dict, Tuple
 
 from importlib_resources import files
+
+REQUIRED_DB_VERSION = 7
+'''The major version of FluMutDB required to use this version of FluMut.'''
 
 
 class DBConnection:
@@ -36,6 +41,7 @@ class DBConnection:
         '''The connection to the database.'''
         if self._connection is None:
             self._connection = sqlite3.connect(self.connection_string, uri=True)
+            self.check_db_version()
         return self._connection
 
     @property
@@ -54,12 +60,29 @@ class DBConnection:
     def version_string(self) -> str:
         '''Database version as a string.'''
         major, minor, date = self.version
-        return f'{major}.{minor}, released on {date}'
+        return f'v.{major}.{minor}, released on {date}'
 
     @property
     def is_pip_package(self) -> bool:
         '''Checks if the database is the flumutdb package one.'''
         return self._default_db == self.db_file
+
+    def check_db_version(self):
+        '''
+        Checks if the FluMutDB version is compatible with this version of FluMut.
+        Exits if versions are not compatible.
+        '''
+        db_major_version, _, _ = self.version
+        if db_major_version < REQUIRED_DB_VERSION:
+            logging.critical(f'FluMutDB {self.version_string} is too old.')
+            logging.critical(f'This version of FluMut works only with FluMutDB v.{REQUIRED_DB_VERSION}.x.')
+            logging.critical(f'Please, update FluMutDB with `flumut --update`.')
+            sys.exit(1)
+        if db_major_version > REQUIRED_DB_VERSION:
+            logging.critical(f'FluMutDB {self.version_string} is too recent.')
+            logging.critical(f'This version of FluMut works only with FluMutDB v.{REQUIRED_DB_VERSION}.x.')
+            logging.critical(f'Please, search for FluMut updates.')
+            sys.exit(1)
 
     def execute_query(self, query: str, row_factory: Callable = None) -> sqlite3.Cursor:
         '''
