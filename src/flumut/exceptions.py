@@ -1,5 +1,3 @@
-import sys
-
 class UnmatchNameException(Exception):
     def __init__(self, name, regex) -> None:
         self.name = name
@@ -22,10 +20,12 @@ class UnknownNucleotideException(Exception):
         self.message = f'Unexpected nucleotide in codon "{codon}".'
         super().__init__(self.message)
 
+
 class MalformedFastaException(Exception):
     def __init__(self) -> None:
         self.message = 'Provided FASTA file does not start whit ">".'
         super().__init__(self.message)
+
 
 class PermissionDeniedException(Exception):
     def __init__(self, file_name) -> None:

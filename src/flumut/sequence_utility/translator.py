@@ -2,7 +2,7 @@
 from copy import deepcopy
 import itertools
 from typing import List, Optional, Tuple
-from flumut.Exceptions import UnknownNucleotideException
+from flumut.exceptions import UnknownNucleotideException
 from flumut.db_utility.db_data import annotations_by_reference
 from flumut.sequence_utility.models import NucleotideSequence, AminoAcidSequence
 

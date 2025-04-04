@@ -71,7 +71,7 @@ def set_dbfile(ctx, param, value):
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
 def cli(fasta_files: File, relaxed: bool, skip_unmatch_names: bool) -> None:
-    analyze(fasta_files, relaxed, skip_unmatch_names)
+    analyze(fasta_files, relaxed)
 
 
 if __name__ == '__main__':
