@@ -1,16 +1,8 @@
-class UnmatchNameException(Exception):
-    def __init__(self, name, regex) -> None:
-        self.name = name
+class UnmatchingHeaderException(Exception):
+    def __init__(self, header, regex) -> None:
+        self.header = header
         self.regex = regex
-        self.message = f'Unable to parse "{name}" with regular expression "{regex}".'
-        super().__init__(self.message)
-
-
-class UnknownSegmentException(Exception):
-    def __init__(self, name, regex, segment) -> None:
-        self.name = name
-        self.regex = regex
-        self.message = f'Unrecognized segment "{segment}", found in "{name}" parsed with "{regex}".'
+        self.message = f'Unable to parse "{header}" with regular expression "{regex}".'
         super().__init__(self.message)
 
 
