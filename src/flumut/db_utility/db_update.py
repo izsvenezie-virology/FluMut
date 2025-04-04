@@ -1,6 +1,7 @@
-import sys
 import subprocess
+import sys
 from urllib.request import urlretrieve
+
 from flumut.db_utility.db_connection import DBConnection
 
 

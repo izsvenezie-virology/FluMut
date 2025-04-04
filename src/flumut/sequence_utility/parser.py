@@ -1,5 +1,5 @@
-
 from typing import List
+
 from flumut.db_utility.db_data import mutations_by_protein
 from flumut.db_utility.db_models import Mutation
 from flumut.sequence_utility.models import Sample

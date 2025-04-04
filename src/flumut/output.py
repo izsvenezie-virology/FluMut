@@ -1,14 +1,13 @@
-
-
 import csv
-from io import TextIOWrapper
 import logging
-from typing import Callable, Dict, List, Set, Tuple, Union
+from io import TextIOWrapper
+from typing import Callable, Dict, List, Set, Tuple
 
 from importlib_resources import files
 from openpyxl import Workbook, load_workbook
-from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils.cell import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
+
 from flumut.db_utility.db_data import literature_by_ids
 from flumut.db_utility.db_models import Mutation
 from flumut.sequence_utility.models import Sample

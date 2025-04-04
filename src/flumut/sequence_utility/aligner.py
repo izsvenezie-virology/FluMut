@@ -1,8 +1,10 @@
 import logging
-from Bio.Align import PairwiseAligner, Alignment
+
+from Bio.Align import Alignment, PairwiseAligner
 
 from flumut.db_utility.db_data import references_by_segment
-from flumut.sequence_utility.models import NucleotideSequence, ReferenceSequence
+from flumut.sequence_utility.models import (NucleotideSequence,
+                                            ReferenceSequence)
 
 
 def align(sequence: str, segment: str) -> NucleotideSequence:

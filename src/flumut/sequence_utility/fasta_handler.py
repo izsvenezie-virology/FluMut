@@ -1,6 +1,6 @@
-from io import TextIOWrapper
 import logging
 import re
+from io import TextIOWrapper
 from typing import List, Optional, Tuple
 
 from flumut.exceptions import MalformedFastaException
