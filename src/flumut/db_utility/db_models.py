@@ -26,7 +26,7 @@ class Mutation:
     '''Name of protein.'''
 
     mappings: Dict[str, MutationMapping] = field(default_factory=dict, init=False)
-    '''Collection of mappigns for different reference sequences.'''
+    '''Collection of mappings for different reference sequences.'''
     aas_in_samples: Dict[str, str] = field(default_factory=dict, init=False)
     '''Collection of AAs of each sample at mutation position.'''
 

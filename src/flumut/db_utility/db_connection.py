@@ -5,7 +5,8 @@ from importlib_resources import files
 
 
 class DBConnection:
-    _db_file: str = files('flumutdb').joinpath('flumut_db.sqlite')
+    _default_db: str = files('flumutdb').joinpath('flumut_db.sqlite')
+    _db_file: str = _default_db
     '''Default database is the one stored in flumutdb package.'''
     _connection: sqlite3.Connection = None
 
@@ -48,6 +49,17 @@ class DBConnection:
         '''
         major, minor, date = self.execute_query('SELECT * FROM db_version').fetchone()
         return int(major), int(minor), date
+
+    @property
+    def version_string(self) -> str:
+        '''Database version as a string.'''
+        major, minor, date = self.version
+        return f'{major}.{minor}, released on {date}'
+
+    @property
+    def is_pip_package(self) -> bool:
+        '''Checks if the database is the flumutdb package one.'''
+        return self._default_db == self.db_file
 
     def execute_query(self, query: str, row_factory: Callable = None) -> sqlite3.Cursor:
         '''
