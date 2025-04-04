@@ -6,21 +6,22 @@ from flumut.db_utility.db_connection import DBConnection
 
 
 def update() -> None:
+    '''Update FluMutDB.'''
     db = DBConnection()
     if db.is_pip_package:
-        pip_update()
+        _pip_update()
     else:
-        file_update()
+        _file_update()
 
 
-def pip_update() -> None:
+def _pip_update() -> None:
     '''Update flumutdb Python package using pip.'''
     _ = subprocess.check_output([sys.executable, '-m', 'pip', 'install',
                                 '--upgrade', 'flumutdb'], stderr=subprocess.PIPE)
     pass
 
 
-def file_update() -> None:
+def _file_update() -> None:
     '''Download and replace the database file, the Python package is not updated.'''
     url = 'https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/flumut_db.sqlite'
     db_path = DBConnection().db_file

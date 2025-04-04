@@ -1,3 +1,5 @@
+import logging
+import traceback
 import click
 from click import File
 
@@ -55,6 +57,13 @@ def set_verbosity(ctx, param, value):
     initialize_logging(value)
 
 
+def print_errors(error: Exception) -> None:
+    if logging.root.level == logging.DEBUG:
+        traceback.print_exc()
+    else:
+        logging.critical(f'{type(error).__name__}: {error}')
+
+
 @click.command()
 # Help and versions
 @click.help_option('-h', '--help')
@@ -79,7 +88,10 @@ def set_verbosity(ctx, param, value):
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
 def cli(fasta_files: File, relaxed: bool, allow_unmatching_headers: bool) -> None:
-    analyze(fasta_files, relaxed, allow_unmatching_headers)
+    try:
+        analyze(fasta_files, relaxed, allow_unmatching_headers)
+    except Exception as e:
+        print_errors(e)
 
 
 if __name__ == '__main__':
