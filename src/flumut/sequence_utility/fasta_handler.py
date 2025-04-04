@@ -1,6 +1,7 @@
 from io import TextIOWrapper
+import logging
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from flumut.exceptions import MalformedFastaException
 from flumut.sequence_utility.models import FastaSequence
@@ -15,6 +16,7 @@ def set_header_pattern(pattern: str) -> None:
 
     :param `str` pattern: RegEx string pattern.
     '''
+    logging.debug(f'Set "{pattern}" as header pattern.')
     global _header_pattern
     _header_pattern = re.compile(pattern)
 
@@ -35,6 +37,7 @@ def read_fasta(fasta: TextIOWrapper) -> List[FastaSequence]:
     :param `TextIOWrapper` fasta: The opened Fasta file.
     :return `List[FastaSequence]`: All the sequences found in the Fasta file.
     '''
+    logging.debug(f'Reading file {fasta.name}.')
     sequences = []
     for line in fasta:
         line = line.strip()
@@ -47,21 +50,33 @@ def read_fasta(fasta: TextIOWrapper) -> List[FastaSequence]:
         try:
             sequence.sequence += line.upper()
         except UnboundLocalError:
-            raise MalformedFastaException() from None
+            raise MalformedFastaException(fasta.name) from None
+    logging.debug(f'Found {len(sequences)} sequences.')
     return sequences
 
 
-def parse_header(header: str) -> Tuple[str, str]:
+def parse_header(header: str) -> Tuple[Optional[str], Optional[str]]:
     '''
     Parse the header with the header pattern.
     It searches for two groups in order to retrieve sample and segment from the header.
     The header pattern can be set with set_header_pattern function.
 
     :param `str` header: The FASTA header.
-    :return `str` sample: The sample name.
-    :return `str`segment: The segment name. 
+    :param `str` allow_unmatching_headers: If true, continues the execution in 
+    :return `Optional[str]` sample: The sample name. Returns `None` if  not found.
+    :return `Optional[str]`segment: The segment name. Returns `None` if not found.
     '''
+    logging.debug(f'Parsing "{header}" with "{get_header_pattern()}"')
+    sample = None
+    segment = None
+
     match = _header_pattern.match(header)
-    sample = match.groupdict().get('sample', match.group(1))
-    segment = match.groupdict().get('segment', match.group(2))
+    try:
+        sample = match.groupdict().get('sample', match.group(1))
+        segment = match.groupdict().get('segment', match.group(2))
+    except IndexError as e:
+        pass
+
+    logging.debug(f'Sample:  "{sample}"')
+    logging.debug(f'Segment: "{segment}"')
     return sample, segment

@@ -22,8 +22,9 @@ class UnknownNucleotideException(Exception):
 
 
 class MalformedFastaException(Exception):
-    def __init__(self) -> None:
-        self.message = 'Provided FASTA file does not start whit ">".'
+    def __init__(self, fasta) -> None:
+        self.fasta = fasta
+        self.message = f'{fasta} does not start whit ">".'
         super().__init__(self.message)
 
 
