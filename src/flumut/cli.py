@@ -1,7 +1,7 @@
 import click
 from click import File
 
-from flumut import __author__, __contact__, __version__
+from flumut import __author__, __contact__, __version__, initialize_logging
 from flumut.analysis import analyze
 from flumut.db_utility.db_connection import DBConnection
 from flumut.db_utility.db_update import update
@@ -49,6 +49,12 @@ def set_dbfile(ctx, param, value):
     DBConnection().db_file = value
 
 
+def set_verbosity(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    initialize_logging(value)
+
+
 @click.command()
 # Help and versions
 @click.help_option('-h', '--help')
@@ -63,6 +69,8 @@ def set_dbfile(ctx, param, value):
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
 @click.option('-n', '--name-regex', type=str, callback=set_name_regex, expose_value=False, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True,
               help='Set regular expression to parse sequence name.')
+@click.option('--loglevel', type=click.Choice(['dbg', 'inf', 'wrn', 'err'], case_sensitive=False), callback=set_verbosity, expose_value=False, default='wrn', show_default=True,
+              help='Verbosity of the logging messages')
 # Output files
 @click.option('-m', '--markers-output', callback=set_output, expose_value=False, type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
 @click.option('-M', '--mutations-output', callback=set_output, expose_value=False, type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
