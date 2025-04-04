@@ -14,7 +14,8 @@ def update() -> None:
 
 def pip_update() -> None:
     '''Update flumutdb Python package using pip.'''
-    output = subprocess.check_output([sys.executable, '-m', 'pip', 'install', '-U', 'flumutdb'], stderr=subprocess.PIPE)
+    _ = subprocess.check_output([sys.executable, '-m', 'pip', 'install',
+                                '--upgrade', 'flumutdb'], stderr=subprocess.PIPE)
     pass
 
 
