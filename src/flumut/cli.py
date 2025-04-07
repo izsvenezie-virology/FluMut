@@ -58,10 +58,9 @@ def set_verbosity(ctx, param, value):
 
 
 def print_errors(error: Exception) -> None:
+    logging.critical(f'{type(error).__name__}: {error}')
     if logging.root.level == logging.DEBUG:
         traceback.print_exc()
-    else:
-        logging.critical(f'{type(error).__name__}: {error}')
 
 
 @click.command()
