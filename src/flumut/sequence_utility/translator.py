@@ -18,13 +18,14 @@ def translate(alignment: NucleotideSequence) -> List[AminoAcidSequence]:
     proteins = []
     for protein_name, annotations in annotations_by_reference(alignment.referecence.name).items():
         sample_cds, reference_cds = _get_cds(alignment, annotations)
+        sequence_aa, referenece_aa, frameshifts = _translate_sequence(sample_cds, reference_cds)
 
         reference = deepcopy(alignment.referecence)
-        reference.sequence = ''.join(_translate_sequence(reference_cds))
-
-        protein_sequence = _translate_sequence(sample_cds)
-        protein = AminoAcidSequence(protein_name, protein_sequence, reference)
+        reference.sequence = ''.join(referenece_aa)
+        protein = AminoAcidSequence(protein_name, sequence_aa, reference)
+        protein.frameshifts = frameshifts
         proteins.append(protein)
+
     return proteins
 
 
@@ -49,52 +50,83 @@ def _get_cds(alignment: NucleotideSequence, cds: List[Tuple[int, int]]) -> Tuple
     return seq_cds, ref_cds
 
 
-def _translate_sequence(seq: str) -> List[str]:
+def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[Tuple[int, int]]]:
     '''
     Translate a nucleotide sequence in an amino acid sequence.
 
     :param `str` seq: Aligned nucleotide sequence to translate.
-    :return `str`: Amino acid translated sequence.
+    :return `List[str]`: Amino acid translated sequence of the sample.
+    :return `List[str]`: Amino acid translated sequence of the reference.
+    :return `List[Tuple[int, int]]`: List of frameshifts.
     '''
-    nts = list(seq)
-    aas = []
+    ref_nts = list(ref)
+    seq_nts = list(seq)
+
+    ref_aas = []
+    seq_aas = []
+
+    frameshift_start = None
+    frameshifts = []
     is_first = True
 
-    for i in range(0, len(nts), 3):
-        codon = _get_codon(nts, i, is_first)
+    for i in range(0, len(seq_nts), 3):
+        codon, seq_frameshift = _get_codon(seq_nts, i, is_first)
         aa = _translate_codon(codon)
         if aa not in ('-', '?'):
             is_first = False
-        aas.append(aa)
-    return aas
+        seq_aas.append(aa)
+
+        codon, ref_frameshift = _get_codon(ref_nts, i)
+        aa = _translate_codon(codon)
+        ref_aas.append(aa)
+
+        if seq_frameshift is None or ref_frameshift is None:
+            continue
+        if not seq_frameshift - ref_frameshift == 0 and frameshift_start is None:
+            frameshift_start = int(i/3 + 1)
+            continue
+        if seq_frameshift - ref_frameshift == 0 and frameshift_start is not None:
+            frameshift_end = int(i/3)
+            if frameshift_end - frameshift_start > 1:
+                frameshifts.append((frameshift_start, frameshift_end))
+            frameshift_start = None
+            continue
+
+    if frameshift_start is not None:
+        frameshift_end = len(seq_aas)
+        if frameshift_end - frameshift_start > 1:
+            frameshifts.append((frameshift_start, frameshift_end))
+    return seq_aas, ref_aas, frameshifts
 
 
-def _get_codon(seq: List[str], start: int, is_first: bool) -> List[str]:
+def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List[str], int]:
     '''
     Extract the codon from a sequence.
 
     :param `List[str] seq`: Sequence splitted by nucleotides.
     :param `int` start: Start position of the codon.
-    :param `bool` is_first: If `true` codons starting with `-` are returned as is. 
+    :param `bool` is_first: If `true` codons containing `-` are returned as is. 
     If `false` a frameshift is created.
-    :return `str`, `str`, `str`: The codon splitted by nucleotides. 
+    :return `str`, `str`, `str` codon: The codon splitted by nucleotides.
+    :return `int` frameshift_status: Number of nucleotides moved in order to create the codon.
     '''
     codon = seq[start:start + 3]
     if codon == ['-', '-', '-']:  # If the codon is a deletion
-        return codon
+        return codon, None
     # If the codon starts from mid codon (to avoid frameshifts in truncated sequences):
     if is_first and '-' in codon:
-        return codon
+        return codon, None
     if 'N' in codon:
-        return codon
+        return codon, None
     codon = [n for n in codon if n != '-']
+    frameshift_status = 3 - len(codon)
     while len(codon) < 3:
         next_nucl = _find_next_nucl(seq, start)
         if not next_nucl:
             break
         codon.append(seq[next_nucl])
         seq[next_nucl] = '-'
-    return codon
+    return codon, frameshift_status
 
 
 def _translate_codon(codon: List[str]) -> str:
@@ -129,7 +161,6 @@ def _find_next_nucl(seq: List[str], start: int) -> Optional[int]:
     return None
 
 
-'''Codon to translated amminoacid'''
 _translation_dict = {
     'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
     'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
@@ -141,11 +172,12 @@ _translation_dict = {
     'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G',
     '---': '-'
 }
+'''Codon to translated amminoacid'''
 
-'''Degenerated nucleotide to list of possible nucleotides'''
 _degeneration_dict = {
     'A': ['A'], 'C': ['C'], 'G': ['G'], 'T': ['T'], 'U': ['T'], '-': ['-'],
     'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'], 'W': ['A', 'T'],
     'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['C', 'G', 'T'], 'D': ['A', 'G', 'T'],
     'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
 }
+'''Degenerated nucleotide to list of possible nucleotides'''

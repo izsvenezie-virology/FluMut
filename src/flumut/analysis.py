@@ -50,6 +50,10 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
 
         proteins = translate(alignment)
         alignment.proteins = proteins
+        for protein in proteins:
+            for frameshift in protein.frameshifts:
+                logging.warning(
+                    f'Frameshift in {sequence.header} from position {frameshift[0]} to {frameshift[1]} of protein {protein.name}.')
 
         if sample not in samples:
             samples[sample] = Sample(sample)

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from flumut.db_utility.db_models import Mutation
 
@@ -40,6 +40,8 @@ class AminoAcidSequence():
         Each position is a string of all AAs that may be present.'''
     referecence: ReferenceSequence
     '''The amino acid reference.'''
+    frameshifts: List[Tuple[int, int]] = field(default_factory=list, init=False)
+    '''List of frameshifts.'''
 
     mutations: List[Mutation] = field(default_factory=list, init=False)
     '''All mutations found in the sample.'''
