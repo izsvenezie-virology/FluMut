@@ -43,9 +43,11 @@ def mutations() -> Dict[str, List[Mutation]]:
     :returns `Dict[str, List[Mutation]]`: The key is the protein name, the value is a list of the mutations in that protein.
     '''
     mutations = defaultdict(list)
-    res_mut = execute_query("SELECT name, type, protein_name FROM 'mutations'")
-    for name, type, protein_name in res_mut:
-        mutation = Mutation(name, type, protein_name)
+    res_mut = execute_query("""SELECT segments.name, segments.number, mutations.name, mutations.type, mutations.protein_name, mutations.default_position FROM 'mutations'
+								INNER JOIN proteins ON mutations.protein_name == proteins.name
+                                INNER JOIN segments ON proteins.segment_name == segments.name""")
+    for segment, segment_number, name, type, protein_name, default_position in res_mut:
+        mutation = Mutation(segment, int(segment_number), name, type, protein_name, int(default_position))
         mutations[protein_name].append(mutation)
         res_map = execute_query(
             f"SELECT reference_name, position, ref_seq, alt_seq FROM mutation_mappings WHERE mutation_name = '{name}'")
@@ -117,7 +119,7 @@ def markers_by_mutations(mutations: List[Mutation], relaxed: bool) -> List[Dict[
     JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
     WHERE markers_effects.marker_id IN (
         SELECT markers_tbl.marker_id
-        FROM markers_tbl) { 'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else '' }
+        FROM markers_tbl) {'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else ''}
     GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
     """, to_dict)
     return res.fetchall()

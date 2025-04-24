@@ -110,7 +110,7 @@ def _prepare_mutation_output(samples: List[Sample]) -> Tuple[List[str], List[Dic
         aa_dict['Sample'] = sample.name
         values.append(aa_dict)
 
-    mutations = sorted(mutations, key=lambda x: (x.protein_name, list(x.mappings.values())[0].position))
+    mutations = sorted(mutations, key=lambda x: (x.segment_number, x.default_position))
     header = ['Sample'] + [mutation.name for mutation in mutations]
     return header, values
 

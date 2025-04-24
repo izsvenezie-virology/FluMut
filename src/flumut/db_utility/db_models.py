@@ -26,6 +26,10 @@ class MutationMapping:
 
 @dataclass
 class Mutation:
+    segment: str
+    '''Segment name.'''
+    segment_number: int
+    '''Segment number.'''
     '''Mutations data not connected to reference sequences.'''
     name: str
     '''Name of the mutation.'''
@@ -33,6 +37,8 @@ class Mutation:
     '''Type of the mutation.'''
     protein_name: str
     '''Name of protein.'''
+    default_position: int
+    '''A position of the mutation. Used to sort mutations based on position when multiple mappings are present.'''
 
     mappings: Dict[str, MutationMapping] = field(default_factory=dict, init=False)
     '''Collection of mappings for different reference sequences.'''
