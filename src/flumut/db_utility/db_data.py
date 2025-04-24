@@ -102,25 +102,51 @@ def markers_by_mutations(mutations: List[Mutation], relaxed: bool) -> List[Dict[
     '''
     muts_str = ','.join([f"'{mut.name}'" for mut in mutations])
     res = execute_query(f"""
-    WITH markers_tbl AS (SELECT marker_id,
-                                group_concat(mutation_name) AS found_mutations,
-                                count(mutation_name) AS found_mutations_count
-                            FROM markers_mutations
-                            WHERE mutation_name IN ({muts_str})
-                            GROUP BY markers_mutations.marker_id)
+    SELECT mm.marker_id,
+        -- Get all mutations composing marker
+        (SELECT group_concat(mutation_name, '; ') 
+        FROM (
+            SELECT mutation_name
+            FROM markers_mutations 
+            JOIN mutations ON mutation_name = mutations.name
+            JOIN proteins ON mutations.protein_name = proteins.name
+            JOIN segments ON proteins.segment_name = segments.name
+            WHERE marker_id = mm.marker_id 
+            ORDER BY segments.number, proteins.name, mutations.default_position)) AS 'Marker',
 
-    SELECT  markers_summary.all_mutations AS 'Marker',
-            markers_tbl.found_mutations AS 'Mutations in your sample',
-            markers_effects.effect_name AS 'Effect',
-            group_concat(markers_effects.paper_id, '; ') AS 'Literature',
-            markers_effects.subtype AS 'Subtype'
-    FROM markers_effects
-    JOIN markers_tbl ON markers_tbl.marker_id = markers_effects.marker_id
-    JOIN markers_summary ON markers_summary.marker_id = markers_effects.marker_id
-    WHERE markers_effects.marker_id IN (
-        SELECT markers_tbl.marker_id
-        FROM markers_tbl) {'AND markers_summary.all_mutations_count = markers_tbl.found_mutations_count' if not relaxed else ''}
-    GROUP BY markers_effects.marker_id, markers_effects.effect_name, markers_effects.subtype
+        -- Get all mutations composing marker found in the samples
+        (SELECT group_concat(mutation_name, '; ')
+        FROM (
+            SELECT DISTINCT mutation_name 
+            FROM markers_mutations
+            JOIN mutations ON mutation_name = mutations.name
+            JOIN proteins ON mutations.protein_name = proteins.name
+            JOIN segments ON proteins.segment_name = segments.name
+            WHERE mutation_name IN ({muts_str})
+                AND marker_id = mm.marker_id
+            ORDER BY segments.number, proteins.name, mutations.default_position)) AS 'Mutations in your sample',
+
+        -- Get marker information
+        me.effect_name AS 'Effect',
+        me.subtype AS 'Subtype',
+        (SELECT group_concat(paper_id, '; ')
+        FROM (SELECT DISTINCT paper_id
+            FROM markers_effects
+            WHERE paper_id IN (SELECT paper_id FROM markers_effects WHERE marker_id = mm.marker_id)
+            ORDER BY paper_id)) AS 'Literature',
+
+        -- Counts mutations in the marker
+        count(DISTINCT mutation_name) AS marker_found, 
+        -- Counts mutations composing marker found in the sample
+        (SELECT count(*)
+            FROM markers_mutations
+            WHERE marker_id = mm.marker_id) AS marker_tot
+
+        FROM markers_mutations AS mm
+        JOIN markers_effects AS me ON mm.marker_id = me.marker_id
+        WHERE mm.mutation_name IN ({muts_str}) 
+        GROUP BY mm.marker_id, me.effect_name, me.subtype
+        {"HAVING marker_found = marker_tot" if not relaxed else ''};
     """, to_dict)
     return res.fetchall()
 
