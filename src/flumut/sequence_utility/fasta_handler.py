@@ -3,7 +3,7 @@ import re
 from io import TextIOWrapper
 from typing import List, Optional, Tuple
 
-from flumut.exceptions import MalformedFastaException
+from flumut.sequence_utility.exceptions import MalformedFastaException
 from flumut.sequence_utility.models import FastaSequence
 
 _header_pattern: re.Pattern = None
