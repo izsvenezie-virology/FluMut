@@ -1,12 +1,14 @@
 import logging
 import traceback
+
 import click
 from click import File
 
-from flumut import __author__, __contact__, __version__, initialize_logging
+from flumut import __author__, __contact__, __version__
 from flumut.analysis import analyze
 from flumut.db_utility.db_connection import DBConnection
 from flumut.db_utility.db_update import update
+from flumut.logger import initialize_logging
 from flumut.output import set_output_file
 from flumut.sequence_utility.fasta_handler import set_header_pattern
 
@@ -28,7 +30,6 @@ def print_all_versions(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     print(f'flumut: {__version__}')
-    major, minor, date = DBConnection().version
     print(f'flumutdb: {DBConnection().version_string}')
     ctx.exit()
 

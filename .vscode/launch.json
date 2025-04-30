@@ -22,7 +22,8 @@
                 "examples/multiple_samples_literature.tsv",
                 "-n",
                 "(?P<sample>.+)_(?P<segment>.+)",
-                "--loglevel", "dbg",
+                "--relaxed",
+                "--loglevel", "inf",
                 "examples/multiple_samples.fa"
             ]
         },
