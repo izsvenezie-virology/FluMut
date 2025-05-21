@@ -41,7 +41,7 @@ def write_outputs(samples: List[Sample]) -> None:
     Samples must be completely analyzed.
     '''
     for type, file in _outputs.items():
-        logging.debug(f'Writing {type} into {file.name}')
+        logging.info(f'Writing {type} into {file.name}')
         _outputs_type[type](samples, file)
 
 
