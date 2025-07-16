@@ -21,7 +21,7 @@ def analyze(fastas: Tuple[TextIOWrapper], relaxed: bool, allow_unmatching_header
 
 
 def collect_sequences(fastas: Tuple[TextIOWrapper]) -> List[FastaSequence]:
-    logging.info(f'Collecting sequences from {len(fastas)} Fasta.')
+    logging.info(f'Collecting sequences from {len(fastas)} Fasta files.')
     sequences: List[FastaSequence] = []
     for fasta in fastas:
         sequences += read_fasta(fasta)
@@ -46,14 +46,17 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
 
         alignment = align(sequence.sequence, segment)
         sequence.alignment = alignment
-        logging.info(f'Aligned on {alignment.referecence.name} with score {alignment.score}.')
+        logging.info(f'Aligned "{sequence.header}" on "{alignment.referecence.name}" with score {alignment.score:.0f}.')
+        if alignment.score < len(sequence.sequence)/2:
+            logging.warning(
+                f'Low alignment quality between "{sequence.header}" and reference "{alignment.referecence.name}" (score {alignment.score})')
 
         proteins = translate(alignment)
         alignment.proteins = proteins
         for protein in proteins:
             for frameshift in protein.frameshifts:
                 logging.warning(
-                    f'Frameshift in {sequence.header} from position {frameshift[0]} to {frameshift[1]} of protein {protein.name}.')
+                    f'Frameshift in "{sequence.header}" from position {frameshift[0]} to {frameshift[1]} in protein "{protein.name}" (length {len(protein.sequence)}).')
 
         if sample not in samples:
             samples[sample] = Sample(sample)
