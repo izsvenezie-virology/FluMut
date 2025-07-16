@@ -74,7 +74,7 @@ def parse_header(header: str) -> Tuple[Optional[str], Optional[str]]:
     try:
         sample = match.groupdict().get('sample', match.group(1))
         segment = match.groupdict().get('segment', match.group(2))
-    except IndexError as e:
+    except (IndexError, AttributeError):
         pass
 
     logging.debug(f'Sample:  "{sample}"')
