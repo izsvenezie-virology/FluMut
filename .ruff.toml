@@ -1,0 +1,6 @@
+src = ["src"]
+line-length = 140
+
+[format]
+# 5. Use single quotes in `ruff format`.
+quote-style = "single"

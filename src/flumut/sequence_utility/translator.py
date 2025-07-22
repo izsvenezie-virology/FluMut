@@ -4,17 +4,16 @@ from typing import List, Optional, Tuple
 
 from flumut.db_utility.db_data import annotations_by_reference
 from flumut.sequence_utility.exceptions import UnknownNucleotideException
-from flumut.sequence_utility.models import (AminoAcidSequence,
-                                            NucleotideSequence)
+from flumut.sequence_utility.models import AminoAcidSequence, NucleotideSequence
 
 
 def translate(alignment: NucleotideSequence) -> List[AminoAcidSequence]:
-    '''
+    """
     Translates an alignment into all proteins for the segment.
 
     :param `NucleotideSequence` alignemnt: The alignment to translate.
     :return `List[AminoAcidSequence]`: The sequence with translated proteins.
-    '''
+    """
     proteins = []
     for protein_name, annotations in annotations_by_reference(alignment.referecence.name).items():
         sample_cds, reference_cds = _get_cds(alignment, annotations)
@@ -30,13 +29,13 @@ def translate(alignment: NucleotideSequence) -> List[AminoAcidSequence]:
 
 
 def _get_cds(alignment: NucleotideSequence, cds: List[Tuple[int, int]]) -> Tuple[str, str]:
-    '''
+    """
     Cut and assemble the nucleotide sequences based on positions given by the cds.
 
     :param `NucleotideSequence` alignment: Sequence alignment.
     :param `List[Tuple[int, int]]` cds: The list of starting and ending points of coding sequence.
-    :return `str`, `str`: sequence coding sequence, reference coding sequence 
-    '''
+    :return `str`, `str`: sequence coding sequence, reference coding sequence
+    """
     cds.sort(key=lambda x: x[0])
     seq_cds = ''
     ref_cds = ''
@@ -51,14 +50,14 @@ def _get_cds(alignment: NucleotideSequence, cds: List[Tuple[int, int]]) -> Tuple
 
 
 def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[Tuple[int, int]]]:
-    '''
+    """
     Translate a nucleotide sequence in an amino acid sequence.
 
     :param `str` seq: Aligned nucleotide sequence to translate.
     :return `List[str]`: Amino acid translated sequence of the sample.
     :return `List[str]`: Amino acid translated sequence of the reference.
     :return `List[Tuple[int, int]]`: List of frameshifts.
-    '''
+    """
     ref_nts = list(ref)
     seq_nts = list(seq)
 
@@ -83,10 +82,10 @@ def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[
         if seq_frameshift is None or ref_frameshift is None:
             continue
         if not seq_frameshift - ref_frameshift == 0 and frameshift_start is None:
-            frameshift_start = int(i/3 + 1)
+            frameshift_start = int(i / 3 + 1)
             continue
         if seq_frameshift - ref_frameshift == 0 and frameshift_start is not None:
-            frameshift_end = int(i/3)
+            frameshift_end = int(i / 3)
             if frameshift_end - frameshift_start > 1:
                 frameshifts.append((frameshift_start, frameshift_end))
             frameshift_start = None
@@ -100,17 +99,17 @@ def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[
 
 
 def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List[str], int]:
-    '''
+    """
     Extract the codon from a sequence.
 
     :param `List[str] seq`: Sequence splitted by nucleotides.
     :param `int` start: Start position of the codon.
-    :param `bool` is_first: If `true` codons containing `-` are returned as is. 
+    :param `bool` is_first: If `true` codons containing `-` are returned as is.
     If `false` a frameshift is created.
     :return `str`, `str`, `str` codon: The codon splitted by nucleotides.
     :return `int` frameshift_status: Number of nucleotides moved in order to create the codon.
-    '''
-    codon = seq[start:start + 3]
+    """
+    codon = seq[start : start + 3]
     if codon == ['-', '-', '-']:  # If the codon is a deletion
         return codon, None
     # If the codon starts from mid codon (to avoid frameshifts in truncated sequences):
@@ -130,12 +129,12 @@ def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List
 
 
 def _translate_codon(codon: List[str]) -> str:
-    '''
+    """
     Translate a codon into a set of AAs, containing all possible combinations in case of degenerations.
 
     :param `List[str]` codon: The codon to translate.
     :return `str`: All possible AAs concatenated.
-    '''
+    """
     if 'N' in codon:
         return '?'
     try:
@@ -148,19 +147,20 @@ def _translate_codon(codon: List[str]) -> str:
 
 
 def _find_next_nucl(seq: List[str], start: int) -> Optional[int]:
-    '''
+    """
     Return the position of the next non deleted nucleotide.
 
     :param `List[str]` seq: The sequence splitted by nucleotide.
     :param `int` start: The position where to start to search for nucleotide.
     :return `int`|`None`: The position of next non-deleted nucleotide. If no nucleotide is fuound it returns `None`.
-    '''
+    """
     for i in range(start + 3, len(seq)):
         if not seq[i] == '-':
             return i
     return None
 
 
+# fmt: off
 _translation_dict = {
     'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
     'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
@@ -181,3 +181,4 @@ _degeneration_dict = {
     'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
 }
 '''Degenerated nucleotide to list of possible nucleotides'''
+# fmt: on

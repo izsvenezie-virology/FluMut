@@ -6,9 +6,9 @@ from flumut.sequence_utility.models import Sample
 
 
 def seek_mutations(sample: Sample) -> List[Mutation]:
-    '''
+    """
     Search for mutations present in the protein sequence.
-    '''
+    """
     mutations: List[Mutation] = []
     for sequence in sample.sequences:
         for protein in sequence.alignment.proteins:

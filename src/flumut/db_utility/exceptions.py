@@ -5,11 +5,11 @@ class DBVersionError(Exception):
         if is_higher:
             self.message = f'FluMutDB {self.actual_version} is too recent.\n'
             self.message += f'This version of FluMut works only with FluMutDB v.{expected_version}.x.\n'
-            self.message += f'Please, search for FluMut updates.'
+            self.message += 'Please, search for FluMut updates.'
         else:
             self.message = f'FluMutDB {self.actual_version} is too old.\n'
             self.message += f'This version of FluMut works only with FluMutDB v.{expected_version}.x.\n'
-            self.message += f'Please, update FluMutDB with `flumut --update`.'
+            self.message += 'Please, update FluMutDB with `flumut --update`.'
 
         super().__init__(self.message)
 

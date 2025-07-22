@@ -3,18 +3,17 @@ import logging
 from Bio.Align import Alignment, PairwiseAligner
 
 from flumut.db_utility.db_data import references_by_segment
-from flumut.sequence_utility.models import (NucleotideSequence,
-                                            ReferenceSequence)
+from flumut.sequence_utility.models import NucleotideSequence, ReferenceSequence
 
 
 def align(sequence: str, segment: str) -> NucleotideSequence:
-    '''
+    """
     Find the best reference and creates the alignment for the given sequence.
 
     :param `str` sequence: The sequence to align.
     :param `str` segment: The segment of the sequence.
     :return `NucleotideSequence`: The aligned sequence.
-    '''
+    """
     sequence = sequence.replace('-', '')
     references = references_by_segment(segment)
     best_score = -100000
@@ -32,13 +31,13 @@ def align(sequence: str, segment: str) -> NucleotideSequence:
 
 
 def _pairwise_alignment(reference: str, sample: str) -> Alignment:
-    '''
+    """
     Align sequence against a reference.
 
     :param `str` ref: Reference to align on.
     :param `str` sample: Sequence to align.
     :return `Alignment`: Best alignment.
-    '''
+    """
     aligner = PairwiseAligner()
     aligner.mismatch_score = -1
     aligner.open_gap_score = -5

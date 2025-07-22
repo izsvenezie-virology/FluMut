@@ -4,46 +4,48 @@ from typing import Dict
 
 @dataclass
 class Reference:
-    '''Reference sequence from DB.'''
+    """Reference sequence from DB."""
+
     segment: str
-    '''Segment name.'''
+    """Segment name."""
     name: str
-    '''Name of the reference.'''
+    """Name of the reference."""
     sequence: str
-    '''Nucleotide sequence.'''
+    """Nucleotide sequence."""
 
 
 @dataclass
 class MutationMapping:
-    '''Mutations data specific of a reference sequence.'''
+    """Mutations data specific of a reference sequence."""
+
     reference_name: str
-    '''Name of the reference sequence.'''
+    """Name of the reference sequence."""
     position: int
-    '''Position of the mutation on the reference sequence.'''
+    """Position of the mutation on the reference sequence."""
     mutation_sequence: str
-    '''Sequence of the mutation.'''
+    """Sequence of the mutation."""
 
 
 @dataclass
 class Mutation:
     segment: str
-    '''Segment name.'''
+    """Segment name."""
     segment_number: int
-    '''Segment number.'''
-    '''Mutations data not connected to reference sequences.'''
+    """Segment number."""
+    """Mutations data not connected to reference sequences."""
     name: str
-    '''Name of the mutation.'''
+    """Name of the mutation."""
     type: str
-    '''Type of the mutation.'''
+    """Type of the mutation."""
     protein_name: str
-    '''Name of protein.'''
+    """Name of protein."""
     default_position: int
-    '''A position of the mutation. Used to sort mutations based on position when multiple mappings are present.'''
+    """A position of the mutation. Used to sort mutations based on position when multiple mappings are present."""
 
     mappings: Dict[str, MutationMapping] = field(default_factory=dict, init=False)
-    '''Collection of mappings for different reference sequences.'''
+    """Collection of mappings for different reference sequences."""
     aas_in_samples: Dict[str, str] = field(default_factory=dict, init=False)
-    '''Collection of AAs of each sample at mutation position.'''
+    """Collection of AAs of each sample at mutation position."""
 
     def __hash__(self):
         return hash(self.name)
