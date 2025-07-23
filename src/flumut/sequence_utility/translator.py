@@ -80,6 +80,11 @@ def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[
         ref_aas.append(aa)
 
         if seq_frameshift is None or ref_frameshift is None:
+            if frameshift_start is not None:
+                frameshift_end = int(i / 3)
+                if frameshift_end - frameshift_start > 1:
+                    frameshifts.append((frameshift_start, frameshift_end))
+                frameshift_start = None
             continue
         if not seq_frameshift - ref_frameshift == 0 and frameshift_start is None:
             frameshift_start = int(i / 3 + 1)
@@ -122,6 +127,7 @@ def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List
     while len(codon) < 3:
         next_nucl = _find_next_nucl(seq, start)
         if not next_nucl:
+            frameshift_status = None
             break
         codon.append(seq[next_nucl])
         seq[next_nucl] = '-'
