@@ -20,11 +20,11 @@ def analyze(fastas: Tuple[TextIOWrapper], relaxed: bool, allow_unmatching_header
 
 
 def collect_sequences(fastas: Tuple[TextIOWrapper]) -> List[FastaSequence]:
-    logging.info(f'Collecting sequences from {len(fastas)} Fasta files.')
+    logging.info(f'Collecting sequences from {len(fastas)} Fasta files')
     sequences: List[FastaSequence] = []
     for fasta in fastas:
         sequences += read_fasta(fasta)
-    logging.info(f'Collected {len(sequences)} sequences.')
+    logging.info(f'Collected {len(sequences)} sequences')
     return sequences
 
 
@@ -44,10 +44,10 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
 
         alignment = align(sequence.sequence, segment)
         sequence.alignment = alignment
-        logging.info(f'Aligned "{sequence.header}" on "{alignment.referecence.name}" with score {alignment.score:.0f}.')
+        logging.info(f'Aligned "{sequence.header}" on "{alignment.referecence.name}" with score {alignment.score:.0f}')
         if alignment.score < len(sequence.sequence) / 2:
             logging.warning(
-                f'Low alignment quality between "{sequence.header}" and reference "{alignment.referecence.name}" (score {alignment.score})'
+                f'Low alignment quality between "{sequence.header}" and reference "{alignment.referecence.name}" (score {alignment.score:.0f}'
             )
 
         proteins = translate(alignment)

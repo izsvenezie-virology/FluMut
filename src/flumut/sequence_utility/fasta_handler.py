@@ -16,7 +16,7 @@ def set_header_pattern(pattern: str) -> None:
 
     :param `str` pattern: RegEx string pattern.
     """
-    logging.debug(f'Set "{pattern}" as header pattern.')
+    logging.debug(f'Set "{pattern}" as header pattern')
     global _header_pattern
     _header_pattern = re.compile(pattern)
 
@@ -37,7 +37,7 @@ def read_fasta(fasta: TextIOWrapper) -> List[FastaSequence]:
     :param `TextIOWrapper` fasta: The opened Fasta file.
     :return `List[FastaSequence]`: All the sequences found in the Fasta file.
     """
-    logging.debug(f'Reading file {fasta.name}.')
+    logging.debug(f'Reading file {fasta.name}')
     sequences = []
     for line in fasta:
         line = line.strip()
@@ -51,7 +51,7 @@ def read_fasta(fasta: TextIOWrapper) -> List[FastaSequence]:
             sequence.sequence += line.upper()
         except UnboundLocalError:
             raise MalformedFastaException(fasta.name) from None
-    logging.debug(f'Found {len(sequences)} sequences.')
+    logging.debug(f'Found {len(sequences)} sequences')
     return sequences
 
 
