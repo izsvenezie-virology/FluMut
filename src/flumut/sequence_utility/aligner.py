@@ -42,7 +42,7 @@ def _pairwise_alignment(reference: str, sample: str) -> Alignment:
     aligner.mismatch_score = -1
     aligner.open_gap_score = -5
     aligner.extend_gap_score = -1
-    aligner.query_end_gap_score = 0
-    aligner.target_end_gap_score = 0
+    aligner.query_end_gap_score = -0.1
+    aligner.target_end_gap_score = -0.1
 
     return aligner.align(reference, sample)[0]
