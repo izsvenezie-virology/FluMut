@@ -39,6 +39,7 @@ def _pairwise_alignment(reference: str, sample: str) -> Alignment:
     :return `Alignment`: Best alignment.
     """
     aligner = PairwiseAligner()
+    aligner.wildcard = 'N'
     aligner.mismatch_score = -1
     aligner.open_gap_score = -5
     aligner.extend_gap_score = -1
