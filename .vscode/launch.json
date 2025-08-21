@@ -23,7 +23,8 @@
                 "-n",
                 "(?P<sample>.+)_(?P<segment>.+)",
                 "--relaxed",
-                "--loglevel", "inf",
+                "--loglevel",
+                "dbg",
                 "examples/multiple_samples.fa"
             ]
         },

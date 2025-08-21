@@ -45,9 +45,9 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
         alignment = align(sequence.sequence, segment)
         sequence.alignment = alignment
         logging.info(f'Aligned "{sequence.header}" on "{alignment.referecence.name}" with score {alignment.score:.0f}')
-        if alignment.score < len(sequence.sequence) / 2:
+        if alignment.score < len(sequence.sequence) * 0.5:
             logging.warning(
-                f'Low alignment quality between "{sequence.header}" and reference "{alignment.referecence.name}" (score {alignment.score:.0f}'
+                f'Low alignment quality between "{sequence.header}" and reference "{alignment.referecence.name}" (score {alignment.score:.0f})'
             )
 
         proteins = translate(alignment)
