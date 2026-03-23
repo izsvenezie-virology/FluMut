@@ -15,11 +15,11 @@ def translate(alignment: NucleotideSequence) -> List[AminoAcidSequence]:
     :return `List[AminoAcidSequence]`: The sequence with translated proteins.
     """
     proteins = []
-    for protein_name, annotations in annotations_by_reference(alignment.referecence.name).items():
+    for protein_name, annotations in annotations_by_reference(alignment.reference.name).items():
         sample_cds, reference_cds = _get_cds(alignment, annotations)
         sequence_aa, referenece_aa, frameshifts = _translate_sequence(sample_cds, reference_cds)
 
-        reference = deepcopy(alignment.referecence)
+        reference = deepcopy(alignment.reference)
         reference.sequence = ''.join(referenece_aa)
         protein = AminoAcidSequence(protein_name, sequence_aa, reference)
         protein.frameshifts = frameshifts
@@ -41,10 +41,10 @@ def _get_cds(alignment: NucleotideSequence, cds: List[Tuple[int, int]]) -> Tuple
     ref_cds = ''
 
     for rng in cds:
-        start = alignment.referecence.convert_position(rng[0])
-        end = alignment.referecence.convert_position(rng[1]) + 1
+        start = alignment.reference.convert_position(rng[0])
+        end = alignment.reference.convert_position(rng[1]) + 1
 
-        ref_cds += alignment.referecence.sequence[start:end]
+        ref_cds += alignment.reference.sequence[start:end]
         seq_cds += alignment.sequence[start:end]
     return seq_cds, ref_cds
 

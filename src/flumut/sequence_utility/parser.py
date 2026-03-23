@@ -13,10 +13,10 @@ def seek_mutations(sample: Sample) -> List[Mutation]:
     for sequence in sample.sequences:
         for protein in sequence.alignment.proteins:
             for mutation in mutations_by_protein(protein.name):
-                mapping = mutation.mappings.get(protein.referecence.name, None)
+                mapping = mutation.mappings.get(protein.reference.name, None)
                 if mapping is None:
                     continue
-                pos = protein.referecence.convert_position(mapping.position)
+                pos = protein.reference.convert_position(mapping.position)
                 sample.aas[mutation.name] = protein.sequence[pos]
                 if mapping.mutation_sequence in protein.sequence[pos]:
                     mutations.append(mutation)

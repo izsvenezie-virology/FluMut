@@ -21,11 +21,11 @@ def align(sequence: str, segment: str) -> NucleotideSequence:
     for reference in references:
         alignment = _pairwise_alignment(reference.sequence, sequence)
         if alignment.score > best_score:
-            best_referecence = ReferenceSequence(reference.segment, reference.name, alignment[0])
-            best_alignment = NucleotideSequence(alignment[1], best_referecence, alignment.score)
+            best_reference = ReferenceSequence(reference.segment, reference.name, alignment[0])
+            best_alignment = NucleotideSequence(alignment[1], best_reference, alignment.score)
             best_score = alignment.score
-    logging.debug(f'Best reference: {best_referecence.name} (segment {best_referecence.segment})')
-    logging.debug(f'reference: {best_referecence.sequence}')
+    logging.debug(f'Best reference: {best_reference.name} (segment {best_reference.segment})')
+    logging.debug(f'reference: {best_reference.sequence}')
     logging.debug(f'sample:    {best_alignment.sequence}')
     return best_alignment
 

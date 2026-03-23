@@ -39,7 +39,7 @@ class AminoAcidSequence:
     sequence: List[str]
     """Aligned proteic sequence of the sample as list, one element per position. 
         Each position is a string of all AAs that may be present."""
-    referecence: ReferenceSequence
+    reference: ReferenceSequence
     """The amino acid reference."""
     frameshifts: List[Tuple[int, int]] = field(default_factory=list, init=False)
     """List of frameshifts."""
@@ -54,7 +54,7 @@ class NucleotideSequence:
 
     sequence: str
     """Aligned sequence."""
-    referecence: ReferenceSequence
+    reference: ReferenceSequence
     """The nucleotide aligned reference."""
     score: float
     """Score of the alignment, the higher the better."""
