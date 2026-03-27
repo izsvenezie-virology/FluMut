@@ -200,7 +200,6 @@ def _save_workbook(wb: Workbook, output_file: TextIOWrapper) -> None:
     :param `Workbook` wb: The workbook to save.
     :param `str` output_file: The path where save the workbook.
     """
-    output_file.close()
     wb.save(output_file.name)
 
 

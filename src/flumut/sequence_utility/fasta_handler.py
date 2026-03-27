@@ -62,7 +62,6 @@ def parse_header(header: str) -> Tuple[Optional[str], Optional[str]]:
     The header pattern can be set with set_header_pattern function.
 
     :param `str` header: The FASTA header.
-    :param `str` allow_unmatching_headers: If true, continues the execution in
     :return `Optional[str]` sample: The sample name. Returns `None` if  not found.
     :return `Optional[str]`segment: The segment name. Returns `None` if not found.
     """

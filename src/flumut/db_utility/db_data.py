@@ -29,7 +29,7 @@ def annotations() -> Dict[str, Dict[str, List[Tuple[int, int]]]]:
     The second dictionary has the name of the protein as key and a list of start/end values for each part of the coding sequence in the protein.
     """
     res = execute_query("SELECT reference_name, protein_name, start, end FROM 'annotations'")
-    ann = defaultdict(lambda: defaultdict(list))
+    ann: Dict[str, Dict[str, List[Tuple[int, int]]]] = defaultdict(lambda: defaultdict(list))
     for ref, prot, start, end in res:
         ann[ref][prot].append((start, end))
     return ann

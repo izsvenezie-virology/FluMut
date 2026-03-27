@@ -11,7 +11,7 @@ def translate(alignment: NucleotideSequence) -> List[AminoAcidSequence]:
     """
     Translates an alignment into all proteins for the segment.
 
-    :param `NucleotideSequence` alignemnt: The alignment to translate.
+    :param `NucleotideSequence` alignment: The alignment to translate.
     :return `List[AminoAcidSequence]`: The sequence with translated proteins.
     """
     proteins = []
@@ -158,7 +158,7 @@ def _find_next_nucl(seq: List[str], start: int) -> Optional[int]:
 
     :param `List[str]` seq: The sequence splitted by nucleotide.
     :param `int` start: The position where to start to search for nucleotide.
-    :return `int`|`None`: The position of next non-deleted nucleotide. If no nucleotide is fuound it returns `None`.
+    :return `int`|`None`: The position of next non-deleted nucleotide. If no nucleotide is found it returns `None`.
     """
     for i in range(start + 3, len(seq)):
         if not seq[i] == '-':
