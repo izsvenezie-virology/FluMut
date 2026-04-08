@@ -42,17 +42,17 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'
+          ruby-version: "3.2"
           bundler-cache: true
           cache-version: 0
-          working-directory: '${{ github.workspace }}/docs'
+          working-directory: "${{ github.workspace }}/docs"
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: "3.x"
       - name: Create markers table
         run: |
           wget https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/flumut_db.sqlite
