@@ -19,27 +19,37 @@ For the complete documentation please visit [FluMut site](https://izsvenezie-vir
 
 ## Installation
 
-### Prerequisites
+### FluMut-GUI
 
-FluMut is available for Windows, Linux and macOS.
+FluMut-GUI is the graphical interface of FluMut, easy to use and easy to install.
+If you need the CLI version, check [FluMut installation](#flumut).
+Download the compiled version for your OS, double click on it and follow instructions to install FluMutGUI:
 
-### Pip
+- [Windows](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-Windows-installer.exe)
+- [MacOS](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-MacOS.zip)
+- [Linux](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-linux.tar.gz)
+
+### FluMut
+
+FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation.
+
+#### Pip [![install with pip](https://img.shields.io/badge/install%20with-pip-brightgreen.svg)](https://pypi.org/project/flumut/)
 
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 
 - [Python](https://www.python.org/downloads/)
-- [Pip](https://pypi.org/project/pip/) (often packaged with Python)
+- [Pip](https://pypi.org/project/pip/) (often packed with Python)
 
-Then, you can install FluMut with this command:
+Then, you can install FluMut with this simple command:
 
 ```
 pip install flumut
 ```
 
-### Bioconda
+#### Bioconda [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/flumut/README.html)
 
-FluMut is also available on [Bioconda](https://bioconda.github.io/flumut).
+FluMut is also available on [Bioconda](https://bioconda.github.io/recipes/flumut/README.html).
 You can install using Conda or Mamba.
 
 - [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (recommended)
@@ -54,16 +64,9 @@ mamba install -c bioconda flumut
 conda install -c bioconda flumut
 ```
 
-### FluMutGUI
-
-The graphical version at the moment is available only for Windows OS.
-We plan to release it also for MacOS and Linux.
-[Download](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI_Installer.exe) the installer and follow the instructions.
-Check out how to use it on [complete documentation](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-gui).
-
 ## Usage
 
-## Input
+### Input
 
 FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
 It can handle partial and complete genome sequences of multiple samples.
@@ -75,7 +78,7 @@ For this reason, the header must contain both a sample ID (consistent among sequ
 
 An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
 
-### Basic usage
+#### Basic usage
 
 You can get the output file in an [Excel format](#excel) (user-friendly) running:
 
@@ -89,7 +92,7 @@ If you prefer the [text outputs](#text-outputs) (machine-readable format) run:
 flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
 ```
 
-### Update database
+#### Update database
 
 You should always use the latest version of our database and you can do it just by running this command:
 
@@ -97,7 +100,7 @@ You should always use the latest version of our database and you can do it just 
 flumut --update
 ```
 
-## Outputs
+### Outputs
 
 FluMut can produce an Excel output or text outputs:
 
@@ -107,7 +110,7 @@ FluMut can produce an Excel output or text outputs:
 By default FluMut reports only markers where all mutations are found.
 You can report all markers where at least one mutation is found using option `-r`/`--relaxed`.
 
-### Excel
+#### Excel
 
 This is the most user-friendly and complete output.
 You can obtain this output using the `-x`/`--excel-output` option.
@@ -117,7 +120,7 @@ Find out more [here](https://izsvenezie-virology.github.io/FluMut/docs/output#ex
 > If you don't care about navigation, you can use `.xlsx` exstension.
 > Other exstensions lead to unreadable files.
 
-### Text outputs
+#### Text outputs
 
 You can obtain 3 different text outputs:
 | Option | Output | Desctription |
@@ -136,7 +139,7 @@ If you use FluMut, please cite:
 
 FluMut is licensed under the GNU Affero v3 license (see [LICENSE](LICENSE)).
 
-# Fundings
+## Fundings
 
 This work was partially supported by the FLU-SWITCH Era-Net ICRAD (grant agreement No. 862605), by EU funding under the NextGeneration EU-MUR PNRR Extended Partnership initiative on Emerging Infectious Diseases (Project No. PE00000007, INF-ACT), and by KAPPA-FLU HORIZON-CL6-2022-FARM2FORK-02-03 (grant agreement No. 101084171).
 
