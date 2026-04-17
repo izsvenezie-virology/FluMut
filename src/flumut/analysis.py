@@ -2,10 +2,12 @@ import logging
 from io import TextIOWrapper
 from typing import Dict, List, Tuple
 
+import flumutdb
+
 from flumut.db_utility.db_data import markers_by_mutations
 from flumut.exceptions import UnmatchingHeaderException
 from flumut.output import write_outputs
-from flumut.sequence_utility.aligner import align
+from flumut.sequence_utility.aligner import align, select_candidate_references
 from flumut.sequence_utility.fasta_handler import get_header_pattern, parse_header, read_fasta
 from flumut.sequence_utility.models import FastaSequence, Sample
 from flumut.sequence_utility.parser import seek_mutations
@@ -13,6 +15,8 @@ from flumut.sequence_utility.translator import translate
 
 
 def analyze(fastas: Tuple[TextIOWrapper], relaxed: bool, allow_unmatching_headers: bool) -> None:
+    flumutdb.initialize()
+
     sequences = collect_sequences(fastas)
     samples = parse_sequences(sequences, allow_unmatching_headers)
     seek_markers(samples, relaxed)
@@ -42,7 +46,8 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
             logging.info(f'Cannot extract sample ID from "{sequence.header}". The whole header is used as sample ID')
             sample = sequence.header
 
-        alignment = align(sequence.sequence, segment)
+        candidates = select_candidate_references(segment)
+        alignment = align(sequence.sequence, candidates)
         sequence.alignment = alignment
         logging.info(f'Aligned "{sequence.header}" on "{alignment.reference.name}" with score {alignment.score:.0f}')
         if alignment.score < len(sequence.sequence) * 0.5:
