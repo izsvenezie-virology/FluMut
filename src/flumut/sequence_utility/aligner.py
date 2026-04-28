@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 
 from Bio.Align import PairwiseAligner
 from flumutdb import Reference, Segment
@@ -21,20 +20,28 @@ _aligner.query_end_gap_score = GAP_END_SCORE
 _aligner.target_end_gap_score = GAP_END_SCORE
 
 
-def select_candidate_references(segment_name: Optional[str]) -> List[Reference]:
-    candidates: List[Reference] = []
+def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
+    if not candidate_hint:
+        return Reference.all()
+
+    candidates: list[Reference] = []
+
     for segment in Segment.all():
-        if segment.name == segment_name:
+        if segment.name == candidate_hint:
             for reference in segment.references:
                 candidates.append(reference)
+
+    for reference in Reference.all():
+        if reference.name == candidate_hint:
+            candidates.append(reference)
+
     if not candidates:
-        for segment in Segment.all():
-            for reference in segment.references:
-                candidates.append(reference)
+        candidates = Reference.all()
+
     return candidates
 
 
-def align(sequence: str, candidates: List[Reference]) -> NucleotideSequence:
+def find_best_reference(sequence: str, candidates: list[Reference]) -> NucleotideSequence:
     """
     Find the best reference and creates the alignment for the given sequence.
 
@@ -44,8 +51,8 @@ def align(sequence: str, candidates: List[Reference]) -> NucleotideSequence:
     """
     query_sequence = sequence.replace('-', '')
     best_score = -1_000_000
-    best_reference: Optional[ReferenceSequence] = None
-    best_alignment: Optional[NucleotideSequence] = None
+    best_reference: ReferenceSequence | None = None
+    best_alignment: NucleotideSequence | None = None
 
     for reference in candidates:
         reference_sequence = str(reference.sequence)

@@ -7,7 +7,7 @@ import flumutdb
 from flumut.db_utility.db_data import markers_by_mutations
 from flumut.exceptions import UnmatchingHeaderException
 from flumut.io.output import write_outputs
-from flumut.sequence_utility.aligner import align, select_candidate_references
+from flumut.sequence_utility.aligner import find_best_reference, select_candidate_references
 from flumut.sequence_utility.fasta_handler import get_header_pattern, parse_header, read_fasta
 from flumut.sequence_utility.models import FastaSequence, Sample
 from flumut.sequence_utility.parser import seek_mutations
@@ -47,7 +47,7 @@ def parse_sequences(sequences: List[FastaSequence], allow_unmatching_headers: bo
             sample = sequence.header
 
         candidates = select_candidate_references(segment)
-        alignment = align(sequence.sequence, candidates)
+        alignment = find_best_reference(sequence.sequence, candidates)
         sequence.alignment = alignment
         logging.info(f'Aligned "{sequence.header}" on "{alignment.reference.name}" with score {alignment.score:.0f}')
         if alignment.score < len(sequence.sequence) * 0.5:
