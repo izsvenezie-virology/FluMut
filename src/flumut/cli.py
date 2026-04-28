@@ -8,8 +8,8 @@ from flumut import __author__, __contact__, __version__
 from flumut.analysis import analyze
 from flumut.db_utility.db_connection import DBConnection
 from flumut.db_utility.db_update import update
+from flumut.io.output import set_output_file
 from flumut.logger import initialize_logging
-from flumut.output import set_output_file
 from flumut.sequence_utility.fasta_handler import set_header_pattern
 
 

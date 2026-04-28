@@ -6,7 +6,7 @@ import flumutdb
 
 from flumut.db_utility.db_data import markers_by_mutations
 from flumut.exceptions import UnmatchingHeaderException
-from flumut.output import write_outputs
+from flumut.io.output import write_outputs
 from flumut.sequence_utility.aligner import align, select_candidate_references
 from flumut.sequence_utility.fasta_handler import get_header_pattern, parse_header, read_fasta
 from flumut.sequence_utility.models import FastaSequence, Sample
