@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from flumut.db_utility.db_data import annotations_by_reference
-from flumut.sequence_utility.exceptions import UnknownNucleotideException
+from flumut.exceptions import UnknownNucleotideException
 from flumut.sequence_utility.models import AminoAcidSequence, NucleotideSequence
 
 
@@ -103,7 +103,7 @@ def _translate_sequence(seq: str, ref: str) -> Tuple[List[str], List[str], List[
     return seq_aas, ref_aas, frameshifts
 
 
-def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List[str], int]:
+def _get_codon(seq: List[str], start: int, is_first: bool = False) -> Tuple[List[str], Optional[int]]:
     """
     Extract the codon from a sequence.
 

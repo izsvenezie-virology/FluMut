@@ -11,3 +11,10 @@ class PermissionDeniedException(Exception):
         self.file_name = file_name
         self.message = f'Permission denied while trying to write "{file_name}".'
         super().__init__(self.message)
+
+
+class UnknownNucleotideException(Exception):
+    def __init__(self, codon) -> None:
+        self.codon = codon
+        self.message = f'Unexpected nucleotide in codon "{codon}".'
+        super().__init__(self.message)
