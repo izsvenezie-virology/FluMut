@@ -10,7 +10,6 @@ from flumut.db_utility.db_connection import DBConnection
 from flumut.db_utility.db_update import update
 from flumut.io.output import set_output_file
 from flumut.logger import initialize_logging
-from flumut.sequence_utility.fasta_handler import set_header_pattern
 
 
 def update_db(ctx, param, value):
@@ -32,12 +31,6 @@ def print_all_versions(ctx, param, value):
     print(f'flumut: {__version__}')
     print(f'flumutdb: {DBConnection().version_string}')
     ctx.exit()
-
-
-def set_name_regex(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    set_header_pattern(value)
 
 
 def set_output(ctx, param, value):
@@ -85,8 +78,6 @@ def print_errors(error: Exception) -> None:
     '-n',
     '--name-regex',
     type=str,
-    callback=set_name_regex,
-    expose_value=False,
     default=r'(?P<sample>.+)_(?P<segment>.+)',
     show_default=True,
     help='Set regular expression to parse sequence name.',
@@ -133,9 +124,9 @@ def print_errors(error: Exception) -> None:
 )
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
-def cli(fasta_files: File, relaxed: bool, allow_unmatching_headers: bool) -> None:
+def cli(fasta_files: File, relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
     try:
-        analyze(fasta_files, relaxed, allow_unmatching_headers)
+        analyze(fasta_files, relaxed, allow_unmatching_headers, name_regex)
     except Exception as e:
         print_errors(e)
 

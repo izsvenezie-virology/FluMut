@@ -1,61 +1,10 @@
 import logging
 import re
-from io import TextIOWrapper
-from typing import List, Optional, Tuple
 
-from flumut.sequence_utility.exceptions import MalformedFastaException
-from flumut.sequence_utility.models import FastaSequence
-
-_header_pattern: re.Pattern = None
-"""RegEx used to parse Fasta headers."""
+from flumut.exceptions import UnmatchingHeaderException
 
 
-def set_header_pattern(pattern: str) -> None:
-    """
-    Set the pattern used for header parsing.
-
-    :param `str` pattern: RegEx string pattern.
-    """
-    logging.debug(f'Set "{pattern}" as header pattern')
-    global _header_pattern
-    _header_pattern = re.compile(pattern)
-
-
-def get_header_pattern() -> str:
-    """
-    Return the pattern used for header parsing.
-
-    :return `str`: The RegEx string pattern.
-    """
-    return _header_pattern.pattern
-
-
-def read_fasta(fasta: TextIOWrapper) -> List[FastaSequence]:
-    """
-    Read all the sequences in the Fasta file.
-
-    :param `TextIOWrapper` fasta: The opened Fasta file.
-    :return `List[FastaSequence]`: All the sequences found in the Fasta file.
-    """
-    logging.debug(f'Reading file {fasta.name}')
-    sequences = []
-    for line in fasta:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('>'):
-            sequence = FastaSequence(fasta.name, line[1:])
-            sequences.append(sequence)
-            continue
-        try:
-            sequence.sequence += line.upper()
-        except UnboundLocalError:
-            raise MalformedFastaException(fasta.name) from None
-    logging.debug(f'Found {len(sequences)} sequences')
-    return sequences
-
-
-def parse_header(header: str) -> Tuple[Optional[str], Optional[str]]:
+def parse_header(header: str, pattern: re.Pattern, allow_unmatching_headers: bool = False) -> tuple[str | None, str | None]:
     """
     Parse the header with the header pattern.
     It searches for two groups in order to retrieve sample and segment from the header.
@@ -65,17 +14,21 @@ def parse_header(header: str) -> Tuple[Optional[str], Optional[str]]:
     :return `Optional[str]` sample: The sample name. Returns `None` if  not found.
     :return `Optional[str]`segment: The segment name. Returns `None` if not found.
     """
-    logging.debug(f'Parsing "{header}" with "{get_header_pattern()}"')
-    sample = None
-    segment = None
+    logging.debug(f'Parsing "{header}" with "{pattern.pattern}"')
+    sample, segment = None, None
+    match = pattern.match(header)
 
-    match = _header_pattern.match(header)
+    if not match:
+        if not allow_unmatching_headers:
+            raise UnmatchingHeaderException(header, pattern.pattern) from None
+        logging.info(f'Cannot extract sample ID from "{header}". The whole header is used as sample ID.')
+        return header, None
+
     try:
         sample = match.groupdict().get('sample', match.group(1))
         segment = match.groupdict().get('segment', match.group(2))
-    except (IndexError, AttributeError):
+    except IndexError:
         pass
 
-    logging.debug(f'Sample:  "{sample}"')
-    logging.debug(f'Segment: "{segment}"')
+    logging.debug(f'Sample:  "{sample}" - Segment: "{segment}"')
     return sample, segment
