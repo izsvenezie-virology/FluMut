@@ -71,7 +71,7 @@ class FastaSequence:
     """Name of Fasta file storing this sequence."""
     header: str
     """Header of sequence in Fasta file."""
-    sequence: str = ''
+    sequence: str
     """Nucleotidic sequence."""
 
     sample: str = field(default='', init=False)

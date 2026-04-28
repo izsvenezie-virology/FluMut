@@ -6,6 +6,7 @@ from flumutdb import Reference, Segment
 from flumut.sequence_utility.models import NucleotideSequence, ReferenceSequence
 
 WILDCARD = 'N'  # Wildcard character for not known nucleotides
+GAP_SYMBOL = '-'  # Symbol for gaps in the alignment
 MISMATCH_SCORE = -1  # Score for a mismatch between the reference and the sample sequence
 GAP_OPEN_SCORE = -5  # Score for opening a gap in the alignment
 GAP_EXTEND_SCORE = -1  # Score for extending a gap in the alignment
@@ -16,27 +17,25 @@ _aligner.wildcard = WILDCARD
 _aligner.mismatch_score = MISMATCH_SCORE
 _aligner.open_gap_score = GAP_OPEN_SCORE
 _aligner.extend_gap_score = GAP_EXTEND_SCORE
-_aligner.query_end_gap_score = GAP_END_SCORE
-_aligner.target_end_gap_score = GAP_END_SCORE
+_aligner.end_deletion_score = GAP_END_SCORE
+_aligner.end_insertion_score = GAP_END_SCORE
 
 
 def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
+    references = [ref for segment in Segment.all() for ref in segment.references]
+
     if not candidate_hint:
-        return Reference.all()
+        return references
 
     candidates: list[Reference] = []
 
     for segment in Segment.all():
-        if segment.name == candidate_hint:
-            for reference in segment.references:
+        for reference in segment.references:
+            if _is_candidate_reference(reference, candidate_hint):
                 candidates.append(reference)
 
-    for reference in Reference.all():
-        if reference.name == candidate_hint:
-            candidates.append(reference)
-
     if not candidates:
-        candidates = Reference.all()
+        candidates = references
 
     return candidates
 
@@ -49,7 +48,7 @@ def find_best_reference(sequence: str, candidates: list[Reference]) -> Nucleotid
     :param `str` segment: The segment of the sequence.
     :return `NucleotideSequence`: The aligned sequence.
     """
-    query_sequence = sequence.replace('-', '')
+    query_sequence = sequence.replace(GAP_SYMBOL, '')
     best_score = -1_000_000
     best_reference: ReferenceSequence | None = None
     best_alignment: NucleotideSequence | None = None
@@ -69,3 +68,11 @@ def find_best_reference(sequence: str, candidates: list[Reference]) -> Nucleotid
     logging.debug(f'reference: {best_reference.sequence}')
     logging.debug(f'sample:    {best_alignment.sequence}')
     return best_alignment
+
+
+def _is_candidate_reference(reference: Reference, candidate_hint: str) -> bool:
+    if reference.name == candidate_hint:
+        return True
+    if reference.segment.name == candidate_hint:
+        return True
+    return False
