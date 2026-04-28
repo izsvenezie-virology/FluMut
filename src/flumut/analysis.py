@@ -1,7 +1,7 @@
 import logging
 import re
 from io import TextIOWrapper
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import flumutdb
 
@@ -15,7 +15,7 @@ from flumut.sequence_utility.parser import seek_mutations
 from flumut.sequence_utility.translator import translate
 
 
-def analyze(fastas: Tuple[TextIOWrapper], relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
+def analyze(fastas: tuple[TextIOWrapper, ...], relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
     flumutdb.initialize()
 
     sequences = collect_sequences(fastas)
@@ -24,7 +24,7 @@ def analyze(fastas: Tuple[TextIOWrapper], relaxed: bool, allow_unmatching_header
     write_outputs(samples)
 
 
-def collect_sequences(fastas: Tuple[TextIOWrapper]) -> List[FastaSequence]:
+def collect_sequences(fastas: tuple[TextIOWrapper, ...]) -> List[FastaSequence]:
     logging.info(f'Collecting sequences from {len(fastas)} Fasta files')
     sequences: List[FastaSequence] = []
     for fasta in fastas:

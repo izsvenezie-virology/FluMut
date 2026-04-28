@@ -1,5 +1,6 @@
 import logging
 import traceback
+from io import TextIOWrapper
 
 import click
 from click import File
@@ -124,7 +125,7 @@ def print_errors(error: Exception) -> None:
 )
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
-def cli(fasta_files: File, relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
+def cli(fasta_files: tuple[TextIOWrapper, ...], relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
     try:
         analyze(fasta_files, relaxed, allow_unmatching_headers, name_regex)
     except Exception as e:

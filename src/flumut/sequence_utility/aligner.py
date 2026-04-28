@@ -1,7 +1,7 @@
 import logging
 
 from Bio.Align import PairwiseAligner
-from flumutdb import Reference, Segment
+from flumutdb import Reference
 
 from flumut.sequence_utility.models import NucleotideSequence, ReferenceSequence
 
@@ -22,20 +22,17 @@ _aligner.end_insertion_score = GAP_END_SCORE
 
 
 def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
-    references = [ref for segment in Segment.all() for ref in segment.references]
-
     if not candidate_hint:
-        return references
+        return Reference.all()
 
     candidates: list[Reference] = []
 
-    for segment in Segment.all():
-        for reference in segment.references:
-            if _is_candidate_reference(reference, candidate_hint):
-                candidates.append(reference)
+    for reference in Reference.all():
+        if _is_candidate_reference(reference, candidate_hint):
+            candidates.append(reference)
 
     if not candidates:
-        candidates = references
+        candidates = Reference.all()
 
     return candidates
 
