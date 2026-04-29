@@ -1,23 +1,9 @@
 from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from flumut.db_utility.db_connection import execute_query, to_dict
-from flumut.db_utility.db_models import Mutation, MutationMapping, Reference
-
-
-@lru_cache
-def references() -> List[Reference]:
-    """
-    Retrieve all the references present in the database.
-
-    :return `List[Reference]` references: The list of references
-    """
-    res = execute_query("SELECT segment_name, name, sequence FROM 'references'")
-    segments = []
-    for segment, name, sequence in res:
-        segments.append(Reference(segment, name, sequence))
-    return segments
+from flumut.db_utility.db_models import Mutation, MutationMapping
 
 
 @lru_cache
@@ -53,20 +39,6 @@ def mutations() -> Dict[str, List[Mutation]]:
         for reference_name, position, _, alt_seq in res_map:
             mutation.mappings[reference_name] = MutationMapping(reference_name, position, alt_seq)
     return mutations
-
-
-def references_by_segment(segment: Optional[str]) -> List[Reference]:
-    """
-    Returns all the references available for a specific segment.
-    If no references are available, all the references are returned.
-
-    :param `str`/`None` segment: The name of the segment. If `None` all references are returned.
-    :return `List[Reference]`: List of references available for the segment.
-    """
-    refs = [ref for ref in references() if ref.segment == segment]
-    if not refs:
-        refs = references()
-    return refs
 
 
 def annotations_by_reference(ref_name: str) -> Dict[str, List[Tuple[int, int]]]:

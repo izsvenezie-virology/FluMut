@@ -3,18 +3,6 @@ from typing import Dict
 
 
 @dataclass
-class Reference:
-    """Reference sequence from DB."""
-
-    segment: str
-    """Segment name."""
-    name: str
-    """Name of the reference."""
-    sequence: str
-    """Nucleotide sequence."""
-
-
-@dataclass
 class MutationMapping:
     """Mutations data specific of a reference sequence."""
 
