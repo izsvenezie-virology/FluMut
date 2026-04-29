@@ -9,9 +9,8 @@ from flumut.db_utility.db_data import markers_by_mutations
 from flumut.io.input import read_fasta
 from flumut.io.output import write_outputs
 from flumut.sequence_utility.aligner import find_best_reference, select_candidate_references
-from flumut.sequence_utility.fasta_handler import parse_header
 from flumut.sequence_utility.models import FastaSequence, Sample
-from flumut.sequence_utility.parser import seek_mutations
+from flumut.sequence_utility.parser import parse_header, seek_mutations
 from flumut.sequence_utility.translator import translate
 
 
