@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from flumut.core.globals import GAP_SYMBOL
 
@@ -7,8 +7,8 @@ from flumut.core.globals import GAP_SYMBOL
 class Alignment:
     """Stores the alignment of a sequence to a reference."""
 
-    aligned_reference: str = ''
-    aligned_query: str = ''
+    aligned_reference: list[str] = field(default_factory=list)
+    aligned_query: list[str] = field(default_factory=list)
 
     def get_positions(self) -> list[int]:
         positions = []

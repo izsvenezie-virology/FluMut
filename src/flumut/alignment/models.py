@@ -20,6 +20,6 @@ class NucleotideAlignment(Alignment):
 
     def set_alignment(self, reference: Reference, alignment: BioAlignment) -> None:
         self.reference = reference
-        self.aligned_reference = str(alignment.target)
-        self.aligned_query = str(alignment.query)
+        self.aligned_reference = list(alignment.target)
+        self.aligned_query = list(alignment.query)
         self.score = alignment.score  # type: ignore
