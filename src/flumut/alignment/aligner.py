@@ -53,7 +53,7 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
         raise ValueError(f'No reference found for sequence {query.name}')
 
     logging.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
-    logging.align(f'Alignment:\n{"".join(best_alignment.aligned_reference)}\n{"".join(best_alignment.aligned_query)}')  # type: ignore
+    # logging.align(f'Alignment:\n{"".join(best_alignment.aligned_reference)}\n{"".join(best_alignment.aligned_query)}')  # type: ignore
     return best_alignment
 
 

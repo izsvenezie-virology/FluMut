@@ -20,7 +20,7 @@ def scan(alignment: ProteinAlignment) -> list[PositionScan]:
 
 def is_positive(scan: PositionScan) -> bool:
     match scan.mapping.mutation.type:
-        case MutationType.SNP:
+        case MutationType.SNP.value:
             return str(scan.mapping.alteration) in scan.ammino_acid
         case _:
             raise NotImplementedError(f'Mutation type {scan.mapping.mutation.type} not supported')

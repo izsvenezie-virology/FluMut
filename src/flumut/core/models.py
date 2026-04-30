@@ -1,16 +1,12 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
 
 from flumut.core.globals import GAP_SYMBOL
-from flumut.scan.models import PositionScan
-from flumut.translation.models import ProteinAlignment
 
-
-@dataclass
-class Sample:
-    id: str
-    segments: defaultdict[str, list[ProteinAlignment]] = field(default_factory=lambda: defaultdict(list))
-    scan: list[PositionScan] = field(default_factory=list)
+# @dataclass
+# class Sample:
+#     id: str
+#     segments: defaultdict[str, list[ProteinAlignment]] = field(default_factory=lambda: defaultdict(list))
+#     scan: list[PositionScan] = field(default_factory=list)
 
 
 @dataclass(kw_only=True)

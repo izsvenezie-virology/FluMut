@@ -26,7 +26,7 @@ def seek_mutations(sample: Sample) -> List[Mutation]:
     return mutations
 
 
-def parse_header(header: str, pattern: re.Pattern, allow_unmatching_headers: bool = False) -> tuple[str | None, str | None]:
+def parse_header(header: str, pattern: re.Pattern, allow_unmatching_headers: bool = False) -> tuple[str, str | None]:
     """
     Parse the header with the header pattern.
     It searches for two groups in order to retrieve sample and segment from the header.
@@ -53,4 +53,4 @@ def parse_header(header: str, pattern: re.Pattern, allow_unmatching_headers: boo
         pass
 
     logging.debug(f'Sample:  "{sample}" - Segment: "{segment}"')
-    return sample, segment
+    return sample or header, segment
