@@ -13,7 +13,7 @@ class NucleotideAlignment(Alignment):
 
     query: SeqRecord
     """Query sequence."""
-    reference: Reference | None = None
+    reference: Reference = None  # type: ignore[assignment]
     """Reference sequence."""
 
     score: float = -1_000_000

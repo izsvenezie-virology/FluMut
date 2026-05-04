@@ -12,7 +12,7 @@ def scan(alignment: ProteinAlignment) -> list[PositionScan]:
         for mapping in mutation.mappings:
             if not mapping.reference == alignment.reference:
                 continue
-            index = positions.index(mapping.position)  # type: ignore
+            index = positions.index(mapping.position)
             aa = alignment.aligned_query[index]
             scans.append(PositionScan(mapping, aa))
     return scans

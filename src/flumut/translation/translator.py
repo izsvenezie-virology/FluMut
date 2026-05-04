@@ -23,8 +23,8 @@ def get_cds(alignment: ProteinAlignment) -> tuple[list[str], list[str]]:
     cds_query = []
     for annotation in alignment.protein.annotations:
         if annotation.reference == nucleotides.reference:
-            start = positions.index(annotation.start)  # type: ignore
-            end = positions.index(annotation.end) + 1  # type: ignore
+            start = positions.index(annotation.start)
+            end = positions.index(annotation.end) + 1
             cds_query += nucleotides.aligned_query[start:end]
             cds_reference += nucleotides.aligned_reference[start:end]
     return cds_reference, cds_query
