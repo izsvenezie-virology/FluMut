@@ -1,15 +1,17 @@
 import logging
+import re
 import traceback
 from io import TextIOWrapper
 
 import click
 from click import File
+from flumutdb import initialize
 
 from flumut import __author__, __contact__, __version__
-from flumut.analysis import analyze
+from flumut.analysis.models import Analysis
 from flumut.db_utility.db_connection import DBConnection
 from flumut.db_utility.db_update import update
-from flumut.io.output import set_output_file
+from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.logger import initialize_logging
 
 
@@ -34,16 +36,10 @@ def print_all_versions(ctx, param, value):
     ctx.exit()
 
 
-def set_output(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    set_output_file(param.name, value)
-
-
 def set_dbfile(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    DBConnection().db_file = value
+    initialize(value, read_only=True)
 
 
 def set_verbosity(ctx, param, value):
@@ -56,6 +52,7 @@ def print_errors(error: Exception) -> None:
     logging.critical(f'{type(error).__name__}: {error}')
     if logging.root.level == logging.DEBUG:
         traceback.print_exc()
+        raise error
 
 
 @click.command()
@@ -93,41 +90,45 @@ def print_errors(error: Exception) -> None:
     help='Verbosity of the logging messages',
 )
 # Output files
-@click.option(
-    '-m',
-    '--markers-output',
-    callback=set_output,
-    expose_value=False,
-    type=File('w', 'utf-8'),
-    default=None,
-    help='TSV markers output file.',
-)
-@click.option(
-    '-M',
-    '--mutations-output',
-    callback=set_output,
-    expose_value=False,
-    type=File('w', 'utf-8'),
-    default=None,
-    help='TSV mutations output file.',
-)
-@click.option(
-    '-l',
-    '--literature-output',
-    callback=set_output,
-    expose_value=False,
-    type=File('w', 'utf-8'),
-    default=None,
-    help='TSV literature output file.',
-)
-@click.option(
-    '-x', '--excel-output', callback=set_output, expose_value=False, type=File('w', lazy=False), default=None, help='Excel complete report.'
-)
+@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
+@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
+@click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
+@click.option('-x', '--excel-output', type=File('w', lazy=False), default=None, help='Excel complete report.')
 # Input files
 @click.argument('fasta-files', type=File('r'), nargs=-1)
-def cli(fasta_files: tuple[TextIOWrapper, ...], relaxed: bool, allow_unmatching_headers: bool, name_regex: str) -> None:
+def cli(
+    fasta_files: tuple[TextIOWrapper, ...],
+    relaxed: bool,
+    allow_unmatching_headers: bool,
+    name_regex: str,
+    markers_output: TextIOWrapper,
+    mutations_output: TextIOWrapper,
+    literature_output: TextIOWrapper,
+    excel_output: TextIOWrapper,
+) -> None:
     try:
-        analyze(fasta_files, relaxed, allow_unmatching_headers, name_regex)
+        analysis = Analysis()
+        pattern = re.compile(name_regex)
+
+        for fasta in fasta_files:
+            analysis.load_nucleotide_fasta(fasta, pattern)
+        analysis.analyse(relaxed)
+
+        if markers_output or excel_output:
+            markers = get_markers_data(analysis)
+            if markers_output:
+                write_tsv(markers_output, markers)
+        if mutations_output or excel_output:
+            mutations = get_mutations_data(analysis)
+            if mutations_output:
+                write_tsv(mutations_output, mutations)
+        if literature_output or excel_output:
+            literature = get_literature_data(analysis)
+            if literature_output:
+                write_tsv(literature_output, literature)
+        if excel_output:
+            write_excel(excel_output, markers, mutations, literature)  # type: ignore
+
     except Exception as e:
         print_errors(e)
 

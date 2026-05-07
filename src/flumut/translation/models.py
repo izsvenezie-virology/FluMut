@@ -9,12 +9,9 @@ from flumut.core.models import Alignment
 
 @dataclass
 class ProteinAlignment(Alignment):
-    nucleotides: NucleotideAlignment
     protein: Protein
-    frameshifts: list[tuple[int, int]] = field(default_factory=list)
+    reference: Reference
 
-    @property
-    def reference(self) -> Reference:
-        if self.nucleotides.reference is None:
-            raise ValueError('ProteinAlignment has no reference')
-        return self.nucleotides.reference
+    # From nucleotide alignment properties
+    nucleotides: NucleotideAlignment | None = None
+    frameshifts: list[tuple[int, int]] = field(default_factory=list)

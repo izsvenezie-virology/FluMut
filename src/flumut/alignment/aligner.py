@@ -40,20 +40,20 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
     :param `str` segment: The segment of the sequence.
     :return `NucleotideSequence`: The aligned sequence.
     """
-    best_alignment = NucleotideAlignment(query=query)
+    best_alignment = None
+    best_score = -1_000_000
     query_sequence = str(query.seq).replace(GAP_SYMBOL, '')
 
     for reference in candidates:
         reference_sequence = str(reference.sequence)
         alignment = _aligner.align(reference_sequence, query_sequence)[0]
-        if alignment.score > best_alignment.score:  # type: ignore
-            best_alignment.set_alignment(reference, alignment)
+        if alignment.score > best_score:  # type: ignore
+            best_alignment = NucleotideAlignment(query, reference, alignment)
 
-    if not best_alignment.reference:
+    if not best_alignment:
         raise ValueError(f'No reference found for sequence {query.name}')
 
     logging.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
-    # logging.align(f'Alignment:\n{"".join(best_alignment.aligned_reference)}\n{"".join(best_alignment.aligned_query)}')  # type: ignore
     return best_alignment
 
 

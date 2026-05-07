@@ -1,43 +1,159 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "FluMut",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "flumut.cli",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "-x",
-                "examples/multiple_samples.xlsm",
-                "-m",
-                "examples/multiple_samples_markers.tsv",
-                "-M",
-                "examples/multiple_samples_mutations.tsv",
-                "-l",
-                "examples/multiple_samples_literature.tsv",
-                "-n",
-                "(?P<sample>.+)_(?P<segment>.+)",
-                "--relaxed",
-                "--loglevel",
-                "dbg",
-                "examples/multiple_samples.fa"
-            ]
-        },
-        {
-            "name": "FluMutUpdate",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "flumut.cli",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "--update"
-            ]
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FluMut-Multi-all_outputs",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-x",
+        "examples/multiple_samples.xlsm",
+        "-m",
+        "examples/multiple_samples_markers.tsv",
+        "-M",
+        "examples/multiple_samples_mutations.tsv",
+        "-l",
+        "examples/multiple_samples_literature.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/multiple_samples.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-txt_outputs",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-m",
+        "examples/single_sample_markers.tsv",
+        "-M",
+        "examples/single_sample_mutations.tsv",
+        "-l",
+        "examples/single_sample_literature.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-xls_output",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-x",
+        "examples/multiple_samples.xlsm",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-Markers_output",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-m",
+        "examples/single_sample_markers.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-Mutations_output",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-M",
+        "examples/single_sample_mutations.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-Literature_output",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-l",
+        "examples/single_sample_literature.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMut-Single-All_outputs",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "-x",
+        "examples/single_sample.xlsm",
+        "-m",
+        "examples/single_sample_markers.tsv",
+        "-M",
+        "examples/single_sample_mutations.tsv",
+        "-l",
+        "examples/single_sample_literature.tsv",
+        "-n",
+        "(?P<sample>.+)_(?P<segment>.+)",
+        "--relaxed",
+        "--loglevel",
+        "dbg",
+        "examples/single_sample.fa"
+      ]
+    },
+    {
+      "name": "FluMutUpdate",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.cli",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["--update"]
+    }
+  ]
 }

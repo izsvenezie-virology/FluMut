@@ -2,12 +2,6 @@ from dataclasses import dataclass, field
 
 from flumut.core.globals import GAP_SYMBOL
 
-# @dataclass
-# class Sample:
-#     id: str
-#     segments: defaultdict[str, list[ProteinAlignment]] = field(default_factory=lambda: defaultdict(list))
-#     scan: list[PositionScan] = field(default_factory=list)
-
 
 @dataclass(kw_only=True)
 class Alignment:

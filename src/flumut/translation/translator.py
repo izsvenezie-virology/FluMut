@@ -1,27 +1,41 @@
 import itertools
 
+from flumutdb import Annotation, Protein
+
+from flumut.alignment.models import NucleotideAlignment
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
 from flumut.translation.models import ProteinAlignment
 
 
-def translate(alignment: ProteinAlignment) -> None:
-    cds_reference, cds_query = get_cds(alignment)
+def translate(alignment: NucleotideAlignment, protein: Protein) -> ProteinAlignment:
+    cds_reference, cds_query = get_cds(alignment, protein.annotations)
 
-    alignment.frameshifts = adjust_frame(cds_reference, cds_query)
+    frameshifts = adjust_frame(cds_reference, cds_query)
+    aligned_reference = []
+    aligned_query = []
 
     for i in range(0, len(cds_query), 3):
         codon_query = cds_query[i : i + 3]
         codon_reference = cds_reference[i : i + 3]
-        alignment.aligned_query += translate_codon(codon_query)
-        alignment.aligned_reference += translate_codon(codon_reference)
+        aligned_reference += translate_codon(codon_reference)
+        aligned_query += translate_codon(codon_query)
+
+    return ProteinAlignment(
+        protein,
+        alignment.reference,
+        nucleotides=alignment,
+        frameshifts=frameshifts,
+        aligned_reference=aligned_reference,
+        aligned_query=aligned_query,
+    )
 
 
-def get_cds(alignment: ProteinAlignment) -> tuple[list[str], list[str]]:
-    nucleotides = alignment.nucleotides
+def get_cds(alignment: NucleotideAlignment, annotations: list[Annotation]) -> tuple[list[str], list[str]]:
+    nucleotides = alignment
     positions = nucleotides.get_positions()
     cds_reference = []
     cds_query = []
-    for annotation in alignment.protein.annotations:
+    for annotation in annotations:
         if annotation.reference == nucleotides.reference:
             start = positions.index(annotation.start)
             end = positions.index(annotation.end) + 1

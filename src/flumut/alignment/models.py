@@ -13,13 +13,10 @@ class NucleotideAlignment(Alignment):
 
     query: SeqRecord
     """Query sequence."""
-    reference: Reference = None  # type: ignore[assignment]
+    reference: Reference
     """Reference sequence."""
+    alignment: BioAlignment
 
-    score: float = -1_000_000
-
-    def set_alignment(self, reference: Reference, alignment: BioAlignment) -> None:
-        self.reference = reference
-        self.aligned_reference = list(alignment.target)
-        self.aligned_query = list(alignment.query)
-        self.score = alignment.score  # type: ignore
+    def __post_init__(self) -> None:
+        self.aligned_reference = list(self.alignment.target)
+        self.aligned_query = list(self.alignment.query)

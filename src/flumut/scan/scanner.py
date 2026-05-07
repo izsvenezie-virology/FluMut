@@ -1,12 +1,12 @@
-from flumutdb.models import MutationType
+from flumutdb import Marker
 
-from flumut.scan.models import PositionScan
+from flumut.scan.models import MarkerScan, PositionScan
 from flumut.translation.models import ProteinAlignment
 
 
-def scan(alignment: ProteinAlignment) -> list[PositionScan]:
+def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:
     positions = alignment.get_positions()
-    scans = []
+    result = []
 
     for mutation in alignment.protein.mutations:
         for mapping in mutation.mappings:
@@ -14,13 +14,25 @@ def scan(alignment: ProteinAlignment) -> list[PositionScan]:
                 continue
             index = positions.index(mapping.position)
             aa = alignment.aligned_query[index]
-            scans.append(PositionScan(mapping, aa))
-    return scans
+            result.append(PositionScan(mapping=mapping, ammino_acid=aa))
+    return result
 
 
-def is_positive(scan: PositionScan) -> bool:
-    match scan.mapping.mutation.type:
-        case MutationType.SNP.value:
-            return str(scan.mapping.alteration) in scan.ammino_acid
-        case _:
-            raise NotImplementedError(f'Mutation type {scan.mapping.mutation.type} not supported')
+def scan_markers(positions: list[PositionScan], relaxed: bool) -> list[MarkerScan]:
+    markers = []
+    mapping = {pos.mutation: pos for pos in positions}
+
+    for marker in Marker.all():
+        marker_positions = []
+        for mutation in marker.mutations:
+            pos = mapping.get(mutation, None)
+            if pos:
+                marker_positions.append(pos)
+
+        ms = MarkerScan(marker, marker_positions)
+        if not ms.is_detected:
+            continue
+        if not relaxed and not ms.is_complete:
+            continue
+        markers.append(ms)
+    return markers
