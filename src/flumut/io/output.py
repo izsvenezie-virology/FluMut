@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 from io import TextIOWrapper
 
 from openpyxl import Workbook, load_workbook
@@ -40,15 +41,24 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
 
     for sample in analysis.samples.values():
         for scan in sample.marker_scans:
+            papers_collect = defaultdict(list)
             for evidence in scan.marker.evidences:
+                papers_collect[
+                    (
+                        evidence.effect.name,
+                        evidence.subtype.name,
+                        evidence.host.name if evidence.host else '',
+                    )
+                ].append(evidence.paper.short_name)
+            for (effect, subtype, host), papers in papers_collect.items():
                 marker_evidence = {
                     'Sample': sample.id,
                     'Marker': scan.marker.name if scan.marker.name else ', '.join([m.name for m in scan.marker.mutations]),
                     'Mutations in your sample': ', '.join([m.mutation.name for m in scan.detected_mutations]),
-                    'Effect': evidence.effect.name,
-                    'Subtype': evidence.subtype.name,
-                    'Literature': evidence.paper.short_name,
-                    'Host': evidence.host.name if evidence.host else '',
+                    'Effect': effect,
+                    'Subtype': subtype,
+                    'Literature': ';'.join(papers),
+                    'Host': host,
                 }
                 values.append(marker_evidence)
     return values
