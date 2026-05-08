@@ -1,36 +1,7 @@
-from .initializer import initialize
-from .models import (
-    Annotation,
-    DbVersion,
-    Effect,
-    Evidence,
-    Host,
-    Mapping,
-    Marker,
-    Mutation,
-    Paper,
-    Protein,
-    Reference,
-    Segment,
-    Subtype,
-)
+from peewee import DatabaseProxy
 
-__all__ = [
-    'initialize',
-    'Annotation',
-    'DbVersion',
-    'Effect',
-    'Marker',
-    'Evidence',
-    'Host',
-    'Mutation',
-    'Mapping',
-    'Paper',
-    'Protein',
-    'Reference',
-    'Segment',
-    'Subtype',
-]
+from flumut.flumutdb.initializer import initialize
 
+DATABASE_PROXY = DatabaseProxy()
 
 initialize()

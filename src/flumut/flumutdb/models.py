@@ -12,7 +12,8 @@ from peewee import (
     prefetch,
 )
 
-from flumut.flumutdb.core import DATABASE_PROXY, REQUIRED_MAJOR_VERSION
+from flumut.core.globals import DB_MAJOR_VERSION
+from flumut.flumutdb import DATABASE_PROXY
 from flumut.flumutdb.exceptions import IncompatibleVersionError, MissingVersionError
 
 
@@ -230,6 +231,6 @@ class DbVersion(BaseModel):
         version: DbVersion = DbVersion.get_or_none()
         if version is None:
             raise MissingVersionError()
-        if version.major != REQUIRED_MAJOR_VERSION:
-            raise IncompatibleVersionError(version, REQUIRED_MAJOR_VERSION)
+        if version.major != DB_MAJOR_VERSION:
+            raise IncompatibleVersionError(version, DB_MAJOR_VERSION)
         return True

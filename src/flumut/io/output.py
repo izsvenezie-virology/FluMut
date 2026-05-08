@@ -1,12 +1,12 @@
 import csv
 from io import TextIOWrapper
 
-from importlib_resources import files
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from flumut.analysis.models import Analysis
+from flumut.core.globals import EXCEL_TEMPLATE
 
 TSV_data = list[dict[str, str]]
 
@@ -91,7 +91,7 @@ def _open_workbook(keep_vba: bool) -> Workbook:
     :param `bool` keep_vba: If `False` the VBA code in the template is discarded.
     :return `Workbook`: The opened workbook.
     """
-    wb = load_workbook(str(files('flumut').joinpath('data/flumut_output.xlsm')), keep_vba=keep_vba)
+    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=keep_vba)
     return wb
 
 
