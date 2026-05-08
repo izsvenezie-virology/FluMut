@@ -7,7 +7,7 @@ import click
 from click import File
 
 from flumut import __author__, __contact__, __version__, logger
-from flumut.analysis.models import Analysis
+from flumut.analysis import Analysis
 from flumut.flumutdb import initialize
 from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.logger import initialize_logging

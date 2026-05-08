@@ -3,12 +3,12 @@ from dataclasses import dataclass, field
 from io import TextIOWrapper
 
 from flumut.alignment.aligner import get_best_alignment, select_candidate_references
-from flumut.flumutdb.models import Marker, Mutation, Paper
+from flumut.analysis.parser import parse_header
+from flumut.flumutdb import Marker, Mutation, Paper
 from flumut.io.input import read_fasta
-from flumut.scan.models import MarkerScan, PositionScan
+from flumut.scan import MarkerScan, PositionScan
 from flumut.scan.scanner import scan_markers, scan_positions
-from flumut.sequence_utility.parser import parse_header
-from flumut.translation.models import ProteinAlignment
+from flumut.translation import ProteinAlignment
 from flumut.translation.translator import translate
 
 

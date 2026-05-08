@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from enum import Enum
 from typing import List
 
@@ -29,16 +27,16 @@ BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 
 class Segment(BaseModel):
     name: str = TextField()  # type: ignore[assignment]
-    proteins: list[Protein]
-    references: list[Reference]
+    proteins: list['Protein']
+    references: list['Reference']
 
     def __str__(self) -> str:
         return str(self.name)
 
-    _cache: list[Segment] = []
+    _cache: list['Segment'] = []
 
     @staticmethod
-    def all(force_reload: bool = False) -> list[Segment]:
+    def all(force_reload: bool = False) -> list['Segment']:
         """Return all Segment instances, cached after first call.
 
         Args:
@@ -66,8 +64,8 @@ class Segment(BaseModel):
 class Protein(BaseModel):
     name: str = TextField()  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='proteins')  # type: ignore[assignment]
-    annotations: list[Annotation]
-    mutations: list[Mutation]
+    annotations: list['Annotation']
+    mutations: list['Mutation']
 
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
@@ -78,16 +76,16 @@ class Reference(BaseModel):
     segment: Segment = ForeignKeyField(Segment, backref='references')  # type: ignore[assignment]
     sequence: str = TextField()  # type: ignore[assignment]
     source: str = TextField()  # type: ignore[assignment]
-    annotations: list[Annotation]
-    mappings: list[Mapping]
+    annotations: list['Annotation']
+    mappings: list['Mapping']
 
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
-    _cache: list[Reference] = []
+    _cache: list['Reference'] = []
 
     @staticmethod
-    def all(force_reload: bool = False) -> list[Reference]:
+    def all(force_reload: bool = False) -> list['Reference']:
         """Return all Reference instances, cached after first call.
 
         Args:
@@ -113,8 +111,8 @@ class Mutation(BaseModel):
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
     protein: Protein = ForeignKeyField(Protein, backref='mutations')  # type: ignore[assignment]
     default_position: int | None = IntegerField(null=True)  # type: ignore[assignment]
-    mappings: list[Mapping]
-    markers: list[Marker]
+    mappings: list['Mapping']
+    markers: list['Marker']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -133,7 +131,7 @@ class Mapping(BaseModel):
 
 class Effect(BaseModel):
     name: str = TextField()  # type: ignore[assignment]
-    evidences: list[Evidence]
+    evidences: list['Evidence']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -141,7 +139,7 @@ class Effect(BaseModel):
 
 class Subtype(BaseModel):
     name: str = TextField()  # type: ignore[assignment]
-    evidences: list[Evidence]
+    evidences: list['Evidence']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -149,7 +147,7 @@ class Subtype(BaseModel):
 
 class Host(BaseModel):
     name: str = TextField()  # type: ignore[assignment]
-    evidences: list[Evidence]
+    evidences: list['Evidence']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -163,7 +161,7 @@ class Paper(BaseModel):
     journal: str | None = TextField(null=True)  # type: ignore[assignment]
     url: str | None = TextField(null=True)  # type: ignore[assignment]
     doi: str | None = TextField(null=True)  # type: ignore[assignment]
-    evidences: list[Evidence]
+    evidences: list['Evidence']
 
     def __str__(self) -> str:
         return str(self.short_name)
@@ -172,16 +170,16 @@ class Paper(BaseModel):
 class Marker(BaseModel):
     name: str | None = TextField(unique=True, null=True)  # type: ignore[assignment]
     mutations: list[Mutation] = ManyToManyField(Mutation, backref='markers')  # type: ignore[assignment]
-    evidences: list[Evidence]
+    evidences: list['Evidence']
 
     def __str__(self) -> str:
         mutations = ', '.join(str(m) for m in self.mutations)
         return f'Marker({mutations})'
 
-    _cache: List[Marker] = []
+    _cache: List['Marker'] = []
 
     @staticmethod
-    def all(force_reload: bool = False) -> list[Marker]:
+    def all(force_reload: bool = False) -> list['Marker']:
         """Returns a list of all Marker instances, cached after first call.
 
         Args:

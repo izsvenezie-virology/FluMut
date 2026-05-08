@@ -1,6 +1,6 @@
-from flumut.flumutdb.models import Marker
-from flumut.scan.models import MarkerScan, PositionScan
-from flumut.translation.models import ProteinAlignment
+from flumut.flumutdb import Marker
+from flumut.scan import MarkerScan, PositionScan
+from flumut.translation import ProteinAlignment
 
 
 def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:

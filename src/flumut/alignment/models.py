@@ -4,7 +4,7 @@ from Bio.Align import Alignment as BioAlignment
 from Bio.SeqRecord import SeqRecord
 
 from flumut.core.models import Alignment
-from flumut.flumutdb.models import Reference
+from flumut.flumutdb import Reference
 
 
 @dataclass

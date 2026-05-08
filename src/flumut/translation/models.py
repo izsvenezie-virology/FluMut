@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from flumut.alignment.models import NucleotideAlignment
+from flumut.alignment import NucleotideAlignment
 from flumut.core.models import Alignment
-from flumut.flumutdb.models import Protein, Reference
+from flumut.flumutdb import Protein, Reference
 
 
 @dataclass
