@@ -218,10 +218,10 @@ class Evidence(BaseModel):
 class DbVersion(BaseModel):
     major: int = IntegerField()  # type: ignore[assignment]
     minor: int = IntegerField()  # type: ignore[assignment]
-    date: str = TextField()  # type: ignore[assignment]
+    patch: int = IntegerField()  # type: ignore[assignment]
 
     def __str__(self) -> str:
-        return f'{self.major}.{self.minor} ({self.date})'
+        return f'{self.major}.{self.minor}.{self.patch}'
 
     @staticmethod
     def is_compatible() -> bool:
