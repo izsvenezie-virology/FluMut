@@ -6,7 +6,7 @@ from io import TextIOWrapper
 import click
 from click import File
 
-from flumut import __author__, __contact__, __version__
+from flumut import __author__, __contact__, __version__, logger
 from flumut.analysis.models import Analysis
 from flumut.flumutdb import initialize
 from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
@@ -65,7 +65,7 @@ def print_errors(error: Exception) -> None:
 )
 @click.option(
     '--loglevel',
-    type=click.Choice(['dbg', 'inf', 'wrn', 'err'], case_sensitive=False),
+    type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
     callback=set_verbosity,
     expose_value=False,
     default='wrn',
