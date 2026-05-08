@@ -89,6 +89,9 @@ def cli(
     excel_output: TextIOWrapper,
 ) -> None:
     try:
+        if not fasta_files:
+            raise Exception("Missing argument 'FASTA_FILES'")
+
         analysis = Analysis()
         pattern = re.compile(name_regex)
 
