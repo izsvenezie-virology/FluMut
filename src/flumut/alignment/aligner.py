@@ -47,8 +47,9 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
     for reference in candidates:
         reference_sequence = str(reference.sequence)
         alignment = _aligner.align(reference_sequence, query_sequence)[0]
-        if alignment.score > best_score:  # type: ignore
+        if best_score < alignment.score:  # type: ignore
             best_alignment = NucleotideAlignment(query, reference, alignment)
+            best_score = alignment.score  # type: ignore
 
     if not best_alignment:
         raise ValueError(f'No reference found for sequence {query.name}')
