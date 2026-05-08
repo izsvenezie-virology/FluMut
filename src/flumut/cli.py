@@ -9,20 +9,22 @@ from click import File
 from flumut import __author__, __contact__, __version__, logger
 from flumut.analysis import Analysis
 from flumut.flumutdb import initialize
+from flumut.flumutdb.models import DbVersion
 from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.logger import initialize_logging
 
 
 def update_db(ctx, param, value):
-    if not value or not ctx.resilient_context():
+    if not value or ctx.resilient_parsing:
         return
     raise NotImplementedError()
 
 
 def print_all_versions(ctx, param, value):
-    if not value or not ctx.resilient_context():
+    if not value or ctx.resilient_parsing:
         return
-    raise NotImplementedError()
+    print(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get()}')
+    ctx.exit()
 
 
 def set_dbfile(ctx, param, value):
@@ -47,11 +49,11 @@ def print_errors(error: Exception) -> None:
 @click.command()
 # Help and versions
 @click.help_option('-h', '--help')
-@click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
+@click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})')
 # Database selection, must be eager since it must be parsed before update and all-versions
 @click.option('-D', '--db-file', type=str, callback=set_dbfile, expose_value=False, is_eager=True, help='Set source database.')
 # Options that exits from the workflow
-@click.option('-V', '--all-versions', is_flag=True, callback=print_all_versions, expose_value=False, help='Prints all versions and exit.')
+@click.option('--all-versions', is_flag=True, callback=print_all_versions, expose_value=False, help='Prints all versions and exit.')
 @click.option('--update', is_flag=True, callback=update_db, expose_value=False, help='Update the database to the latest version and exit.')
 # Advanced options
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
