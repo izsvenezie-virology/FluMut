@@ -1,6 +1,8 @@
 # Sequence symbols
 from importlib.resources import files
 
+from peewee import DatabaseProxy
+
 import flumut
 
 WILDCARD = 'N'  # Wildcard character for not known nucleotides
@@ -18,3 +20,6 @@ EXCEL_TEMPLATE: str = str(files(flumut) / 'data' / 'flumut_output.xlsm')
 
 # DB major version required
 DB_MAJOR_VERSION = 7
+
+# DB proxy
+DATABASE_PROXY = DatabaseProxy()

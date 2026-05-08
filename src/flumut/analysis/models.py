@@ -2,9 +2,8 @@ import re
 from dataclasses import dataclass, field
 from io import TextIOWrapper
 
-from flumutdb import Marker, Mutation, Paper
-
 from flumut.alignment.aligner import get_best_alignment, select_candidate_references
+from flumut.flumutdb.models import Marker, Mutation, Paper
 from flumut.io.input import read_fasta
 from flumut.scan.models import MarkerScan, PositionScan
 from flumut.scan.scanner import scan_markers, scan_positions

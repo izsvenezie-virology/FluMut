@@ -12,8 +12,7 @@ from peewee import (
     prefetch,
 )
 
-from flumut.core.globals import DB_MAJOR_VERSION
-from flumut.flumutdb import DATABASE_PROXY
+from flumut.core.globals import DATABASE_PROXY, DB_MAJOR_VERSION
 from flumut.flumutdb.exceptions import IncompatibleVersionError, MissingVersionError
 
 

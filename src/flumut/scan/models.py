@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
-from flumutdb import Mapping, Marker, Mutation
-from flumutdb.models import MutationType
+from flumut.flumutdb.models import Mapping, Marker, Mutation, MutationType
 
 
 @dataclass

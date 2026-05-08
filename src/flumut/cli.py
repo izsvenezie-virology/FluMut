@@ -5,35 +5,24 @@ from io import TextIOWrapper
 
 import click
 from click import File
-from flumutdb import initialize
 
 from flumut import __author__, __contact__, __version__
 from flumut.analysis.models import Analysis
-from flumut.db_utility.db_connection import DBConnection
-from flumut.db_utility.db_update import update
+from flumut.flumutdb import initialize
 from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.logger import initialize_logging
 
 
 def update_db(ctx, param, value):
-    if not value or ctx.resilient_parsing:
+    if not value or not ctx.resilient_context():
         return
-    old_version = DBConnection().version_string
-    update()
-    new_version = DBConnection().version_string
-    if old_version == new_version:
-        print(f'Already using latest flumutdb version ({new_version})')
-    else:
-        print(f'Updated flumutdb to version {new_version}')
-    ctx.exit()
+    raise NotImplementedError()
 
 
 def print_all_versions(ctx, param, value):
-    if not value or ctx.resilient_parsing:
+    if not value or not ctx.resilient_context():
         return
-    print(f'flumut: {__version__}')
-    print(f'flumutdb: {DBConnection().version_string}')
-    ctx.exit()
+    raise NotImplementedError()
 
 
 def set_dbfile(ctx, param, value):
@@ -65,12 +54,6 @@ def print_errors(error: Exception) -> None:
 @click.option('-V', '--all-versions', is_flag=True, callback=print_all_versions, expose_value=False, help='Prints all versions and exit.')
 @click.option('--update', is_flag=True, callback=update_db, expose_value=False, help='Update the database to the latest version and exit.')
 # Advanced options
-@click.option(
-    '--allow-unmatching-headers',
-    is_flag=True,
-    default=False,
-    help='Uses the whole header if this does not match the regular expression pattern.',
-)
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
 @click.option(
     '-n',
@@ -99,7 +82,6 @@ def print_errors(error: Exception) -> None:
 def cli(
     fasta_files: tuple[TextIOWrapper, ...],
     relaxed: bool,
-    allow_unmatching_headers: bool,
     name_regex: str,
     markers_output: TextIOWrapper,
     mutations_output: TextIOWrapper,
