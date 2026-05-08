@@ -18,5 +18,5 @@ class NucleotideAlignment(Alignment):
     alignment: BioAlignment
 
     def __post_init__(self) -> None:
-        self.aligned_reference = list(self.alignment.target)
-        self.aligned_query = list(self.alignment.query)
+        self.aligned_reference = list(self.alignment[0])  # type: ignore
+        self.aligned_query = list(self.alignment[1])  # type: ignore
