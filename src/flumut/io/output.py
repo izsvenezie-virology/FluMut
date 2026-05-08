@@ -43,14 +43,16 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
         for scan in sample.marker_scans:
             papers_collect = defaultdict(list)
             for evidence in scan.marker.evidences:
+                effect_name = evidence.effect.name
+                if evidence.host:
+                    effect_name += f' in {evidence.host.name}'
                 papers_collect[
                     (
-                        evidence.effect.name,
+                        effect_name,
                         evidence.subtype.name,
-                        evidence.host.name if evidence.host else '',
                     )
                 ].append(evidence.paper.short_name)
-            for (effect, subtype, host), papers in papers_collect.items():
+            for (effect, subtype), papers in papers_collect.items():
                 marker_evidence = {
                     'Sample': sample.id,
                     'Marker': scan.marker.name if scan.marker.name else ', '.join([m.name for m in scan.marker.mutations]),
@@ -58,7 +60,6 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
                     'Effect': effect,
                     'Subtype': subtype,
                     'Literature': ';'.join(papers),
-                    'Host': host,
                 }
                 values.append(marker_evidence)
     return values
