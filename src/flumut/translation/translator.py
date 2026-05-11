@@ -3,33 +3,28 @@ import itertools
 from flumut.alignment import NucleotideAlignment
 from flumut.analysis import ProteinAlignment
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
-from flumut.flumutdb import Annotation, Protein
+from flumut.flumutdb import Protein
+from flumut.translation import CDSAlignment
 
 
 def translate(alignment: NucleotideAlignment, protein: Protein) -> ProteinAlignment:
-    cds_reference, cds_query = get_cds(alignment, protein.annotations)
+    cds = get_cds(alignment, protein)
+    cds.adjust_frame()
 
-    frameshifts = adjust_frame(cds_reference, cds_query)
-    aligned_reference = []
-    aligned_query = []
+    aa_reference = []
+    aa_query = []
 
-    for i in range(0, len(cds_query), 3):
-        codon_query = cds_query[i : i + 3]
-        codon_reference = cds_reference[i : i + 3]
-        aligned_reference += translate_codon(codon_reference)
-        aligned_query += translate_codon(codon_query)
+    for i in range(0, len(cds.aligned_query), 3):
+        codon_query = cds.aligned_query[i : i + 3]
+        codon_reference = cds.aligned_reference[i : i + 3]
+        aa_reference += translate_codon(codon_reference)
+        aa_query += translate_codon(codon_query)
 
-    return ProteinAlignment(
-        protein,
-        alignment.reference,
-        nucleotides=alignment,
-        frameshifts=frameshifts,
-        aligned_reference=aligned_reference,
-        aligned_query=aligned_query,
-    )
+    return ProteinAlignment(protein, alignment.reference, cds=cds, aligned_reference=aa_reference, aligned_query=aa_query)
 
 
-def get_cds(alignment: NucleotideAlignment, annotations: list[Annotation]) -> tuple[list[str], list[str]]:
+def get_cds(alignment: NucleotideAlignment, protein: Protein) -> CDSAlignment:
+    annotations = protein.annotations
     nucleotides = alignment
     positions = nucleotides.get_positions()
     cds_reference = []
@@ -40,7 +35,7 @@ def get_cds(alignment: NucleotideAlignment, annotations: list[Annotation]) -> tu
             end = positions.index(annotation.end) + 1
             cds_query += nucleotides.aligned_query[start:end]
             cds_reference += nucleotides.aligned_reference[start:end]
-    return cds_reference, cds_query
+    return CDSAlignment(alignment, protein, aligned_reference=cds_reference, aligned_query=cds_query)
 
 
 def translate_codon(codon: list[str]) -> str:
@@ -57,10 +52,6 @@ def translate_codon(codon: list[str]) -> str:
     codons = list(itertools.product(*undegenerated_codon))
     aas = [_translation_dict.get(''.join(c), '?') for c in codons]
     return ''.join(sorted(set(aas)))
-
-
-def adjust_frame(reference: list[str], query: list[str]) -> list[tuple[int, int]]:
-    return []
 
 
 def get_start_position(query: list[str]) -> int:

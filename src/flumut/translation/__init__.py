@@ -1,1 +1,1 @@
-from flumut.translation.models import ProteinAlignment
+from flumut.translation.models import CDSAlignment

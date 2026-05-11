@@ -2,14 +2,16 @@ from dataclasses import dataclass, field
 
 from flumut.alignment import NucleotideAlignment
 from flumut.core.models import Alignment
-from flumut.flumutdb import Protein, Reference
+from flumut.flumutdb import Protein
 
 
 @dataclass
-class ProteinAlignment(Alignment):
+class CDSAlignment(Alignment):
+    alignment: NucleotideAlignment
     protein: Protein
-    reference: Reference
 
     # From nucleotide alignment properties
-    nucleotides: NucleotideAlignment | None = None
     frameshifts: list[tuple[int, int]] = field(default_factory=list)
+
+    def adjust_frame(self) -> None:
+        pass
