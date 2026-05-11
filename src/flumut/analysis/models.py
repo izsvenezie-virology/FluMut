@@ -2,14 +2,25 @@ import re
 from dataclasses import dataclass, field
 from io import TextIOWrapper
 
+from flumut.alignment import NucleotideAlignment
 from flumut.alignment.aligner import get_best_alignment, select_candidate_references
 from flumut.analysis.parser import parse_header
-from flumut.flumutdb import Marker, Mutation, Paper
+from flumut.core.models import Alignment
+from flumut.flumutdb import Marker, Mutation, Paper, Protein, Reference
 from flumut.io.input import read_fasta
 from flumut.scan import MarkerScan, PositionScan
 from flumut.scan.scanner import scan_markers, scan_positions
-from flumut.translation import ProteinAlignment
 from flumut.translation.translator import translate
+
+
+@dataclass
+class ProteinAlignment(Alignment):
+    protein: Protein
+    reference: Reference
+
+    # From nucleotide alignment properties
+    nucleotides: NucleotideAlignment | None = None
+    frameshifts: list[tuple[int, int]] = field(default_factory=list)
 
 
 @dataclass
