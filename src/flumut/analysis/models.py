@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 
-from flumut.core.models import Alignment
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
-from flumut.nucleotides.models import CDSAlignment, Protein, Reference
+from flumut.nucleotides.models import Alignment, CDSAlignment, Protein, Reference
 
 
 @dataclass
