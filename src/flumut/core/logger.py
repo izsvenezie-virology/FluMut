@@ -9,10 +9,14 @@ LEVELS = {
 }
 
 
-def initialize_logging(logging_level: str) -> None:
+def initialize_logging() -> None:
     logging.basicConfig(
-        level=LEVELS[logging_level],
+        level=LEVELS['wrn'],
         format='[%(levelname)s] %(message)s',
         stream=sys.stderr,
         force=True,
     )
+
+
+def set_level(level: str) -> None:
+    logging.getLogger().setLevel(LEVELS[level])

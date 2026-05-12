@@ -9,7 +9,6 @@ from click import File
 from flumut import __author__, __contact__, __version__
 from flumut.analysis import Analysis
 from flumut.core import logger
-from flumut.core.logger import initialize_logging
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
 from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
@@ -37,7 +36,7 @@ def set_dbfile(ctx, param, value):
 def set_verbosity(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    initialize_logging(value)
+    logger.set_level(value)
 
 
 def print_errors(error: Exception) -> None:
