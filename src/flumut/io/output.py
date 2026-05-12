@@ -87,23 +87,11 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
     :param `List[Sample]` samples: Samples to write in the output.
     :param `TextIOWrapper` output_file: Path for the output file.
     """
-
-    wb = _open_workbook((output_file.name.endswith('.xlsm')))
+    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.name.endswith('.xlsm'))
     _write_excel_sheet(wb, 'Mutations', mutations)
     _write_excel_sheet(wb, 'Markers', markers)
     _write_excel_sheet(wb, 'Literature', literature)
-    _save_workbook(wb, output_file)
-
-
-def _open_workbook(keep_vba: bool) -> Workbook:
-    """
-    Open the template workbook.
-
-    :param `bool` keep_vba: If `False` the VBA code in the template is discarded.
-    :return `Workbook`: The opened workbook.
-    """
-    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=keep_vba)
-    return wb
+    wb.save(output_file.name)
 
 
 def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
@@ -126,13 +114,3 @@ def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
         name='TableStyleMedium2', showFirstColumn=False, showLastColumn=False, showRowStripes=True, showColumnStripes=False
     )
     ws.add_table(table)
-
-
-def _save_workbook(wb: Workbook, output_file: TextIOWrapper) -> None:
-    """
-    Save the workbook in the specified path.
-
-    :param `Workbook` wb: The workbook to save.
-    :param `str` output_file: The path where save the workbook.
-    """
-    wb.save(output_file.name)
