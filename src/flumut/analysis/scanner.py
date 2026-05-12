@@ -1,6 +1,28 @@
+from flumut.analysis.models import Analysis, MarkerScan, PositionScan
 from flumut.core.models import ProteinAlignment
 from flumut.flumutdb import Marker
-from flumut.scan import MarkerScan, PositionScan
+
+
+def analyse(analysis: Analysis, relaxed: bool = True) -> None:
+    analysis.mutations.clear()
+    analysis.markers.clear()
+    analysis.literature.clear()
+
+    for sample in analysis.samples.values():
+        for alignment in sample.alignments:
+            sample.positions += scan_positions(alignment)
+        sample.marker_scans = scan_markers(sample.positions, relaxed)
+
+        for position in sample.positions:
+            if position.is_detected:
+                analysis.mutations.add(position.mutation)
+
+        for scan in sample.marker_scans:
+            analysis.markers.add(scan.marker)
+
+    for marker in analysis.markers:
+        for evidence in marker.evidences:
+            analysis.literature.add(evidence.paper)
 
 
 def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:

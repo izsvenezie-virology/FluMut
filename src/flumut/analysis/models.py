@@ -1,15 +1,40 @@
-import re
 from dataclasses import dataclass, field
-from io import TextIOWrapper
 
-from flumut.analysis.parser import parse_header
 from flumut.core.models import ProteinAlignment
-from flumut.flumutdb import Marker, Mutation, Paper
-from flumut.io.input import read_fasta
-from flumut.nucleotides.aligner import get_best_alignment, select_candidate_references
-from flumut.nucleotides.translator import translate
-from flumut.scan import MarkerScan, PositionScan
-from flumut.scan.scanner import scan_markers, scan_positions
+from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
+
+
+@dataclass
+class PositionScan:
+    mapping: Mapping
+    ammino_acid: str
+    is_detected: bool = field(init=False)
+
+    def __post_init__(self) -> None:
+        match self.mapping.mutation.type:
+            case MutationType.SNP.value:
+                self.is_detected = self.mapping.alteration in self.ammino_acid
+            case _:
+                raise NotImplementedError(f'Mutation type {self.mapping.mutation.type} not supported')
+
+    @property
+    def mutation(self) -> Mutation:
+        return self.mapping.mutation
+
+
+@dataclass
+class MarkerScan:
+    marker: Marker
+    positions: list[PositionScan]
+
+    detected_mutations: list[PositionScan] = field(default_factory=list, init=False)
+    is_detected: bool = field(default=False, init=False)
+    is_complete: bool = field(default=False, init=False)
+
+    def __post_init__(self) -> None:
+        self.detected_mutations = [position for position in self.positions if position.is_detected]
+        self.is_detected = len(self.detected_mutations) > 0
+        self.is_complete = len(self.detected_mutations) == len(self.marker.mutations)
 
 
 @dataclass
@@ -27,37 +52,3 @@ class Analysis:
     mutations: set[Mutation] = field(default_factory=set)
     markers: set[Marker] = field(default_factory=set)
     literature: set[Paper] = field(default_factory=set)
-
-    def load_nucleotide_fasta(self, fasta: TextIOWrapper, header_pattern: re.Pattern) -> None:
-        for sequence in read_fasta(fasta):
-            sample, candidate_hint = parse_header(sequence.name, header_pattern)
-            candidates = select_candidate_references(candidate_hint)
-            nt_alignment = get_best_alignment(sequence, candidates)
-
-            if sample not in self.samples:
-                self.samples[sample] = Sample(sample)
-
-            for protein in nt_alignment.reference.segment.proteins:
-                aa_alignment = translate(nt_alignment, protein)
-                self.samples[sample].alignments.append(aa_alignment)
-
-    def analyse(self, relaxed: bool = True) -> None:
-        self.mutations.clear()
-        self.markers.clear()
-        self.literature.clear()
-
-        for sample in self.samples.values():
-            for alignment in sample.alignments:
-                sample.positions += scan_positions(alignment)
-            sample.marker_scans = scan_markers(sample.positions, relaxed)
-
-            for position in sample.positions:
-                if position.is_detected:
-                    self.mutations.add(position.mutation)
-
-            for scan in sample.marker_scans:
-                self.markers.add(scan.marker)
-
-        for marker in self.markers:
-            for evidence in marker.evidences:
-                self.literature.add(evidence.paper)

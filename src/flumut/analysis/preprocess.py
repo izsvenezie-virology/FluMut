@@ -1,5 +1,11 @@
 import logging
 import re
+from io import TextIOWrapper
+
+from flumut.analysis.models import Analysis, Sample
+from flumut.io.input import read_fasta
+from flumut.nucleotides.aligner import get_best_alignment, select_candidate_references
+from flumut.nucleotides.translator import translate
 
 
 def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
@@ -28,3 +34,17 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
 
     logging.debug(f'Sample:  "{sample}" - Segment: "{segment}"')
     return sample or header, segment
+
+
+def load_nucleotide_fasta(analysis: Analysis, fasta: TextIOWrapper, header_pattern: re.Pattern) -> None:
+    for sequence in read_fasta(fasta):
+        sample, candidate_hint = parse_header(sequence.name, header_pattern)
+        candidates = select_candidate_references(candidate_hint)
+        nt_alignment = get_best_alignment(sequence, candidates)
+
+        if sample not in analysis.samples:
+            analysis.samples[sample] = Sample(sample)
+
+        for protein in nt_alignment.reference.segment.proteins:
+            aa_alignment = translate(nt_alignment, protein)
+            analysis.samples[sample].alignments.append(aa_alignment)
