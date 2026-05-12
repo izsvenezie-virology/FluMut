@@ -1,1 +1,1 @@
-from flumut.analysis.models import Analysis, ProteinAlignment, Sample
+from flumut.analysis.models import Analysis, Sample

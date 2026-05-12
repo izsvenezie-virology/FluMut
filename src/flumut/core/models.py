@@ -1,6 +1,11 @@
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from flumut.core.globals import GAP_SYMBOL
+from flumut.flumutdb import Protein, Reference
+
+if TYPE_CHECKING:
+    from flumut.nucleotides.models import CDSAlignment
 
 
 @dataclass(kw_only=True)
@@ -20,3 +25,11 @@ class Alignment:
                 last_position += 1
                 positions.append(last_position)
         return positions
+
+
+@dataclass
+class ProteinAlignment(Alignment):
+    protein: Protein
+    reference: Reference
+
+    cds: 'CDSAlignment | None' = None

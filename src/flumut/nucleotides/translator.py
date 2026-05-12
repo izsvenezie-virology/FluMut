@@ -1,7 +1,7 @@
 import itertools
 
-from flumut.analysis import ProteinAlignment
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
+from flumut.core.models import ProteinAlignment
 from flumut.flumutdb import Protein
 from flumut.nucleotides import CDSAlignment
 from flumut.nucleotides.models import NucleotideAlignment
