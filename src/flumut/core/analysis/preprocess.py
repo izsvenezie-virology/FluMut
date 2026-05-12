@@ -2,10 +2,10 @@ import logging
 import re
 from io import TextIOWrapper
 
-from flumut.analysis.models import Analysis, Sample
-from flumut.io.input import read_fasta
-from flumut.nucleotides.aligner import get_best_alignment, select_candidate_references
-from flumut.nucleotides.translator import translate
+from flumut.core.analysis.models import Analysis, Sample
+from flumut.core.io.input import read_fasta
+from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
+from flumut.core.nucleotides.translator import translate
 
 
 def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:

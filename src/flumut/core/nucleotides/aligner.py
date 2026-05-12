@@ -4,8 +4,8 @@ from Bio.Align import PairwiseAligner
 from Bio.SeqRecord import SeqRecord
 
 from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE, GAP_SYMBOL, MISMATCH_SCORE, WILDCARD
+from flumut.core.nucleotides.models import Alignment, NucleotideAlignment
 from flumut.flumutdb import Reference
-from flumut.nucleotides.models import Alignment, NucleotideAlignment
 
 _aligner = PairwiseAligner()
 _aligner.wildcard = WILDCARD

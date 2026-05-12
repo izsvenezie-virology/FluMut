@@ -6,7 +6,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
-from flumut.analysis import Analysis
+from flumut.core.analysis.models import Analysis
 from flumut.core.globals import EXCEL_TEMPLATE
 
 TSV_data = list[dict[str, str]]

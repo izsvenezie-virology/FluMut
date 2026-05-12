@@ -7,13 +7,13 @@ import click
 from click import File
 
 from flumut import __author__, __contact__, __version__
-from flumut.analysis import Analysis
-from flumut.analysis.preprocess import load_nucleotide_fasta
-from flumut.analysis.scanner import analyse
 from flumut.core import logger
+from flumut.core.analysis.models import Analysis
+from flumut.core.analysis.preprocess import load_nucleotide_fasta
+from flumut.core.analysis.scanner import analyse
+from flumut.core.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
-from flumut.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 
 
 def update_db(ctx, param, value):

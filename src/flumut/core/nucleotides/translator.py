@@ -1,10 +1,9 @@
 import itertools
 
-from flumut.analysis.models import ProteinAlignment
+from flumut.core.analysis.models import ProteinAlignment
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
+from flumut.core.nucleotides.models import Alignment, CDSAlignment, NucleotideAlignment
 from flumut.flumutdb import Protein
-from flumut.nucleotides import CDSAlignment
-from flumut.nucleotides.models import Alignment, NucleotideAlignment
 
 
 def translate(alignment: NucleotideAlignment, protein: Protein) -> ProteinAlignment:

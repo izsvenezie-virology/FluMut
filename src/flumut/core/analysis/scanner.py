@@ -1,4 +1,4 @@
-from flumut.analysis.models import Analysis, MarkerScan, PositionScan, ProteinAlignment
+from flumut.core.analysis.models import Analysis, MarkerScan, PositionScan, ProteinAlignment
 from flumut.flumutdb import Marker
 
 
