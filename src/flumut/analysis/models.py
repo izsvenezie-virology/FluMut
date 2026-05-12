@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 
-from flumut.core.models import ProteinAlignment
+from flumut.core.models import Alignment
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
+from flumut.nucleotides.models import CDSAlignment, Protein, Reference
 
 
 @dataclass
@@ -35,6 +36,15 @@ class MarkerScan:
         self.detected_mutations = [position for position in self.positions if position.is_detected]
         self.is_detected = len(self.detected_mutations) > 0
         self.is_complete = len(self.detected_mutations) == len(self.marker.mutations)
+
+
+@dataclass
+class ProteinAlignment:
+    protein: Protein
+    reference: Reference
+    alignment: Alignment
+
+    cds: 'CDSAlignment | None' = None
 
 
 @dataclass
