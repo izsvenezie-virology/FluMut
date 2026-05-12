@@ -38,7 +38,7 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
 
 def load_nucleotide_fasta(analysis: Analysis, fasta: TextIOWrapper, header_pattern: re.Pattern) -> None:
     for sequence in read_fasta(fasta):
-        sample, candidate_hint = parse_header(sequence.name, header_pattern)
+        sample, candidate_hint = parse_header(sequence.header, header_pattern)
         candidates = select_candidate_references(candidate_hint)
         nt_alignment = get_best_alignment(sequence, candidates)
 

@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
 
-from Bio.SeqRecord import SeqRecord
-
 from flumut.core.globals import GAP_SYMBOL
+from flumut.core.io.input import FastaSequence
 from flumut.flumutdb import Protein, Reference
 
 
@@ -29,7 +28,7 @@ class Alignment:
 class Nucleotide:
     """Stores the alignment of a sequence to a reference."""
 
-    query: SeqRecord
+    query: FastaSequence
     """Query sequence."""
     reference: Reference
     """Reference sequence."""

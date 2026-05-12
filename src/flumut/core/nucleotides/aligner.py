@@ -1,9 +1,9 @@
 import logging
 
 from Bio.Align import PairwiseAligner
-from Bio.SeqRecord import SeqRecord
 
 from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE, GAP_SYMBOL, MISMATCH_SCORE, WILDCARD
+from flumut.core.io.input import FastaSequence
 from flumut.core.nucleotides.models import Alignment, Nucleotide
 from flumut.flumutdb import Reference
 
@@ -32,7 +32,7 @@ def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
     return candidates
 
 
-def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleotide:
+def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nucleotide:
     """
     Find the best reference and creates the alignment for the given sequence.
 
@@ -42,7 +42,7 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
     """
     best_alignment = None
     best_score = -1_000_000
-    query_sequence = str(query.seq).replace(GAP_SYMBOL, '')
+    query_sequence = str(query.sequence).replace(GAP_SYMBOL, '')
 
     for reference in candidates:
         reference_sequence = str(reference.sequence)
@@ -53,7 +53,7 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
             best_score = alignment.score  # type: ignore
 
     if not best_alignment:
-        raise ValueError(f'No reference found for sequence {query.name}')
+        raise ValueError(f'No reference found for sequence {query.header} in file {query.file}')
 
     logging.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
     return best_alignment
