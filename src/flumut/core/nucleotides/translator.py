@@ -2,38 +2,37 @@ import itertools
 
 from flumut.core.analysis.models import ProteinAlignment
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
-from flumut.core.nucleotides.models import Alignment, CDSAlignment, NucleotideAlignment
+from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
 from flumut.flumutdb import Protein
 
 
-def translate(alignment: NucleotideAlignment, protein: Protein) -> ProteinAlignment:
-    cds = get_cds(alignment, protein)
+def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
+    cds = get_cds(nucleotides, protein)
     cds.adjust_frame()
 
     sequences = Alignment()
 
     for i in range(0, len(cds.alignment.query), 3):
-        codon_query = cds.alignment.query[i : i + 3]
         codon_reference = cds.alignment.reference[i : i + 3]
+        codon_query = cds.alignment.query[i : i + 3]
         sequences.reference += translate_codon(codon_reference)
         sequences.query += translate_codon(codon_query)
 
-    return ProteinAlignment(protein, alignment.reference, sequences, cds)
+    return ProteinAlignment(protein, nucleotides.reference, sequences, cds)
 
 
-def get_cds(alignment: NucleotideAlignment, protein: Protein) -> CDSAlignment:
+def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
     annotations = protein.annotations
-    nucleotides = alignment
     positions = nucleotides.alignment.get_positions()
-    aln = Alignment()
+    alignment = Alignment()
 
     for annotation in annotations:
         if annotation.reference == nucleotides.reference:
             start = positions.index(annotation.start)
             end = positions.index(annotation.end) + 1
-            aln.query += nucleotides.alignment.query[start:end]
-            aln.reference += nucleotides.alignment.reference[start:end]
-    return CDSAlignment(alignment, protein, aln)
+            alignment.reference += nucleotides.alignment.reference[start:end]
+            alignment.query += nucleotides.alignment.query[start:end]
+    return CDS(nucleotides, protein, alignment)
 
 
 def translate_codon(codon: list[str]) -> str:

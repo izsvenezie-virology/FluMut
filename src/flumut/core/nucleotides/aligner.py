@@ -4,7 +4,7 @@ from Bio.Align import PairwiseAligner
 from Bio.SeqRecord import SeqRecord
 
 from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE, GAP_SYMBOL, MISMATCH_SCORE, WILDCARD
-from flumut.core.nucleotides.models import Alignment, NucleotideAlignment
+from flumut.core.nucleotides.models import Alignment, Nucleotide
 from flumut.flumutdb import Reference
 
 _aligner = PairwiseAligner()
@@ -32,7 +32,7 @@ def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
     return candidates
 
 
-def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> NucleotideAlignment:
+def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleotide:
     """
     Find the best reference and creates the alignment for the given sequence.
 
@@ -49,7 +49,7 @@ def get_best_alignment(query: SeqRecord, candidates: list[Reference]) -> Nucleot
         alignment = _aligner.align(reference_sequence, query_sequence)[0]
         if best_score < alignment.score:  # type: ignore
             aln = Alignment(list(alignment[0]), list(alignment[1]))  # type: ignore
-            best_alignment = NucleotideAlignment(query, reference, aln)
+            best_alignment = Nucleotide(query, reference, aln)
             best_score = alignment.score  # type: ignore
 
     if not best_alignment:

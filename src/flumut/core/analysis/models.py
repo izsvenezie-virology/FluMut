@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from flumut.core.nucleotides.models import Alignment, CDSAlignment, Protein, Reference
+from flumut.core.nucleotides.models import CDS, Alignment, Protein, Reference
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
 
 
@@ -43,7 +43,7 @@ class ProteinAlignment:
     reference: Reference
     alignment: Alignment
 
-    cds: 'CDSAlignment | None' = None
+    cds: CDS | None = None
 
 
 @dataclass

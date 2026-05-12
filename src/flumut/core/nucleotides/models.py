@@ -26,7 +26,7 @@ class Alignment:
 
 
 @dataclass
-class NucleotideAlignment:
+class Nucleotide:
     """Stores the alignment of a sequence to a reference."""
 
     query: SeqRecord
@@ -37,8 +37,8 @@ class NucleotideAlignment:
 
 
 @dataclass
-class CDSAlignment:
-    nucleotides: NucleotideAlignment
+class CDS:
+    nucleotides: Nucleotide
     protein: Protein
     alignment: Alignment
 
