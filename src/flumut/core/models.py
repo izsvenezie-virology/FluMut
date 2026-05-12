@@ -8,17 +8,17 @@ if TYPE_CHECKING:
     from flumut.nucleotides.models import CDSAlignment
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Alignment:
     """Stores the alignment of a sequence to a reference."""
 
-    aligned_reference: list[str] = field(default_factory=list)
-    aligned_query: list[str] = field(default_factory=list)
+    reference: list[str] = field(default_factory=list)
+    query: list[str] = field(default_factory=list)
 
     def get_positions(self) -> list[int]:
         positions = []
         last_position = 0
-        for r in self.aligned_reference:
+        for r in self.reference:
             if r == GAP_SYMBOL:
                 positions.append(None)
             else:
@@ -28,8 +28,9 @@ class Alignment:
 
 
 @dataclass
-class ProteinAlignment(Alignment):
+class ProteinAlignment:
     protein: Protein
     reference: Reference
+    alignment: Alignment
 
     cds: 'CDSAlignment | None' = None

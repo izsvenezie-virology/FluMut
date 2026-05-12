@@ -1,7 +1,7 @@
 import itertools
 
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
-from flumut.core.models import ProteinAlignment
+from flumut.core.models import Alignment, ProteinAlignment
 from flumut.flumutdb import Protein
 from flumut.nucleotides import CDSAlignment
 from flumut.nucleotides.models import NucleotideAlignment
@@ -11,31 +11,30 @@ def translate(alignment: NucleotideAlignment, protein: Protein) -> ProteinAlignm
     cds = get_cds(alignment, protein)
     cds.adjust_frame()
 
-    aa_reference = []
-    aa_query = []
+    sequences = Alignment()
 
-    for i in range(0, len(cds.aligned_query), 3):
-        codon_query = cds.aligned_query[i : i + 3]
-        codon_reference = cds.aligned_reference[i : i + 3]
-        aa_reference += translate_codon(codon_reference)
-        aa_query += translate_codon(codon_query)
+    for i in range(0, len(cds.alignment.query), 3):
+        codon_query = cds.alignment.query[i : i + 3]
+        codon_reference = cds.alignment.reference[i : i + 3]
+        sequences.reference += translate_codon(codon_reference)
+        sequences.query += translate_codon(codon_query)
 
-    return ProteinAlignment(protein, alignment.reference, cds=cds, aligned_reference=aa_reference, aligned_query=aa_query)
+    return ProteinAlignment(protein, alignment.reference, sequences, cds)
 
 
 def get_cds(alignment: NucleotideAlignment, protein: Protein) -> CDSAlignment:
     annotations = protein.annotations
     nucleotides = alignment
-    positions = nucleotides.get_positions()
-    cds_reference = []
-    cds_query = []
+    positions = nucleotides.alignment.get_positions()
+    aln = Alignment()
+
     for annotation in annotations:
         if annotation.reference == nucleotides.reference:
             start = positions.index(annotation.start)
             end = positions.index(annotation.end) + 1
-            cds_query += nucleotides.aligned_query[start:end]
-            cds_reference += nucleotides.aligned_reference[start:end]
-    return CDSAlignment(alignment, protein, aligned_reference=cds_reference, aligned_query=cds_query)
+            aln.query += nucleotides.alignment.query[start:end]
+            aln.reference += nucleotides.alignment.reference[start:end]
+    return CDSAlignment(alignment, protein, aln)
 
 
 def translate_codon(codon: list[str]) -> str:

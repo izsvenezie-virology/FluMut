@@ -26,7 +26,7 @@ def analyse(analysis: Analysis, relaxed: bool = True) -> None:
 
 
 def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:
-    positions = alignment.get_positions()
+    positions = alignment.alignment.get_positions()
     result = []
 
     for mutation in alignment.protein.mutations:
@@ -34,7 +34,7 @@ def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:
             if not mapping.reference == alignment.reference:
                 continue
             index = positions.index(mapping.position)
-            aa = alignment.aligned_query[index]
+            aa = alignment.alignment.query[index]
             result.append(PositionScan(mapping=mapping, ammino_acid=aa))
     return result
 
