@@ -154,6 +154,14 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": ["--update"]
+    },
+    {
+      "name": "FluMut-GUI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut.gui",
+      "console": "integratedTerminal",
+      "justMyCode": true
     }
   ]
 }

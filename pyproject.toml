@@ -34,6 +34,7 @@ file = "README.md"
 
 [project.scripts]
 flumut = "flumut.cli:cli"
+flumut-gui = "flumut.gui:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -50,7 +51,11 @@ version = {attr = "flumut.__version__"}
 
 [dependency-groups]
 dev = [
+  "pyside6>=6.11.1",
   "pytest>=9.0.3",
+]
+gui = [
+  "pyside6>=6.11.1",
 ]
 
 [tool.pytest.ini_options]
