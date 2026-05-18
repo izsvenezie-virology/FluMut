@@ -10,7 +10,7 @@ from flumut import Updater
 from flumut.FluMut import start_analysis
 from flumut.DbReader import get_db_version, set_db_file
 
-REQUIRED_MAJOR_DB_VERSION = '6'
+REQUIRED_MAJOR_DB_VERSION = 6
 
 def versions() -> Dict[str, str]:
     """Collect versions of FluMut and FluMutDB packages.
