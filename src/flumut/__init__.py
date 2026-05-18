@@ -1,4 +1,4 @@
-__version__ = '0.6.4'
+__version__ = '0.6.5'
 __author__ = 'Edoardo Giussani'
 __contact__ = 'egiussani@izsvenezie.it'
 
@@ -10,6 +10,7 @@ from flumut import Updater
 from flumut.FluMut import start_analysis
 from flumut.DbReader import get_db_version, set_db_file
 
+REQUIRED_MAJOR_DB_VERSION = '6'
 
 def versions() -> Dict[str, str]:
     """Collect versions of FluMut and FluMutDB packages.
@@ -74,6 +75,9 @@ def analyze(name_regex: str, fasta_file: TextIOWrapper, db_file: str,
         name_regex = r'(?P<sample>.+)_(?P<segment>.+)'
     if db_file is not None:
         set_db_file(db_file)
+    major, _, _ = get_db_version()
+    if not major == REQUIRED_MAJOR_DB_VERSION:
+        raise ValueError(f"Detected major database version does not match required version ('{REQUIRED_MAJOR_DB_VERSION}'): {major}")
 
     start_analysis(name_regex=name_regex,
                    fasta_file=fasta_file,
