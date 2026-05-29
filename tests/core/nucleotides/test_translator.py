@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from flumut.core.globals import GAP_SYMBOL
-from flumut.core.nucleotides.models import Alignment, CDS
+from flumut.core.nucleotides.models import CDS, Alignment
 from flumut.core.nucleotides.translator import get_cds, translate, translate_codon
 
 
@@ -19,7 +19,6 @@ def _make_cds(reference_chars: list[str], query_chars: list[str]) -> CDS:
         protein=MagicMock(),
         alignment=Alignment(reference=reference_chars, query=query_chars),
     )
-    cds.adjust_frame = MagicMock()
     return cds
 
 
@@ -44,8 +43,9 @@ def test_translate_produces_correct_amino_acid_sequences(mock_get_cds) -> None:
 def test_translate_calls_adjust_frame_on_cds(mock_get_cds) -> None:
     cds = _make_cds(['A', 'T', 'G'], ['G', 'T', 'G'])
     mock_get_cds.return_value = cds
-    translate(MagicMock(), MagicMock())
-    cds.adjust_frame.assert_called_once()
+    with patch('flumut.core.nucleotides.translator.adjust_frame') as mock_adjust:
+        translate(MagicMock(), MagicMock())
+        mock_adjust.assert_called_once_with(cds)
 
 
 def test_translate_passes_arguments_to_get_cds(mock_get_cds) -> None:
@@ -145,17 +145,17 @@ def test_get_cds_gap_in_alignment_maps_positions_correctly() -> None:
 @pytest.mark.parametrize(
     'codon, expected',
     [
-        (['N', 'T', 'G'], '?'),   # wildcard at start
-        (['A', 'N', 'G'], '?'),   # wildcard in middle
-        ([],             '?'),    # empty codon
-        (['A', 'T'],     '?'),    # one base short
-        (['A', 'T', 'G'], 'M'),   # ATG = Met
-        (['T', 'T', 'T'], 'F'),   # TTT = Phe
-        (['T', 'A', 'A'], '*'),   # stop codon
-        (['-', '-', '-'], '-'),   # gap codon (--- → -)
+        (['N', 'T', 'G'], '?'),  # wildcard at start
+        (['A', 'N', 'G'], '?'),  # wildcard in middle
+        ([], '?'),  # empty codon
+        (['A', 'T'], '?'),  # one base short
+        (['A', 'T', 'G'], 'M'),  # ATG = Met
+        (['T', 'T', 'T'], 'F'),  # TTT = Phe
+        (['T', 'A', 'A'], '*'),  # stop codon
+        (['-', '-', '-'], '-'),  # gap codon (--- → -)
         (['R', 'T', 'G'], 'MV'),  # R=A|G → ATG=M, GTG=V → sorted 'MV'
-        (['T', 'C', 'Y'], 'S'),   # Y=C|T → TCC=TCS=S, dedup → 'S'
-        (['A', 'T', '-'], '?'),   # mixed gap → 'AT-' not in dict
+        (['T', 'C', 'Y'], 'S'),  # Y=C|T → TCC=TCS=S, dedup → 'S'
+        (['A', 'T', '-'], '?'),  # mixed gap → 'AT-' not in dict
     ],
     ids=[
         'wildcard_at_start',

@@ -1,14 +1,15 @@
 import itertools
 
 from flumut.core.analysis.models import ProteinAlignment
-from flumut.core.globals import GAP_SYMBOL, WILDCARD
+from flumut.core.globals import WILDCARD
+from flumut.core.nucleotides.framer import adjust_frame
 from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
 from flumut.flumutdb import Protein
 
 
 def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
     cds = get_cds(nucleotides, protein)
-    cds.adjust_frame()
+    adjust_frame(cds)
 
     sequences = Alignment()
 
@@ -49,14 +50,6 @@ def translate_codon(codon: list[str]) -> str:
     codons = list(itertools.product(*undegenerated_codon))
     aas = [_translation_dict.get(''.join(c), '?') for c in codons]
     return ''.join(sorted(set(aas)))
-
-
-def get_start_position(query: list[str]) -> int:
-    for i in range(0, len(query), 3):
-        codon = query[i : i + 3]
-        if WILDCARD not in codon and GAP_SYMBOL not in codon:
-            return i
-    raise ValueError('No valid codon found in query sequence')
 
 
 # fmt: off

@@ -43,6 +43,3 @@ class CDS:
 
     # From nucleotide alignment properties
     frameshifts: list[tuple[int, int]] = field(default_factory=list)
-
-    def adjust_frame(self) -> None:
-        pass
