@@ -7,6 +7,8 @@ import flumut
 
 WILDCARD = 'N'  # Wildcard character for not known nucleotides
 GAP_SYMBOL = '-'  # Symbol for gaps in the alignment
+STOP_CODON_SYMBOL = '*'  # Symbol for stop codons in the alignment
+UNKNOWN_AA_SYMBOL = '?'  # Symbol for unknown amino acids in the alignment
 
 # Alignment scores
 MISMATCH_SCORE = -1  # Score for a mismatch between the reference and the sample sequence

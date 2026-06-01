@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flumut.core.globals import GAP_SYMBOL
+from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 from flumut.core.nucleotides.models import CDS, Alignment
 from flumut.core.nucleotides.translator import get_cds, translate, translate_codon
 
@@ -145,17 +145,17 @@ def test_get_cds_gap_in_alignment_maps_positions_correctly() -> None:
 @pytest.mark.parametrize(
     'codon, expected',
     [
-        (['N', 'T', 'G'], '?'),  # wildcard at start
-        (['A', 'N', 'G'], '?'),  # wildcard in middle
-        ([], '?'),  # empty codon
-        (['A', 'T'], '?'),  # one base short
+        (['N', 'T', 'G'], UNKNOWN_AA_SYMBOL),  # wildcard at start
+        (['A', 'N', 'G'], UNKNOWN_AA_SYMBOL),  # wildcard in middle
+        ([], UNKNOWN_AA_SYMBOL),  # empty codon
+        (['A', 'T'], UNKNOWN_AA_SYMBOL),  # one base short
         (['A', 'T', 'G'], 'M'),  # ATG = Met
         (['T', 'T', 'T'], 'F'),  # TTT = Phe
-        (['T', 'A', 'A'], '*'),  # stop codon
+        (['T', 'A', 'A'], STOP_CODON_SYMBOL),  # stop codon
         (['-', '-', '-'], '-'),  # gap codon (--- → -)
         (['R', 'T', 'G'], 'MV'),  # R=A|G → ATG=M, GTG=V → sorted 'MV'
         (['T', 'C', 'Y'], 'S'),  # Y=C|T → TCC=TCS=S, dedup → 'S'
-        (['A', 'T', '-'], '?'),  # mixed gap → 'AT-' not in dict
+        (['A', 'T', '-'], UNKNOWN_AA_SYMBOL),  # mixed gap → 'AT-' not in dict
     ],
     ids=[
         'wildcard_at_start',

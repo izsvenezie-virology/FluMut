@@ -1,7 +1,8 @@
 import itertools
 
 from flumut.core.analysis.models import ProteinAlignment
-from flumut.core.globals import WILDCARD
+from flumut.core.globals import STOP_CODON_SYMBOL as SCS
+from flumut.core.globals import UNKNOWN_AA_SYMBOL, WILDCARD
 from flumut.core.nucleotides.framer import adjust_frame
 from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
 from flumut.flumutdb import Protein
@@ -38,9 +39,9 @@ def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
 
 def translate_codon(codon: list[str]) -> str:
     if WILDCARD in codon:
-        return '?'
+        return UNKNOWN_AA_SYMBOL
     if len(codon) < 3:
-        return '?'
+        return UNKNOWN_AA_SYMBOL
 
     try:
         undegenerated_codon = [_degeneration_dict[nucl] for nucl in codon]
@@ -48,7 +49,7 @@ def translate_codon(codon: list[str]) -> str:
         raise ValueError('Unknown nucleotide found in codon: ' + ''.join(codon))
 
     codons = list(itertools.product(*undegenerated_codon))
-    aas = [_translation_dict.get(''.join(c), '?') for c in codons]
+    aas = [_translation_dict.get(''.join(c), UNKNOWN_AA_SYMBOL) for c in codons]
     return ''.join(sorted(set(aas)))
 
 
@@ -58,9 +59,9 @@ _translation_dict = {
     'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
     'TCT': 'S', 'TCC': 'S', 'TCA': 'S', 'TCG': 'S', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P',
     'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A',
-    'TAT': 'Y', 'TAC': 'Y', 'TAA': '*', 'TAG': '*', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
+    'TAT': 'Y', 'TAC': 'Y', 'TAA': SCS, 'TAG': SCS, 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
     'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
-    'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
+    'TGT': 'C', 'TGC': 'C', 'TGA': SCS, 'TGG': 'W', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
     'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G',
     '---': '-'
 }
