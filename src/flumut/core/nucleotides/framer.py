@@ -5,6 +5,9 @@ from flumut.core.nucleotides.models import CDS, Alignment
 def adjust_frame(cds: CDS) -> None:
     aln = cds.alignment
 
+    frameshifts = set()
+    non_closing_frameshift = False
+
     pos = get_start_position(aln.query)
 
     while pos < len(aln.reference):
@@ -24,10 +27,29 @@ def adjust_frame(cds: CDS) -> None:
                 if codon_query[i] == GAP_SYMBOL:
                     moved = move_gap(aln.query, pos + i)
                     break
-            if not moved:
+            if moved:
+                frameshifts.add(pos + i + 1)  # type: ignore[reportPossiblyUnboundVariable]
+            else:
+                non_closing_frameshift = True
                 pos += 3
         else:
             pos += 3
+    cds.frameshifts = _collapse_to_ranges(sorted(frameshifts), non_closing_frameshift)
+
+
+def _collapse_to_ranges(positions: list[int], non_closing_frameshift: bool) -> list[tuple[int, int | None]]:
+    if not positions:
+        return []
+    result = []
+    start = prev = positions[0]
+    for p in positions[1:]:
+        if p > prev + 9:
+            result.append((start, prev))
+            start = p
+        prev = p
+    last = None if non_closing_frameshift else prev
+    result.append((start, last))
+    return result
 
 
 def move_gap(sequence: list[str], pos: int) -> bool:

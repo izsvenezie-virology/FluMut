@@ -42,4 +42,4 @@ class CDS:
     alignment: Alignment
 
     # From nucleotide alignment properties
-    frameshifts: list[tuple[int, int]] = field(default_factory=list)
+    frameshifts: list[tuple[int, int | None]] = field(default_factory=list)

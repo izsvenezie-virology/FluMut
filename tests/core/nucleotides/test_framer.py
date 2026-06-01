@@ -40,35 +40,37 @@ def test_adjust_frame_opening_gaps_in_query_are_left_untouched() -> None:
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGGA')
     assert cds.alignment.query == list('---AAGGGA')
+    assert cds.frameshifts == []
 
 
 # ---------------------------------------------------------------------------
 # Unresolved insertions in query (gap in reference)
-# Gap must move forward until end of sequence
+# Gap moves forward until end of sequence.
+# Frameshift is recorded at the last codon where the gap lands (aa 3).
 # ---------------------------------------------------------------------------
 
 
 def test_adjust_frame_insertion_at_codon_boundary_moves_to_end() -> None:
     # 1-nt insertion: ref gap at codon boundary (pos 3)
-    # expected: gap slides to last position of ref
     cds = _make_cds(list('ATG-AAGGG'), list('ATGCAAGGG'))
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGG-')
     assert cds.alignment.query == list('ATGCAAGGG')
+    assert cds.frameshifts == [(4, None)]
 
 
 def test_adjust_frame_insertion_mid_codon_moves_to_end() -> None:
     # 1-nt insertion: ref gap inside first codon (pos 2)
-    # expected: gap first realigns within codon, then slides to end
     cds = _make_cds(list('AT-GAAGGG'), list('ATCGAAGGG'))
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGG-')
     assert cds.alignment.query == list('ATCGAAGGG')
+    assert cds.frameshifts == [(3, None)]
 
 
 # ---------------------------------------------------------------------------
 # Unresolved deletions in query (gap in query)
-# Gap must move forward until end of sequence
+# Gap moves forward until end of sequence.
 # ---------------------------------------------------------------------------
 
 
@@ -78,20 +80,21 @@ def test_adjust_frame_deletion_at_codon_boundary_moves_to_end() -> None:
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGGC')
     assert cds.alignment.query == list('ATGAGGGC-')
+    assert cds.frameshifts == [(4, None)]
 
 
 def test_adjust_frame_two_nt_deletion_moves_to_end() -> None:
-    # 2-nt deletion: two qry gaps spread across codons
-    # expected: both gaps move to the last two positions
+    # 2-nt deletion: two qry gaps spread across codons → both move to end
     cds = _make_cds(list('ATGAAGGGATTT'), list('ATGAA--GATTT'))
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGGATTT')
     assert cds.alignment.query == list('ATGAAGATTT--')
+    assert cds.frameshifts == [(6, None)]
 
 
 # ---------------------------------------------------------------------------
 # Compensation — one ref gap and one qry gap cancel each other
-# The column where both are '-' is removed; both sequences shrink by 1
+# The column where both are '-' is removed; both sequences shrink by 1.
 # ---------------------------------------------------------------------------
 
 
@@ -101,18 +104,19 @@ def test_adjust_frame_compensation_removes_column_and_shrinks_sequences() -> Non
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGG')  # shrank from 9 → 8
     assert cds.alignment.query == list('ATGCAGGG')  # shrank from 9 → 8
+    assert cds.frameshifts == [(4, 6)]
 
 
 # ---------------------------------------------------------------------------
 # Multiple gaps forming a complete deletion codon
-# Three spread gaps must collapse into a single '---' codon
+# Three spread gaps collapse into a single '---' codon.
 # ---------------------------------------------------------------------------
 
 
 def test_adjust_frame_three_nt_deletion_collapses_to_gap_codon() -> None:
-    # qry has 3 gaps at positions 3, 5, 7 — none forming a complete codon
-    # expected: all three merge into codon slot 6:9 → '---'
+    # qry has 3 gaps at positions 3, 5, 7 → collapse to codon slot 6:9
     cds = _make_cds(list('ATGAAGGGATTT'), list('ATG-A-G-ATTT'))
     adjust_frame(cds)
     assert cds.alignment.reference == list('ATGAAGGGATTT')
     assert cds.alignment.query == list('ATGAGA---TTT')
+    assert cds.frameshifts == [(4, 6)]
