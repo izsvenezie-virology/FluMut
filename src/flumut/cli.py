@@ -8,6 +8,7 @@ from click import File
 
 from flumut import __author__, __contact__, __version__
 from flumut.core import logger
+from flumut.core.analysis.checks import perform_checks
 from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
@@ -101,6 +102,7 @@ def cli(
 
         for fasta in fasta_files:
             load_nucleotide_fasta(analysis, fasta, pattern)
+        perform_checks(analysis)
         analyse(analysis, relaxed)
 
         if markers_output or excel_output:

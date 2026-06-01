@@ -211,6 +211,17 @@ def test_sample_marker_scans_list_is_independent_per_instance() -> None:
     assert s2.marker_scans == []
 
 
+def test_sample_checks_starts_empty() -> None:
+    assert Sample(id='seq1').checks == []
+
+
+def test_sample_checks_list_is_independent_per_instance() -> None:
+    s1 = Sample(id='seq1')
+    s2 = Sample(id='seq2')
+    s1.checks.append(MagicMock())
+    assert s2.checks == []
+
+
 # ---------------------------------------------------------------------------
 # Analysis tests
 # ---------------------------------------------------------------------------

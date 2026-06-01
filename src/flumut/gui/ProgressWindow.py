@@ -7,6 +7,7 @@ from PySide6 import QtGui
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QDialog, QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout
 
+from flumut.core.analysis.checks import perform_checks
 from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
@@ -27,6 +28,7 @@ def run_flumut(args_dict):
 
     for fasta in [fasta_files]:
         load_nucleotide_fasta(analysis, fasta, pattern)
+    perform_checks(analysis)
     analyse(analysis, relaxed)
 
     if markers_output or excel_output:

@@ -1,7 +1,11 @@
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from flumut.core.nucleotides.models import CDS, Alignment, Protein, Reference
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
+
+if TYPE_CHECKING:
+    from flumut.core.analysis.checks import Check
 
 
 @dataclass
@@ -53,6 +57,7 @@ class Sample:
 
     positions: list[PositionScan] = field(default_factory=list, init=False)
     marker_scans: list[MarkerScan] = field(default_factory=list, init=False)
+    checks: list['Check'] = field(default_factory=list, init=False)
 
 
 @dataclass
