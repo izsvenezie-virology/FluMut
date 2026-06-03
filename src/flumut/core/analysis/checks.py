@@ -9,10 +9,10 @@ if TYPE_CHECKING:
 
 def perform_checks(analysis: 'Analysis') -> None:
     for sample in analysis.samples.values():
+        check_duplications(sample)
+        check_frameshifts(sample)
         check_truncation(sample)
         check_enlongation(sample)
-        check_frameshifts(sample)
-        check_duplications(sample)
 
 
 def check_truncation(sample: 'Sample') -> None:
