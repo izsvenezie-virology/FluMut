@@ -1,11 +1,8 @@
+import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from flumut.core.nucleotides.models import CDS, Alignment, Protein, Reference
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
-
-if TYPE_CHECKING:
-    from flumut.core.analysis.checks import Check
 
 
 @dataclass
@@ -66,3 +63,33 @@ class Analysis:
     mutations: set[Mutation] = field(default_factory=set)
     markers: set[Marker] = field(default_factory=set)
     literature: set[Paper] = field(default_factory=set)
+
+
+class Check:
+    def __init__(self, message: str):
+        self.message = message
+        logging.warning(self.message)
+
+
+class TruncationCheck(Check):
+    def __init__(self, sample_id: str, protein_name: str, position: int):
+        message = f'Premature stop codon detected in sample "{sample_id}" for protein "{protein_name}" at {position}'
+        super().__init__(message)
+
+
+class EnlongationCheck(Check):
+    def __init__(self, sample_id: str, protein_name: str):
+        message = f'Enlongation detected in sample "{sample_id}" for protein "{protein_name}"'
+        super().__init__(message)
+
+
+class FrameshiftCheck(Check):
+    def __init__(self, sample_id: str, protein_name: str, start: int, end: int | None):
+        message = f'Frameshift detected in sample "{sample_id}" for protein "{protein_name}" from position {start} to {end or "end"}'
+        super().__init__(message)
+
+
+class DuplicationCheck(Check):
+    def __init__(self, sample_id: str, protein_name: str):
+        message = f'Duplicate protein "{protein_name}" detected in sample "{sample_id}"'
+        super().__init__(message)
