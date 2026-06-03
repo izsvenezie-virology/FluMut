@@ -1,6 +1,6 @@
-import logging
 from dataclasses import dataclass, field
 
+from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.models import CDS, Alignment, Protein, Reference
 from flumut.flumutdb import Mapping, Marker, Mutation, MutationType, Paper
 
@@ -68,7 +68,7 @@ class Analysis:
 class Check:
     def __init__(self, message: str):
         self.message = message
-        logging.warning(self.message)
+        LOGGER.warning(self.message)
 
 
 class TruncationCheck(Check):

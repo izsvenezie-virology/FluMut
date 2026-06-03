@@ -1,9 +1,9 @@
-import logging
 import re
 from io import TextIOWrapper
 
 from flumut.core.analysis.models import Analysis, Sample
 from flumut.core.io.input import read_fasta
+from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
 from flumut.core.nucleotides.translator import translate
 
@@ -18,12 +18,12 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
     :return `Optional[str]` sample: The sample name. Returns `None` if  not found.
     :return `Optional[str]`segment: The segment name. Returns `None` if not found.
     """
-    logging.debug(f'Parsing "{header}" with "{pattern.pattern}"')
+    LOGGER.debug(f'Parsing "{header}" with "{pattern.pattern}"')
     sample, segment = None, None
     match = pattern.match(header)
 
     if not match:
-        logging.info(f'Cannot extract sample ID from "{header}". The whole header is used as sample ID.')
+        LOGGER.info(f'Cannot extract sample ID from "{header}". The whole header is used as sample ID.')
         return header, None
 
     try:
@@ -32,7 +32,7 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
     except IndexError:
         pass
 
-    logging.debug(f'Sample:  "{sample}" - Segment: "{segment}"')
+    LOGGER.debug(f'Sample: "{sample}" - Segment: "{segment}"')
     return sample or header, segment
 
 

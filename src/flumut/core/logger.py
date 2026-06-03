@@ -1,6 +1,8 @@
 import logging
 import sys
 
+LOGGER = logging.getLogger(__name__)
+
 LEVELS = {
     'dbg': logging.DEBUG,
     'inf': logging.INFO,
@@ -19,4 +21,4 @@ def initialize_logging() -> None:
 
 
 def set_level(level: str) -> None:
-    logging.getLogger().setLevel(LEVELS[level])
+    LOGGER.setLevel(LEVELS[level])

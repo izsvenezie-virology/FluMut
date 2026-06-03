@@ -1,9 +1,8 @@
-import logging
-
 from Bio.Align import PairwiseAligner
 
 from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE, GAP_SYMBOL, MISMATCH_SCORE, WILDCARD
 from flumut.core.io.input import FastaSequence
+from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.models import Alignment, Nucleotide
 from flumut.flumutdb import Reference
 
@@ -55,7 +54,7 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
     if not best_alignment:
         raise ValueError(f'No reference found for sequence {query.header} in file {query.file}')
 
-    logging.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
+    LOGGER.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
     return best_alignment
 
 
