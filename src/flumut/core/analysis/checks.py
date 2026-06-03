@@ -24,6 +24,8 @@ def check_truncation(sample: 'Sample') -> None:
 
 def check_enlongation(sample: 'Sample') -> None:
     for alignment in sample.alignments:
+        if alignment.alignment.reference[-1] != STOP_CODON_SYMBOL:
+            continue
         last_aa = alignment.alignment.query[-1]
         if last_aa not in (STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL):
             sample.checks.append(EnlongationCheck(sample.id, alignment.protein.name))
