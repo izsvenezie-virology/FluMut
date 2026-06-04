@@ -12,7 +12,7 @@ from flumut.core.analysis.checks import perform_checks
 from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
-from flumut.core.io.output import get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
+from flumut.core.io.output import get_checks_data, get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
 
@@ -118,7 +118,8 @@ def cli(
             if literature_output:
                 write_tsv(literature_output, literature)
         if excel_output:
-            write_excel(excel_output, markers, mutations, literature)  # type: ignore
+            checks = get_checks_data(analysis)
+            write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
 
     except Exception as e:
         print_errors(e)

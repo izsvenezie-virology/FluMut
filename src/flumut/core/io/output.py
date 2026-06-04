@@ -6,8 +6,10 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
+import flumut
 from flumut.core.analysis.models import Analysis
 from flumut.core.globals import EXCEL_TEMPLATE
+from flumut.flumutdb.models import DbVersion
 
 TSV_data = list[dict[str, str]]
 
@@ -59,7 +61,7 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
                     'Mutations in your sample': ', '.join([m.mutation.name for m in scan.detected_mutations]),
                     'Effect': effect,
                     'Subtype': subtype,
-                    'Literature': ';'.join(papers),
+                    'Literature': '; '.join(papers),
                 }
                 values.append(marker_evidence)
     return values
@@ -80,7 +82,17 @@ def get_mutations_data(analysis: Analysis) -> TSV_data:
     return values
 
 
-def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_data, literature: TSV_data) -> None:
+def get_checks_data(analysis: Analysis) -> TSV_data:
+    values = []
+
+    for sample in analysis.samples.values():
+        for check in sample.checks:
+            check_dict = {'Checks': check.message}
+            values.append(check_dict)
+    return values
+
+
+def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_data, literature: TSV_data, checks: TSV_data) -> None:
     """
     Write complete Excel output.
 
@@ -88,9 +100,16 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
     :param `TextIOWrapper` output_file: Path for the output file.
     """
     wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.name.endswith('.xlsm'))
+
+    ws = wb['Checks']
+    ws.cell(row=1, column=4, value=flumut.__version__)
+    ws.cell(row=1, column=7, value=str(DbVersion().get()))
+
     _write_excel_sheet(wb, 'Mutations', mutations)
     _write_excel_sheet(wb, 'Markers', markers)
     _write_excel_sheet(wb, 'Literature', literature)
+    _write_excel_sheet(wb, 'Checks', checks)
+
     wb.save(output_file.name)
 
 
@@ -103,9 +122,12 @@ def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
     :param `List[str]` header: The header fields.
     :param `TSV_data` values: The list of values to write.
     """
+    if not values:
+        return
     ws = wb[sheet_name]
     header = list(values[0].keys())
-    ws.append(header)
+    for col, col_name in enumerate(header):
+        ws.cell(row=1, column=col + 1, value=col_name)
     for row, row_values in enumerate(values):
         for col, col_name in enumerate(header):
             ws.cell(row=row + 2, column=col + 1, value=row_values.get(col_name, ''))
