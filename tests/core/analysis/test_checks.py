@@ -17,10 +17,17 @@ from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 # ---------------------------------------------------------------------------
 
 
-def _make_alignment(protein_name: str, query: list[str], frameshifts: list | None = None) -> MagicMock:
+def _make_alignment(
+    protein_name: str,
+    query: list[str],
+    reference: list[str] | None = None,
+    frameshifts: list | None = None,
+) -> MagicMock:
     a = MagicMock()
     a.protein.name = protein_name
     a.alignment.query = query
+    if reference is not None:
+        a.alignment.reference = reference
     if frameshifts is not None:
         a.cds.frameshifts = frameshifts
     else:
@@ -134,16 +141,30 @@ def test_check_truncation_multiple_stop_codons_multiple_checks() -> None:
     ids=['stop_codon', 'unknown_aa', 'gap'],
 )
 def test_check_enlongation_no_check_when_last_aa_is_terminal(last_aa: str) -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', last_aa])])
+    # reference ends with stop codon — the query guard is in play
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', last_aa], reference=['A', STOP_CODON_SYMBOL])])
     check_enlongation(sample)
     assert sample.checks == []
 
 
 def test_check_enlongation_regular_last_aa_appends_check() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', 'V'])])
+    # reference ends with stop codon — query is elongated
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', 'V'], reference=['A', STOP_CODON_SYMBOL])])
     check_enlongation(sample)
     assert len(sample.checks) == 1
     assert isinstance(sample.checks[0], EnlongationCheck)
+
+
+def test_check_enlongation_no_check_when_reference_does_not_end_with_stop_query_stop() -> None:
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL], reference=['A', 'K'])])
+    check_enlongation(sample)
+    assert sample.checks == []
+
+
+def test_check_enlongation_no_check_when_reference_does_not_end_with_stop_query_regular() -> None:
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'V'], reference=['A', 'K'])])
+    check_enlongation(sample)
+    assert sample.checks == []
 
 
 # ---------------------------------------------------------------------------
