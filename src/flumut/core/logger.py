@@ -19,12 +19,3 @@ def initialize_logging() -> None:
         stream=sys.stderr,
         force=True,
     )
-
-
-def set_level(level: str) -> None:
-    """Set the log level for the flumut logger.
-
-    Args:
-        level: Short level key; one of ``'dbg'``, ``'inf'``, ``'wrn'``, ``'err'``.
-    """
-    LOGGER.setLevel(LEVELS[level])

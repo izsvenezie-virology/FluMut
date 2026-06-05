@@ -12,7 +12,7 @@ from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
 from flumut.core.io.output import write_outputs
-from flumut.core.logger import LOGGER
+from flumut.core.logger import LEVELS, LOGGER
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
 
@@ -39,7 +39,7 @@ def set_dbfile(ctx, param, value):
 def set_verbosity(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    logger.set_level(value)
+    LOGGER.setLevel(LEVELS[value])
 
 
 def print_errors(error: Exception) -> None:
