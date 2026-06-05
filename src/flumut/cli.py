@@ -1,5 +1,4 @@
 import logging
-import re
 from io import TextIOWrapper
 
 import click
@@ -7,12 +6,8 @@ from click import File
 
 from flumut import __author__, __contact__, __version__
 from flumut.core import logger
-from flumut.core.analysis.checks import perform_checks
-from flumut.core.analysis.models import Analysis
-from flumut.core.analysis.preprocess import load_nucleotide_fasta
-from flumut.core.analysis.scanner import analyse
-from flumut.core.io.output import write_outputs
 from flumut.core.logger import LEVELS, LOGGER
+from flumut.core.workflows import whole_workflow
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
 
@@ -93,24 +88,7 @@ def cli(
     excel_output: TextIOWrapper | None,
 ) -> None:
     try:
-        if not fasta_files:
-            raise Exception("Missing argument 'FASTA_FILES'")
-
-        analysis = Analysis()
-        pattern = re.compile(name_regex)
-
-        LOGGER.info(f'Reading {len(fasta_files)} FASTA file(s)...')
-        for fasta in fasta_files:
-            load_nucleotide_fasta(analysis, fasta, pattern)
-
-        LOGGER.info(f'Checking {len(analysis.samples)} sample(s)...')
-        perform_checks(analysis)
-
-        LOGGER.info(f'Scanning {len(analysis.samples)} sample(s)...')
-        analyse(analysis, relaxed)
-
-        LOGGER.info('Writing outputs...')
-        write_outputs(analysis, markers_output, mutations_output, literature_output, excel_output)
+        whole_workflow(fasta_files, relaxed, name_regex, markers_output, mutations_output, literature_output, excel_output)
     except Exception as e:
         print_errors(e)
 
