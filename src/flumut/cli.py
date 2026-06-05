@@ -11,7 +11,7 @@ from flumut.core.analysis.checks import perform_checks
 from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
-from flumut.core.io.output import get_checks_data, get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
+from flumut.core.io.output import write_outputs
 from flumut.core.logger import LOGGER
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
@@ -87,10 +87,10 @@ def cli(
     fasta_files: tuple[TextIOWrapper, ...],
     relaxed: bool,
     name_regex: str,
-    markers_output: TextIOWrapper,
-    mutations_output: TextIOWrapper,
-    literature_output: TextIOWrapper,
-    excel_output: TextIOWrapper,
+    markers_output: TextIOWrapper | None,
+    mutations_output: TextIOWrapper | None,
+    literature_output: TextIOWrapper | None,
+    excel_output: TextIOWrapper | None,
 ) -> None:
     try:
         if not fasta_files:
@@ -105,26 +105,7 @@ def cli(
         perform_checks(analysis)
         analyse(analysis, relaxed)
 
-        if markers_output or excel_output:
-            markers = get_markers_data(analysis)
-            if markers_output:
-                LOGGER.info(f'Writing markers to {markers_output.name}')
-                write_tsv(markers_output, markers)
-        if mutations_output or excel_output:
-            mutations = get_mutations_data(analysis)
-            if mutations_output:
-                LOGGER.info(f'Writing mutations to {mutations_output.name}')
-                write_tsv(mutations_output, mutations)
-        if literature_output or excel_output:
-            literature = get_literature_data(analysis)
-            if literature_output:
-                LOGGER.info(f'Writing literature to {literature_output.name}')
-                write_tsv(literature_output, literature)
-        if excel_output:
-            checks = get_checks_data(analysis)
-            LOGGER.info(f'Writing Excel report to {excel_output.name}')
-            write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
-
+        write_outputs(analysis, markers_output, mutations_output, literature_output, excel_output)
     except Exception as e:
         print_errors(e)
 

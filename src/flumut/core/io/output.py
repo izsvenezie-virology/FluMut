@@ -15,6 +15,47 @@ from flumut.flumutdb.models import DbVersion
 TSV_data = list[dict[str, str]]
 
 
+def write_outputs(
+    analysis: Analysis,
+    markers_output: TextIOWrapper | None,
+    mutations_output: TextIOWrapper | None,
+    literature_output: TextIOWrapper | None,
+    excel_output: TextIOWrapper | None,
+):
+    """Write all analysis results to the specified output files.
+
+    Extracts data from the completed Analysis object, writes tab-separated values
+    to the provided file handles, and populates an Excel workbook with the same
+    data using the built-in template.
+
+    Args:
+        analysis: The completed Analysis object.
+        markers_output: Open file handle for the Markers TSV output.
+        mutations_output: Open file handle for the Mutations TSV output.
+        literature_output: Open file handle for the Literature TSV output.
+        excel_output: Open file handle whose name determines the Excel output path and format (``.xlsx`` or ``.xlsm``).
+    """
+    if markers_output or excel_output:
+        markers = get_markers_data(analysis)
+        if markers_output:
+            LOGGER.info(f'Writing markers to {markers_output.name}')
+            write_tsv(markers_output, markers)
+    if mutations_output or excel_output:
+        mutations = get_mutations_data(analysis)
+        if mutations_output:
+            LOGGER.info(f'Writing mutations to {mutations_output.name}')
+            write_tsv(mutations_output, mutations)
+    if literature_output or excel_output:
+        literature = get_literature_data(analysis)
+        if literature_output:
+            LOGGER.info(f'Writing literature to {literature_output.name}')
+            write_tsv(literature_output, literature)
+    if excel_output:
+        checks = get_checks_data(analysis)
+        LOGGER.info(f'Writing Excel report to {excel_output.name}')
+        write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
+
+
 def write_tsv(file: TextIOWrapper, values: TSV_data):
     """Write a list of row dictionaries to a tab-separated file.
 
