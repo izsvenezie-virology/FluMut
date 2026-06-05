@@ -27,8 +27,10 @@ def check_enlongation(sample: 'Sample') -> None:
         if alignment.alignment.reference[-1] != STOP_CODON_SYMBOL:
             continue
         last_aa = alignment.alignment.query[-1]
-        if last_aa not in (STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL):
-            sample.checks.append(EnlongationCheck(sample.id, alignment.protein.name))
+        for aa in last_aa:
+            if aa not in (STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL):
+                sample.checks.append(EnlongationCheck(sample.id, alignment.protein.name))
+                break
 
 
 def check_frameshifts(sample: 'Sample') -> None:

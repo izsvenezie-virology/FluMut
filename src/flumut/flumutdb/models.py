@@ -95,6 +95,11 @@ class Reference(BaseModel):
             Reference._cache = [ref for seg in Segment.all() for ref in seg.references]
         return Reference._cache
 
+    @staticmethod
+    def clear_cache():
+        """Clear the Reference cache, forcing a reload on next access."""
+        Reference._cache = []
+
 
 class Annotation(BaseModel):
     protein: Protein = ForeignKeyField(Protein, backref='annotations')  # type: ignore[assignment]

@@ -9,12 +9,16 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 import flumut
 from flumut.core.analysis.models import Analysis
 from flumut.core.globals import EXCEL_TEMPLATE
+from flumut.core.logger import LOGGER
 from flumut.flumutdb.models import DbVersion
 
 TSV_data = list[dict[str, str]]
 
 
 def write_tsv(file: TextIOWrapper, values: TSV_data):
+    if not values:
+        LOGGER.warning(f'No data to write in {file.name}')
+        return
     header = values[0].keys()
     writer = csv.DictWriter(file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
     writer.writeheader()

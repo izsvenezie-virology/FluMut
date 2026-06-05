@@ -1,6 +1,5 @@
 import logging
 import re
-import traceback
 from io import TextIOWrapper
 
 import click
@@ -26,7 +25,7 @@ def update_db(ctx, param, value):
 def print_all_versions(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    print(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get()}')
+    print(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get_or_none()}')
     ctx.exit()
 
 
@@ -44,8 +43,7 @@ def set_verbosity(ctx, param, value):
 
 def print_errors(error: Exception) -> None:
     logger.LOGGER.critical(f'{type(error).__name__}: {error}')
-    if logger.LOGGER.root.level == logging.DEBUG:
-        traceback.print_exc()
+    if logger.LOGGER.level == logging.DEBUG:
         raise error
 
 

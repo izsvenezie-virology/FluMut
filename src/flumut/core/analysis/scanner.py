@@ -46,7 +46,7 @@ def scan_markers(positions: list[PositionScan], relaxed: bool) -> list[MarkerSca
         marker_positions = []
         for mutation in marker.mutations:
             pos = mapping.get(mutation, None)
-            if pos:
+            if pos is not None:
                 marker_positions.append(pos)
 
         ms = MarkerScan(marker, marker_positions)

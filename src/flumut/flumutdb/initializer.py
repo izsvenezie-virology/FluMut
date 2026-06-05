@@ -1,7 +1,7 @@
 from peewee import SqliteDatabase
 
 from flumut.core.globals import DATABASE_PROXY, DB_FILE
-from flumut.flumutdb.models import DbVersion, Marker, Segment
+from flumut.flumutdb.models import DbVersion, Marker, Reference, Segment
 
 
 def initialize(path: str | None = None, read_only: bool = True) -> None:
@@ -18,3 +18,4 @@ def initialize(path: str | None = None, read_only: bool = True) -> None:
     DbVersion.is_compatible()
     Segment.clear_cache()
     Marker.clear_cache()
+    Reference.clear_cache()
