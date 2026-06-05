@@ -29,8 +29,8 @@ def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
     for i in range(0, len(cds.alignment.query), 3):
         codon_reference = cds.alignment.reference[i : i + 3]
         codon_query = cds.alignment.query[i : i + 3]
-        sequences.reference += translate_codon(codon_reference)
-        sequences.query += translate_codon(codon_query)
+        sequences.reference.append(translate_codon(codon_reference))
+        sequences.query.append(translate_codon(codon_query))
 
     return ProteinAlignment(protein, nucleotides.reference, sequences, cds)
 
