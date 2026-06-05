@@ -24,7 +24,7 @@ def run_flumut(args_dict):
     literature_output: TextIOWrapper | None = args_dict['literature_output']
     excel_output: TextIOWrapper | None = args_dict['excel_output']
     analysis = Analysis()
-    pattern = re.compile(name_regex)
+    pattern = re.compile(name_regex or r'(?P<sample>.+)_(?P<segment>.+)')
 
     for fasta in [fasta_files]:
         load_nucleotide_fasta(analysis, fasta, pattern)
