@@ -70,12 +70,14 @@ def mock_deps():
         patch('flumut.core.analysis.preprocess.read_fasta') as read_fasta,
         patch('flumut.core.analysis.preprocess.select_candidate_references') as select_candidates,
         patch('flumut.core.analysis.preprocess.get_best_alignment') as get_alignment,
+        patch('flumut.core.analysis.preprocess.get_cds') as get_cds,
         patch('flumut.core.analysis.preprocess.translate') as translate,
     ):
         yield SimpleNamespace(
             read_fasta=read_fasta,
             select_candidates=select_candidates,
             get_alignment=get_alignment,
+            get_cds=get_cds,
             translate=translate,
         )
 
@@ -135,9 +137,12 @@ def test_load_translate_called_for_each_protein(mock_deps) -> None:
     mock_deps.get_alignment.return_value = nt_alignment
     load_nucleotide_fasta(Analysis(), MagicMock(), _PATTERN)
     proteins = nt_alignment.reference.segment.proteins
+    assert mock_deps.get_cds.call_count == 2
+    mock_deps.get_cds.assert_any_call(nt_alignment, proteins[0])
+    mock_deps.get_cds.assert_any_call(nt_alignment, proteins[1])
     assert mock_deps.translate.call_count == 2
-    mock_deps.translate.assert_any_call(nt_alignment, proteins[0])
-    mock_deps.translate.assert_any_call(nt_alignment, proteins[1])
+    mock_deps.translate.assert_any_call(mock_deps.get_cds.return_value)
+    mock_deps.translate.assert_any_call(mock_deps.get_cds.return_value)
 
 
 def test_load_translate_result_stored_in_alignments(mock_deps) -> None:

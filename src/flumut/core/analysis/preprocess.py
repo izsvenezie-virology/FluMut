@@ -5,7 +5,7 @@ from flumut.core.analysis.models import Analysis, Sample
 from flumut.core.io.input import read_fasta
 from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
-from flumut.core.nucleotides.translator import translate
+from flumut.core.nucleotides.translator import get_cds, translate
 
 
 def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
@@ -64,5 +64,6 @@ def load_nucleotide_fasta(analysis: Analysis, fasta: TextIOWrapper, header_patte
             analysis.samples[sample] = Sample(sample)
 
         for protein in nt_alignment.reference.segment.proteins:
-            aa_alignment = translate(nt_alignment, protein)
+            cds = get_cds(nt_alignment, protein)
+            aa_alignment = translate(cds)
             analysis.samples[sample].alignments.append(aa_alignment)

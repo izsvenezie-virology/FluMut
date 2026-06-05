@@ -104,28 +104,28 @@ def test_check_truncation_no_stop_codon_appends_no_check() -> None:
 
 
 def test_check_truncation_stop_codon_in_middle_appends_check() -> None:
-    # query[1] = '*', position is 1-based → 2
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'])])
+    # query[1] = '*', reference[1] != '*' → truncation at 1-based position 2
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'], reference=['A', 'K', 'V'])])
     check_truncation(sample)
     assert len(sample.checks) == 1
     assert isinstance(sample.checks[0], TruncationCheck)
 
 
 def test_check_truncation_position_is_one_based() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'])])
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'], reference=['A', 'K', 'V'])])
     check_truncation(sample)
     assert '2' in sample.checks[0].message
 
 
-def test_check_truncation_stop_codon_at_last_position_no_check() -> None:
-    # range(len - 1) never reaches the last index — last stop = elongation, not truncation
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', STOP_CODON_SYMBOL])])
+def test_check_truncation_no_check_when_reference_has_stop_at_same_position() -> None:
+    # reference also has stop at that position = correct termination, not truncation
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', STOP_CODON_SYMBOL], reference=['A', 'K', STOP_CODON_SYMBOL])])
     check_truncation(sample)
     assert sample.checks == []
 
 
 def test_check_truncation_multiple_stop_codons_multiple_checks() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', [STOP_CODON_SYMBOL, STOP_CODON_SYMBOL, 'V'])])
+    sample = _make_sample('s1', [_make_alignment('PB2', [STOP_CODON_SYMBOL, STOP_CODON_SYMBOL, 'V'], reference=['K', 'K', 'V'])])
     check_truncation(sample)
     assert len(sample.checks) == 2
 

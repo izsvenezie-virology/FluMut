@@ -8,22 +8,18 @@ from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
 from flumut.flumutdb import Protein
 
 
-def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
+def translate(cds: CDS) -> ProteinAlignment:
     """Translate a nucleotide alignment to an amino acid alignment for one protein.
 
     Extracts the CDS, adjusts for frameshifts, then translates each codon pair
     (reference and query) to produce a ProteinAlignment.
 
     Args:
-        nucleotides: The full-length nucleotide alignment containing the CDS.
-        protein: The protein whose CDS boundaries and mutations are used.
+        cds: The CDS object containing the nucleotide alignment.
 
     Returns:
         A ProteinAlignment with reference and query amino acid sequences.
     """
-    cds = get_cds(nucleotides, protein)
-    adjust_frame(cds)
-
     sequences = Alignment()
 
     for i in range(0, len(cds.alignment.query), 3):
@@ -32,7 +28,7 @@ def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
         sequences.reference.append(translate_codon(codon_reference))
         sequences.query.append(translate_codon(codon_query))
 
-    return ProteinAlignment(protein, nucleotides.reference, sequences, cds)
+    return ProteinAlignment(cds.protein, cds.nucleotides.reference, sequences, cds)
 
 
 def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
@@ -58,7 +54,9 @@ def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
             end = positions.index(annotation.end) + 1
             alignment.reference += nucleotides.alignment.reference[start:end]
             alignment.query += nucleotides.alignment.query[start:end]
-    return CDS(nucleotides, protein, alignment)
+    cds = CDS(nucleotides, protein, alignment)
+    adjust_frame(cds)
+    return cds
 
 
 def translate_codon(codon: list[str]) -> str:
