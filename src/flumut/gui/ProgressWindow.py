@@ -1,5 +1,5 @@
 import collections
-import contextlib
+import logging
 import re
 from io import TextIOWrapper
 
@@ -7,11 +7,8 @@ from PySide6 import QtGui
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QDialog, QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout
 
-from flumut.core.analysis.checks import perform_checks
-from flumut.core.analysis.models import Analysis
-from flumut.core.analysis.preprocess import load_nucleotide_fasta
-from flumut.core.analysis.scanner import analyse
-from flumut.core.io.output import write_outputs
+from flumut.core.logger import LOGGER
+from flumut.core.workflows import whole_workflow
 from flumut.gui.globals import ICON_PATH
 
 
@@ -19,19 +16,15 @@ def run_flumut(args_dict):
     fasta_files: TextIOWrapper = args_dict['fasta_file']
     name_regex: str = args_dict['name_regex']
     relaxed: bool = args_dict['relaxed']
-    markers_output: TextIOWrapper | None = args_dict['markers_output']
-    mutations_output: TextIOWrapper | None = args_dict['mutations_output']
-    literature_output: TextIOWrapper | None = args_dict['literature_output']
-    excel_output: TextIOWrapper | None = args_dict['excel_output']
-    analysis = Analysis()
-    pattern = re.compile(name_regex or r'(?P<sample>.+)_(?P<segment>.+)')
+    mark_out: TextIOWrapper | None = args_dict['markers_output']
+    mut_out: TextIOWrapper | None = args_dict['mutations_output']
+    lit_out: TextIOWrapper | None = args_dict['literature_output']
+    xls_out: TextIOWrapper | None = args_dict['excel_output']
 
-    for fasta in [fasta_files]:
-        load_nucleotide_fasta(analysis, fasta, pattern)
-    perform_checks(analysis)
-    analyse(analysis, relaxed)
+    pattern = name_regex or r'(?P<sample>.+)_(?P<segment>.+)'
+    LOGGER.setLevel(logging.DEBUG)
 
-    write_outputs(analysis, markers_output, mutations_output, literature_output, excel_output)
+    whole_workflow((fasta_files,), relaxed, pattern, mark_out, mut_out, lit_out, xls_out)
 
 
 class StdIO:
@@ -47,6 +40,9 @@ class StdIO:
         val = value.strip()
         if val:
             self.buffer.append(val)
+
+    def flush(self):
+        pass
 
     readable = writable = lambda self: True
 
@@ -69,19 +65,25 @@ class FluMutWorker(QThread):
         return super().terminate()
 
     def run(self):
-        total_sequences = 0  # len(re.findall(r'^>.+', self.args_dict['fasta_file'].read(), re.M))
-        # self.args_dict['fasta_file'].seek(0)
-        self.args_dict['verbose'] = True
+        total_sequences = len(re.findall(r'^>.+', self.args_dict['fasta_file'].read(), re.M))
+        self.args_dict['fasta_file'].seek(0)
 
         self.started.emit(total_sequences)
 
+        handler = logging.StreamHandler(self.stderr_stream)
+        handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+        LOGGER.addHandler(handler)
+        LOGGER.propagate = False
+
         try:
-            with contextlib.redirect_stderr(self.stderr_stream):
-                run_flumut(self.args_dict)
+            run_flumut(self.args_dict)
             self.ended.emit(0)
         except Exception as e:
             self.ended.emit(1)
             self.error.emit(e)
+        finally:
+            LOGGER.removeHandler(handler)
+            LOGGER.propagate = True
 
 
 class FluMutOutputReader(QThread):
@@ -142,10 +144,10 @@ class ProgressWindow(QDialog):
 
     def start_flumut(self):
         def handle_start(total_sequences):
-            self.progress_bar.setRange(0, total_sequences + 1)
+            self.progress_bar.setRange(0, 5)
             self.progress_bar.setValue(0)
-            self.log_txt.append('Starting FluMut analysis...')
-            self.log_txt.append(f'Detected {total_sequences} sequences.')
+            # self.log_txt.append('Starting FluMut analysis...')
+            # self.log_txt.append(f'Detected {total_sequences} sequences.')
 
         def handle_end(exit_code):
             self.logger_thread.stop()
@@ -177,14 +179,12 @@ class ProgressWindow(QDialog):
             QMessageBox.warning(self, error.__class__.__name__, str(error))
 
         def log_stderr(line):
-            if not line.startswith('LOG: '):
+            if line.startswith('[WARNING]') or line.startswith('[ERROR]') or line.startswith('[CRITICAL]'):
                 self.log_txt.setTextColor(Qt.GlobalColor.red)
-                self.log_txt.append(line)
-                return
-            line = line[5:]
-            if line.startswith('Processing '):
+            else:
+                self.log_txt.setTextColor(Qt.GlobalColor.black)
+            if line.startswith('[INFO]'):
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
-            self.log_txt.setTextColor(Qt.GlobalColor.black)
             self.log_txt.append(line)
 
         self.stderr_stream = StdIO()
