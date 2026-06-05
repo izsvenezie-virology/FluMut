@@ -30,7 +30,7 @@ def read_fasta(fasta: TextIOWrapper) -> list[FastaSequence]:
     Returns:
         A list of FastaSequence objects, one per record in the file.
     """
-    LOGGER.info(f'Reading FASTA file {fasta.name}')
+    LOGGER.debug(f'Reading FASTA file {fasta.name}')
     result = []
     for seq in SeqIO.parse(fasta, 'fasta'):
         result.append(FastaSequence(seq.name, str(seq.seq), fasta.name))

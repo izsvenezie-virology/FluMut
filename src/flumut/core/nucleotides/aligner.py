@@ -78,7 +78,7 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
     if not best_alignment:
         raise ValueError(f'No reference found for sequence {query.header} in file {query.file}')
 
-    LOGGER.info(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
+    LOGGER.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
     return best_alignment
 
 

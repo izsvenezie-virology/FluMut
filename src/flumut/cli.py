@@ -95,16 +95,21 @@ def cli(
     try:
         if not fasta_files:
             raise Exception("Missing argument 'FASTA_FILES'")
-        LOGGER.info(f'Analysing {len(fasta_files)} FASTA file(s)...')
 
         analysis = Analysis()
         pattern = re.compile(name_regex)
 
+        LOGGER.info(f'Reading {len(fasta_files)} FASTA file(s)...')
         for fasta in fasta_files:
             load_nucleotide_fasta(analysis, fasta, pattern)
+
+        LOGGER.info(f'Checking {len(analysis.samples)} sample(s)...')
         perform_checks(analysis)
+
+        LOGGER.info(f'Scanning {len(analysis.samples)} sample(s)...')
         analyse(analysis, relaxed)
 
+        LOGGER.info('Writing outputs...')
         write_outputs(analysis, markers_output, mutations_output, literature_output, excel_output)
     except Exception as e:
         print_errors(e)

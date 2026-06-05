@@ -24,12 +24,12 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
         A tuple of ``(sample_id, segment_name)`` where ``segment_name`` is
         ``None`` when not found.
     """
-    LOGGER.debug(f'Parsing "{header}" with "{pattern.pattern}"')
+    LOGGER.debug(f'Parsing "{header}"')
     sample, segment = None, None
     match = pattern.match(header)
 
     if not match:
-        LOGGER.info(f'Cannot extract sample ID from "{header}". The whole header is used as sample ID.')
+        LOGGER.warning(f'Cannot extract sample ID from "{header}". The whole header is used as sample ID.')
         return header, None
 
     try:

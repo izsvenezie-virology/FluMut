@@ -15,7 +15,7 @@ def perform_checks(analysis: 'Analysis') -> None:
         analysis: The Analysis container holding all samples to validate.
     """
     for sample in analysis.samples.values():
-        LOGGER.debug(f'Performing checks for sample {sample.id}')
+        LOGGER.debug(f'Checking {sample.id}')
         check_duplications(sample)
         check_frameshifts(sample)
         check_truncation(sample)

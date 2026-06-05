@@ -38,21 +38,21 @@ def write_outputs(
     if markers_output or excel_output:
         markers = get_markers_data(analysis)
         if markers_output:
-            LOGGER.info(f'Writing markers to {markers_output.name}')
+            LOGGER.debug(f'Writing markers to {markers_output.name}')
             write_tsv(markers_output, markers)
     if mutations_output or excel_output:
         mutations = get_mutations_data(analysis)
         if mutations_output:
-            LOGGER.info(f'Writing mutations to {mutations_output.name}')
+            LOGGER.debug(f'Writing mutations to {mutations_output.name}')
             write_tsv(mutations_output, mutations)
     if literature_output or excel_output:
         literature = get_literature_data(analysis)
         if literature_output:
-            LOGGER.info(f'Writing literature to {literature_output.name}')
+            LOGGER.debug(f'Writing literature to {literature_output.name}')
             write_tsv(literature_output, literature)
     if excel_output:
         checks = get_checks_data(analysis)
-        LOGGER.info(f'Writing Excel report to {excel_output.name}')
+        LOGGER.debug(f'Writing Excel report to {excel_output.name}')
         write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
 
 
@@ -68,7 +68,7 @@ def write_tsv(file: TextIOWrapper, values: TSV_data):
         values: List of row dictionaries to write.
     """
     if not values:
-        LOGGER.warning(f'No data to write in {file.name}')
+        LOGGER.warning(f'No data to write in file {file.name}')
         return
     header = values[0].keys()
     writer = csv.DictWriter(file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
@@ -215,7 +215,8 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
     _write_excel_sheet(wb, 'Mutations', mutations)
     _write_excel_sheet(wb, 'Markers', markers)
     _write_excel_sheet(wb, 'Literature', literature)
-    _write_excel_sheet(wb, 'Checks', checks)
+    if checks:
+        _write_excel_sheet(wb, 'Checks', checks)
 
     wb.save(output_file.name)
 
@@ -233,6 +234,7 @@ def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
         values: List of row dicts to write; column order follows the first row's keys.
     """
     if not values:
+        LOGGER.warning(f'No data to write in sheet {sheet_name}')
         return
     ws = wb[sheet_name]
     header = list(values[0].keys())
