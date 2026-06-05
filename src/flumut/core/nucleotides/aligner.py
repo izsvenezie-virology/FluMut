@@ -16,6 +16,18 @@ _aligner.end_insertion_score = GAP_END_SCORE
 
 
 def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
+    """Return the subset of references matching a segment or reference name hint.
+
+    If ``candidate_hint`` is None or no reference matches, all known references
+    are returned as candidates.
+
+    Args:
+        candidate_hint: A reference name or segment name to filter by, or None
+            to use all references.
+
+    Returns:
+        A non-empty list of Reference objects to consider during alignment.
+    """
     if not candidate_hint:
         return Reference.all()
 
@@ -32,12 +44,22 @@ def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
 
 
 def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nucleotide:
-    """
-    Find the best reference and creates the alignment for the given sequence.
+    """Align a query sequence against all candidate references and return the best match.
 
-    :param `str` sequence: The sequence to align.
-    :param `str` segment: The segment of the sequence.
-    :return `NucleotideSequence`: The aligned sequence.
+    Uses pairwise alignment scores to select the highest-scoring reference.
+    The returned Nucleotide bundles the query, the winning reference, and the
+    alignment.
+
+    Args:
+        query: The FASTA sequence to align.
+        candidates: Reference sequences to align against.
+
+    Returns:
+        A Nucleotide containing the query, the best-scoring Reference, and the
+        resulting Alignment.
+
+    Raises:
+        ValueError: If ``candidates`` is empty and no alignment can be produced.
     """
     best_alignment = None
     best_score = -1_000_000
@@ -61,6 +83,15 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
 
 
 def _is_candidate_reference(reference: Reference, candidate_hint: str) -> bool:
+    """Check whether a reference matches a given name or segment hint.
+
+    Args:
+        reference: The Reference to test.
+        candidate_hint: A reference name or segment name to match against.
+
+    Returns:
+        True if the reference name or its segment name equals ``candidate_hint``.
+    """
     if reference.name == candidate_hint:
         return True
     if reference.segment.name == candidate_hint:

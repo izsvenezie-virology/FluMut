@@ -16,6 +16,16 @@ TSV_data = list[dict[str, str]]
 
 
 def write_tsv(file: TextIOWrapper, values: TSV_data):
+    """Write a list of row dictionaries to a tab-separated file.
+
+    The column order follows the key order of the first row. Rows missing a
+    key are written as empty strings. Does nothing and emits a warning if
+    ``values`` is empty.
+
+    Args:
+        file: Open file handle for the output TSV file.
+        values: List of row dictionaries to write.
+    """
     if not values:
         LOGGER.warning(f'No data to write in {file.name}')
         return
@@ -26,6 +36,15 @@ def write_tsv(file: TextIOWrapper, values: TSV_data):
 
 
 def get_literature_data(analysis: Analysis) -> TSV_data:
+    """Extract literature reference data from an analysis for output.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with keys: Short name, Title, Authors, Year,
+        Journal, Link, DOI.
+    """
     values = []
 
     for paper in analysis.literature:
@@ -43,6 +62,19 @@ def get_literature_data(analysis: Analysis) -> TSV_data:
 
 
 def get_markers_data(analysis: Analysis) -> TSV_data:
+    """Extract detected marker data from an analysis for output.
+
+    Groups evidences by (effect, subtype) and aggregates associated paper
+    short names. One output row is produced per sample × marker × (effect, subtype)
+    combination.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with keys: Sample, Marker, Mutations in your sample,
+        Effect, Subtype, Literature.
+    """
     values = []
 
     for sample in analysis.samples.values():
@@ -72,6 +104,19 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
 
 
 def get_mutations_data(analysis: Analysis) -> TSV_data:
+    """Extract per-sample mutation amino acid data from an analysis for output.
+
+    Produces one row per sample with a column for each mutation detected across
+    the entire analysis, filled with the observed amino acid(s) or left empty
+    when the mutation was not scanned in that sample.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with ``'Sample'`` as the first key followed by one
+        key per detected mutation, sorted by default position.
+    """
     mutations = sorted(list(analysis.mutations), key=lambda mut: mut.default_position or 0)  # TODO: implement better sorting
     values = []
 
@@ -87,6 +132,15 @@ def get_mutations_data(analysis: Analysis) -> TSV_data:
 
 
 def get_checks_data(analysis: Analysis) -> TSV_data:
+    """Extract quality-check messages from an analysis for output.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with a single ``'Checks'`` key containing the
+        message for each issue detected across all samples.
+    """
     values = []
 
     for sample in analysis.samples.values():
@@ -97,11 +151,19 @@ def get_checks_data(analysis: Analysis) -> TSV_data:
 
 
 def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_data, literature: TSV_data, checks: TSV_data) -> None:
-    """
-    Write complete Excel output.
+    """Write all analysis results to an Excel workbook using the built-in template.
 
-    :param `List[Sample]` samples: Samples to write in the output.
-    :param `TextIOWrapper` output_file: Path for the output file.
+    Loads the FluMut Excel template, writes version information to the Checks
+    sheet, then populates the Mutations, Markers, Literature, and Checks sheets
+    before saving to ``output_file``.
+
+    Args:
+        output_file: Open file handle whose name determines the output path and
+            format (``.xlsx`` or ``.xlsm``).
+        markers: Rows to write to the Markers sheet.
+        mutations: Rows to write to the Mutations sheet.
+        literature: Rows to write to the Literature sheet.
+        checks: Rows to write to the Checks sheet.
     """
     wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.name.endswith('.xlsm'))
 
@@ -118,13 +180,16 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
 
 
 def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
-    """
-    Write an Excel sheet.
+    """Populate one sheet of a workbook with tabular data and apply table formatting.
 
-    :param `Workbook` wb: The workbook to modify.
-    :param `str` sheet_name: The name of the sheet to modify.
-    :param `List[str]` header: The header fields.
-    :param `TSV_data` values: The list of values to write.
+    Writes column headers from the first row's keys, fills subsequent rows with
+    the corresponding values, and registers a styled Excel table over the data
+    range. Does nothing if ``values`` is empty.
+
+    Args:
+        wb: The Workbook object to modify in-place.
+        sheet_name: Name of the worksheet to populate.
+        values: List of row dicts to write; column order follows the first row's keys.
     """
     if not values:
         return

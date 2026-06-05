@@ -12,6 +12,7 @@ LEVELS = {
 
 
 def initialize_logging() -> None:
+    """Configure root logging with WARNING level output to stderr."""
     logging.basicConfig(
         level=LEVELS['wrn'],
         format='[%(levelname)s] %(message)s',
@@ -21,4 +22,9 @@ def initialize_logging() -> None:
 
 
 def set_level(level: str) -> None:
+    """Set the log level for the flumut logger.
+
+    Args:
+        level: Short level key; one of ``'dbg'``, ``'inf'``, ``'wrn'``, ``'err'``.
+    """
     LOGGER.setLevel(LEVELS[level])

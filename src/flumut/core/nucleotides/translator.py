@@ -9,6 +9,18 @@ from flumut.flumutdb import Protein
 
 
 def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
+    """Translate a nucleotide alignment to an amino acid alignment for one protein.
+
+    Extracts the CDS, adjusts for frameshifts, then translates each codon pair
+    (reference and query) to produce a ProteinAlignment.
+
+    Args:
+        nucleotides: The full-length nucleotide alignment containing the CDS.
+        protein: The protein whose CDS boundaries and mutations are used.
+
+    Returns:
+        A ProteinAlignment with reference and query amino acid sequences.
+    """
     cds = get_cds(nucleotides, protein)
     adjust_frame(cds)
 
@@ -24,6 +36,18 @@ def translate(nucleotides: Nucleotide, protein: Protein) -> ProteinAlignment:
 
 
 def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
+    """Slice the nucleotide alignment to the annotated CDS boundaries for a protein.
+
+    Looks up the annotation whose reference matches the nucleotide alignment's
+    reference, then extracts the corresponding sub-alignment.
+
+    Args:
+        nucleotides: The full-length nucleotide alignment to slice.
+        protein: The protein whose annotations define the CDS start and end.
+
+    Returns:
+        A CDS object containing the sliced alignment for the matching annotation.
+    """
     annotations = protein.annotations
     positions = nucleotides.alignment.get_positions()
     alignment = Alignment()
@@ -38,6 +62,23 @@ def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
 
 
 def translate_codon(codon: list[str]) -> str:
+    """Translate a single codon to its amino acid representation.
+
+    Handles degenerate nucleotides by expanding each position to all possible
+    bases, computing all resulting codons, and returning the sorted set of
+    translated amino acids as a concatenated string.
+
+    Args:
+        codon: A list of three nucleotide characters (may include IUPAC
+            degenerate codes).
+
+    Returns:
+        A string of one or more amino acid characters. Returns the unknown
+        amino acid symbol when the codon contains a wildcard or is incomplete.
+
+    Raises:
+        ValueError: If ``codon`` contains a character absent from the degeneration dict.
+    """
     if WILDCARD in codon:
         return UNKNOWN_AA_SYMBOL
     if len(codon) < 3:

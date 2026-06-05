@@ -9,14 +9,20 @@ from flumut.core.nucleotides.translator import translate
 
 
 def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
-    """
-    Parse the header with the header pattern.
-    It searches for two groups in order to retrieve sample and segment from the header.
-    The header pattern can be set with set_header_pattern function.
+    """Extract sample ID and segment name from a FASTA header string.
 
-    :param `str` header: The FASTA header.
-    :return `Optional[str]` sample: The sample name. Returns `None` if  not found.
-    :return `Optional[str]`segment: The segment name. Returns `None` if not found.
+    Applies the given regex pattern to the header. The pattern is expected to
+    define named groups ``sample`` and ``segment``, or positional groups 1 and 2
+    respectively. If the pattern does not match, the raw header is returned as
+    the sample ID with no segment.
+
+    Args:
+        header: Raw FASTA header string (without the leading ``>``).
+        pattern: Compiled regex pattern used to extract sample and segment.
+
+    Returns:
+        A tuple of ``(sample_id, segment_name)`` where ``segment_name`` is
+        ``None`` when not found.
     """
     LOGGER.debug(f'Parsing "{header}" with "{pattern.pattern}"')
     sample, segment = None, None
@@ -37,6 +43,18 @@ def parse_header(header: str, pattern: re.Pattern) -> tuple[str, str | None]:
 
 
 def load_nucleotide_fasta(analysis: Analysis, fasta: TextIOWrapper, header_pattern: re.Pattern) -> None:
+    """Read a nucleotide FASTA file and populate the analysis with aligned protein sequences.
+
+    For each sequence in the FASTA file, parses the header to determine the sample
+    ID and segment hint, selects candidate references, computes the best nucleotide
+    alignment, and translates the CDS for every protein on the matched reference
+    segment. Results are appended to the corresponding Sample in ``analysis.samples``.
+
+    Args:
+        analysis: The Analysis object to populate with the loaded sequences.
+        fasta: Open file handle for the input FASTA file.
+        header_pattern: Compiled regex used to extract sample and segment from headers.
+    """
     for sequence in read_fasta(fasta):
         sample, candidate_hint = parse_header(sequence.header, header_pattern)
         candidates = select_candidate_references(candidate_hint)
