@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from flumut.core.analysis.models import DuplicationCheck, EnlongationCheck, FrameshiftCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
+from flumut.core.logger import LOGGER
 
 if TYPE_CHECKING:
     from flumut.core.analysis.models import Analysis, Sample
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
 
 def perform_checks(analysis: 'Analysis') -> None:
     for sample in analysis.samples.values():
+        LOGGER.debug(f'Performing checks for sample {sample.id}')
         check_duplications(sample)
         check_frameshifts(sample)
         check_truncation(sample)

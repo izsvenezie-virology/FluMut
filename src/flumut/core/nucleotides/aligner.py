@@ -43,6 +43,8 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
     best_score = -1_000_000
     query_sequence = str(query.sequence).replace(GAP_SYMBOL, '')
 
+    LOGGER.debug(f'Aligning "{query.header}" against {len(candidates)} candidate reference(s)...')
+
     for reference in candidates:
         reference_sequence = str(reference.sequence)
         alignment = _aligner.align(reference_sequence, query_sequence)[0]
@@ -54,7 +56,7 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
     if not best_alignment:
         raise ValueError(f'No reference found for sequence {query.header} in file {query.file}')
 
-    LOGGER.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
+    LOGGER.info(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
     return best_alignment
 
 

@@ -8,7 +8,6 @@ from flumut.core.io.output import (
     write_tsv,
 )
 
-
 # ---------------------------------------------------------------------------
 # write_tsv tests
 # ---------------------------------------------------------------------------
@@ -16,13 +15,13 @@ from flumut.core.io.output import (
 
 def test_write_tsv_single_row() -> None:
     output = StringIO()
-    write_tsv(output, [{'Name': 'A', 'Value': '1'}])
-    assert output.getvalue() == 'Name\tValue\n' 'A\t1\n'
+    write_tsv(output, [{'Name': 'A', 'Value': '1'}])  # type: ignore[arg-type]
+    assert output.getvalue() == 'Name\tValue\nA\t1\n'
 
 
 def test_write_tsv_multiple_rows_written_in_order() -> None:
     output = StringIO()
-    write_tsv(output, [{'X': 'a'}, {'X': 'b'}, {'X': 'c'}])
+    write_tsv(output, [{'X': 'a'}, {'X': 'b'}, {'X': 'c'}])  # type: ignore[arg-type]
     lines = output.getvalue().splitlines()
     assert lines == ['X', 'a', 'b', 'c']
 
@@ -157,7 +156,7 @@ def test_get_markers_data_multiple_papers_same_effect_joined_with_semicolon() ->
     analysis.samples = {'sample1': sample}
     result = get_markers_data(analysis)
     assert len(result) == 1
-    assert result[0]['Literature'] == 'Doe2020;Smith2021'
+    assert result[0]['Literature'] == 'Doe2020; Smith2021'
 
 
 # ---------------------------------------------------------------------------

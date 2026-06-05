@@ -12,6 +12,7 @@ from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
 from flumut.core.io.output import get_checks_data, get_literature_data, get_markers_data, get_mutations_data, write_excel, write_tsv
+from flumut.core.logger import LOGGER
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
 
@@ -42,8 +43,8 @@ def set_verbosity(ctx, param, value):
 
 
 def print_errors(error: Exception) -> None:
-    logger.LOGGER.critical(f'{type(error).__name__}: {error}')
-    if logger.LOGGER.level == logging.DEBUG:
+    LOGGER.critical(f'{type(error).__name__}: {error}')
+    if LOGGER.level == logging.DEBUG:
         raise error
 
 
@@ -94,6 +95,7 @@ def cli(
     try:
         if not fasta_files:
             raise Exception("Missing argument 'FASTA_FILES'")
+        LOGGER.info(f'Analysing {len(fasta_files)} FASTA file(s)...')
 
         analysis = Analysis()
         pattern = re.compile(name_regex)
@@ -106,17 +108,21 @@ def cli(
         if markers_output or excel_output:
             markers = get_markers_data(analysis)
             if markers_output:
+                LOGGER.info(f'Writing markers to {markers_output.name}')
                 write_tsv(markers_output, markers)
         if mutations_output or excel_output:
             mutations = get_mutations_data(analysis)
             if mutations_output:
+                LOGGER.info(f'Writing mutations to {mutations_output.name}')
                 write_tsv(mutations_output, mutations)
         if literature_output or excel_output:
             literature = get_literature_data(analysis)
             if literature_output:
+                LOGGER.info(f'Writing literature to {literature_output.name}')
                 write_tsv(literature_output, literature)
         if excel_output:
             checks = get_checks_data(analysis)
+            LOGGER.info(f'Writing Excel report to {excel_output.name}')
             write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
 
     except Exception as e:

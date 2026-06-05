@@ -1,4 +1,5 @@
 from flumut.core.analysis.models import Analysis, MarkerScan, PositionScan, ProteinAlignment
+from flumut.core.logger import LOGGER
 from flumut.flumutdb import Marker
 
 
@@ -8,6 +9,7 @@ def analyse(analysis: Analysis, relaxed: bool = True) -> None:
     analysis.literature.clear()
 
     for sample in analysis.samples.values():
+        LOGGER.debug(f'Scanning sample {sample.id} ({len(sample.alignments)} proteins)')
         for alignment in sample.alignments:
             sample.positions += scan_positions(alignment)
         sample.marker_scans = scan_markers(sample.positions, relaxed)
