@@ -1,0 +1,4 @@
+from flumut_db_editor.main import main
+
+if __name__ == '__main__':
+    main()

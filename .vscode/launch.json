@@ -162,6 +162,15 @@
       "module": "flumut.gui",
       "console": "integratedTerminal",
       "justMyCode": true
+    },
+    {
+      "name": "FluMutDBEditor",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flumut_db_editor",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": []
     }
   ]
 }
