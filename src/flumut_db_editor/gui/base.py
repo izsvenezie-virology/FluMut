@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QHBoxLayout,
-    QHeaderView,
     QPushButton,
     QTableWidget,
     QTreeWidget,
@@ -28,8 +28,8 @@ class BaseTableTab(QWidget):
 
         self.table = QTableWidget()
         self.table.setColumnCount(0)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
 
@@ -56,7 +56,7 @@ class HierarchicalTab(QWidget):
         self.tree = QTreeWidget()
         self.tree.setColumnCount(1)
         self.tree.setHeaderLabel('Items')
-        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.tree)
 

@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
-from flumut.flumutdb.models import Effect
+from flumut.flumutdb.models import Host
 from flumut_db_editor.gui.base import BaseTableTab
 
 
-class EffectsTab(BaseTableTab):
+class HostsTab(BaseTableTab):
     def __init__(self):
         super().__init__()
         self.load_data()
@@ -13,9 +13,9 @@ class EffectsTab(BaseTableTab):
         header = ['Name', 'Notes']
         self.table.setColumnCount(len(header))
         self.table.setHorizontalHeaderLabels(header)
-        effects: list[Effect] = Effect.select()
-        self.table.setRowCount(len(effects))
-        for row, effect in enumerate(effects):
-            self.table.setItem(row, 0, QTableWidgetItem(effect.name))
-            self.table.setItem(row, 1, QTableWidgetItem(effect.notes or ''))
+        hosts: list[Host] = Host.select()
+        self.table.setRowCount(len(hosts))
+        for row, host in enumerate(hosts):
+            self.table.setItem(row, 0, QTableWidgetItem(host.name))
+            self.table.setItem(row, 1, QTableWidgetItem(host.notes or ''))
         self.table.resizeColumnsToContents()

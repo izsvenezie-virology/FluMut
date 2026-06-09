@@ -1,3 +1,5 @@
+from PySide6.QtWidgets import QTableWidgetItem
+
 from flumut_db_editor.gui.base import BaseTableTab
 from flumut_db_editor.models import Reference
 
@@ -8,17 +10,15 @@ class ReferencesTab(BaseTableTab):
         self.load_data()
 
     def load_data(self):
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(['ID', 'Name', 'Segment'])
-        references = Reference.select()
+        header = ['Name', 'Segment', 'Source', 'Notes', 'Sequence']
+        self.table.setColumnCount(len(header))
+        self.table.setHorizontalHeaderLabels(header)
+        references: list[Reference] = Reference.select()
         self.table.setRowCount(len(references))
         for row, ref in enumerate(references):
-            self.table.setItem(row, 0, self.__class__._create_item(str(ref.id)))
-            self.table.setItem(row, 1, self.__class__._create_item(ref.name))
-            self.table.setItem(row, 2, self.__class__._create_item(ref.segment.name))
-
-    @staticmethod
-    def _create_item(text):
-        from PySide6.QtWidgets import QTableWidgetItem
-
-        return QTableWidgetItem(text)
+            self.table.setItem(row, 0, QTableWidgetItem(ref.name))
+            self.table.setItem(row, 1, QTableWidgetItem(ref.segment.name))
+            self.table.setItem(row, 2, QTableWidgetItem(ref.source))
+            self.table.setItem(row, 3, QTableWidgetItem(ref.notes or ''))
+            self.table.setItem(row, 4, QTableWidgetItem(ref.sequence))
+        self.table.resizeColumnsToContents()
