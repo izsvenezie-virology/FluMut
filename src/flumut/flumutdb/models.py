@@ -19,7 +19,7 @@ class MutationType(Enum):
 
 
 class BaseModel(Model):
-    notes = TextField(null=True)
+    notes: str | None = TextField(null=True)  # type: ignore[assignment]
 
 
 BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
