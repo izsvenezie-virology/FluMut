@@ -1,25 +1,32 @@
-from flumut_db_editor.gui.base import BaseTableTab
-from flumut_db_editor.models import Mutation
+from PySide6.QtWidgets import QTreeWidgetItem
+
+from flumut_db_editor.gui.base import HierarchicalTab
+from flumut_db_editor.models import Mapping, Mutation
 
 
-class MutationsTab(BaseTableTab):
+class MutationsTab(HierarchicalTab):
     def __init__(self):
         super().__init__()
+        self.tree.setColumnCount(2)
+        self.tree.setHeaderLabels(['Name', 'Details'])
         self.load_data()
 
     def load_data(self):
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(['ID', 'Name', 'Type', 'Protein'])
-        mutations = Mutation.select()
-        self.table.setRowCount(len(mutations))
-        for row, mutation in enumerate(mutations):
-            self.table.setItem(row, 0, self.__class__._create_item(str(mutation.id)))
-            self.table.setItem(row, 1, self.__class__._create_item(mutation.name))
-            self.table.setItem(row, 2, self.__class__._create_item(mutation.type))
-            self.table.setItem(row, 3, self.__class__._create_item(mutation.protein.name))
+        self.tree.clear()
+        mutations: list[Mutation] = Mutation.select()
+        for mutation in mutations:
+            mut_item = QTreeWidgetItem(self.tree)
+            mut_item.setText(0, mutation.name)
+            mut_item.setText(1, f'Type: {mutation.type} | Protein: {mutation.protein.name}')
+            mut_item.setData(0, 0x0100, ('mutation', mutation.id))
 
-    @staticmethod
-    def _create_item(text):
-        from PySide6.QtWidgets import QTableWidgetItem
-
-        return QTableWidgetItem(text)
+            mappings: list[Mapping] = Mapping.select().where(
+                Mapping.mutation == mutation
+            )
+            for mapping in mappings:
+                mapping_item = QTreeWidgetItem(mut_item)
+                mapping_item.setText(
+                    0, f'{mapping.reference.name}:{mapping.position}'
+                )
+                mapping_item.setText(1, mapping.alteration or '')
+                mapping_item.setData(0, 0x0100, ('mapping', mapping.id))
