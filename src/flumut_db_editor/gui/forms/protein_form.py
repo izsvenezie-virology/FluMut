@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QComboBox, QLabel, QLineEdit
 
+from flumut.flumutdb.models import Protein, Segment
+from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import BaseForm
-from flumut_db_editor.models import Segment
 
 
 class ProteinForm(BaseForm):
@@ -27,8 +28,27 @@ class ProteinForm(BaseForm):
             self.name_field.setText(self.protein.name)
             self.segment_combo.setCurrentText(self.protein.segment.name)
 
-    def get_data(self):
-        return {
-            'name': self.name_field.text(),
-            'segment_id': self.segment_combo.currentData(),
-        }
+    def validate(self) -> bool:
+        name = self.name_field.text().strip()
+        if not name:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Name', 'Name cannot be empty.'
+            )
+            return False
+        if self.segment_combo.count() == 0:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Segment', 'Please select a segment.'
+            )
+            return False
+        return True
+
+    def save_to_db(self) -> None:
+        name = self.name_field.text().strip()
+        segment_id = self.segment_combo.currentData()
+        if self.protein:
+            self.protein.name = name
+            self.protein.segment_id = segment_id
+            self.protein.save()
+        else:
+            Protein.create(name=name, segment_id=segment_id)
+

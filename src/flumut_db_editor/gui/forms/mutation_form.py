@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QComboBox, QLabel, QLineEdit
 
+from flumut.flumutdb.models import Mutation, MutationType, Protein
+from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import BaseForm
-from flumut_db_editor.models import MutationType, Protein
 
 
 class MutationForm(BaseForm):
@@ -34,9 +35,35 @@ class MutationForm(BaseForm):
             self.name_field.setText(self.mutation.name)
             self.protein_combo.setCurrentText(self.mutation.protein.name)
 
-    def get_data(self):
-        return {
-            'name': self.name_field.text(),
-            'type': self.type_combo.currentData(),
-            'protein_id': self.protein_combo.currentData(),
-        }
+    def validate(self) -> bool:
+        name = self.name_field.text().strip()
+        if not name:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Name', 'Name cannot be empty.'
+            )
+            return False
+        if self.protein_combo.count() == 0:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Protein', 'Please select a protein.'
+            )
+            return False
+        if not self.mutation:
+            if Mutation.select().where(Mutation.name == name).exists():
+                ValidationErrorDialog.show_validation_error(
+                    self, 'Name', 'A mutation with this name already exists.'
+                )
+                return False
+        return True
+
+    def save_to_db(self) -> None:
+        name = self.name_field.text().strip()
+        type_val = self.type_combo.currentData()
+        protein_id = self.protein_combo.currentData()
+        if self.mutation:
+            self.mutation.name = name
+            self.mutation.type = type_val
+            self.mutation.protein_id = protein_id
+            self.mutation.save()
+        else:
+            Mutation.create(name=name, type=type_val, protein_id=protein_id)
+

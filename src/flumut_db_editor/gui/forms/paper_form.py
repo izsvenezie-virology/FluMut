@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QLabel, QLineEdit, QSpinBox
 
+from flumut.flumutdb.models import Paper
+from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import BaseForm
 
 
@@ -32,10 +34,44 @@ class PaperForm(BaseForm):
             self.authors_field.setText(self.paper.authors)
             self.year_field.setValue(self.paper.year)
 
-    def get_data(self):
-        return {
-            'short_name': self.short_name_field.text(),
-            'title': self.title_field.text(),
-            'authors': self.authors_field.text(),
-            'year': self.year_field.value(),
-        }
+    def validate(self) -> bool:
+        short_name = self.short_name_field.text().strip()
+        title = self.title_field.text().strip()
+        authors = self.authors_field.text().strip()
+        year = self.year_field.value()
+
+        if not short_name:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Short Name', 'Short name cannot be empty.'
+            )
+            return False
+        if not title:
+            ValidationErrorDialog.show_validation_error(
+                self, 'Title', 'Title cannot be empty.'
+            )
+            return False
+        if not self.paper:
+            if Paper.select().where(Paper.short_name == short_name).exists():
+                ValidationErrorDialog.show_validation_error(
+                    self, 'Short Name', 'A paper with this short name already exists.'
+                )
+                return False
+        return True
+
+    def save_to_db(self) -> None:
+        short_name = self.short_name_field.text().strip()
+        title = self.title_field.text().strip()
+        authors = self.authors_field.text().strip()
+        year = self.year_field.value()
+
+        if self.paper:
+            self.paper.short_name = short_name
+            self.paper.title = title
+            self.paper.authors = authors
+            self.paper.year = year
+            self.paper.save()
+        else:
+            Paper.create(
+                short_name=short_name, title=title, authors=authors, year=year
+            )
+

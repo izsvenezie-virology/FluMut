@@ -9,8 +9,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from flumut_db_editor.gui.crud_mixin import TableCrudMixin, TreeCrudMixin
 
-class BaseTableTab(QWidget):
+
+class BaseTableTab(QWidget, TableCrudMixin):
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -33,11 +35,13 @@ class BaseTableTab(QWidget):
         self.table.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.table)
 
+        self.refresh_button.clicked.connect(self.on_refresh)
+
     def show_context_menu(self, pos):
         pass
 
 
-class HierarchicalTab(QWidget):
+class HierarchicalTab(QWidget, TreeCrudMixin):
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -60,5 +64,8 @@ class HierarchicalTab(QWidget):
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
         layout.addWidget(self.tree)
 
+        self.refresh_button.clicked.connect(self.on_refresh)
+
     def show_context_menu(self, pos):
         pass
+

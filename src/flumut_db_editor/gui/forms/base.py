@@ -27,5 +27,16 @@ class BaseForm(QDialog):
         self.cancel_button.clicked.connect(self.reject)
 
     def submit(self):
-        self.submitted.emit()
-        self.accept()
+        if self.validate():
+            self.save_to_db()
+            self.submitted.emit()
+            self.accept()
+
+    def validate(self) -> bool:
+        """Override in subclass. Return True if form is valid."""
+        return True
+
+    def save_to_db(self) -> None:
+        """Override in subclass. Save form data to database."""
+        pass
+
