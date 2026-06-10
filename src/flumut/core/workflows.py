@@ -7,6 +7,7 @@ from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
 from flumut.core.io.output import write_outputs
 from flumut.core.logger import LOGGER
+from flumut.flumutdb.models import Marker, Segment
 
 
 def whole_workflow(
@@ -21,6 +22,13 @@ def whole_workflow(
     if not fasta_files:
         raise Exception("Missing argument 'FASTA_FILES'")
 
+    LOGGER.info('Loading alignment data...')
+    Segment.all()
+
+    LOGGER.info('Loading markers data...')
+    Marker.all()
+
+    LOGGER.info('Starting analysis...')
     analysis = Analysis()
     pattern = re.compile(name_regex)
 
