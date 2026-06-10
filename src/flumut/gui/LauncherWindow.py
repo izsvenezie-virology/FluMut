@@ -2,6 +2,7 @@ import sys
 import traceback
 from pathlib import Path
 
+import qdarktheme
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
@@ -296,6 +297,8 @@ class LauncherWindow(QWidget):
 def launch_gui():
     app = QApplication(sys.argv)
     app.setStyle('fusion')
+
+    qdarktheme.setup_theme()
 
     win = LauncherWindow()
     win.show()

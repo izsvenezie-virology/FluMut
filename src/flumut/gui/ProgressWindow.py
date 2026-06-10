@@ -157,7 +157,7 @@ class ProgressWindow(QDialog):
                 log_stderr(line)
 
             if exit_code == 0:
-                self.log_txt.setTextColor(Qt.GlobalColor.black)
+                self.log_txt.setTextColor(self.log_txt.palette().color(QtGui.QPalette.ColorRole.Text))
                 self.log_txt.append('FluMut terminated successfully.')
                 self.set_progress_bar_color(98, 201, 27)
                 self.progress_bar.setValue(self.progress_bar.maximum())
@@ -184,7 +184,7 @@ class ProgressWindow(QDialog):
             if line.startswith('[WARNING]') or line.startswith('[ERROR]') or line.startswith('[CRITICAL]'):
                 self.log_txt.setTextColor(Qt.GlobalColor.red)
             else:
-                self.log_txt.setTextColor(Qt.GlobalColor.black)
+                self.log_txt.setTextColor(self.log_txt.palette().color(QtGui.QPalette.ColorRole.Text))
             if line.startswith('[INFO]'):
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
             self.log_txt.append(line)
@@ -206,7 +206,7 @@ class ProgressWindow(QDialog):
         if self.cancel_btn.text() == 'Close':
             self.close()
         else:
-            self.log_txt.setTextColor(Qt.GlobalColor.black)
+            self.log_txt.setTextColor(self.log_txt.palette().color(QtGui.QPalette.ColorRole.Text))
             self.log_txt.append('Stopping FluMut analysis...')
             self.logger_thread.terminate()
             self.flumut_thread.terminate()
