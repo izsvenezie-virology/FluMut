@@ -44,16 +44,15 @@ def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
     Returns:
         A CDS object containing the sliced alignment for the matching annotation.
     """
-    annotations = protein.annotations
+    annotations = nucleotides.reference.annotations_by_protein[protein]
     positions = nucleotides.alignment.get_positions()
     alignment = Alignment()
 
     for annotation in annotations:
-        if annotation.reference == nucleotides.reference:
-            start = positions.index(annotation.start)
-            end = positions.index(annotation.end) + 1
-            alignment.reference += nucleotides.alignment.reference[start:end]
-            alignment.query += nucleotides.alignment.query[start:end]
+        start = positions.index(annotation.start)
+        end = positions.index(annotation.end) + 1
+        alignment.reference += nucleotides.alignment.reference[start:end]
+        alignment.query += nucleotides.alignment.query[start:end]
     cds = CDS(nucleotides, protein, alignment)
     adjust_frame(cds)
     return cds

@@ -51,15 +51,16 @@ def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:
         the alignment's reference.
     """
     positions = alignment.alignment.get_positions()
+    mappings = alignment.reference.mappings_by_protein[alignment.protein]
     result = []
 
-    for mutation in alignment.protein.mutations:
-        for mapping in mutation.mappings:
-            if not mapping.reference == alignment.reference:
-                continue
-            index = positions.index(mapping.position)
-            aa = alignment.alignment.query[index]
-            result.append(PositionScan(mapping=mapping, ammino_acid=aa))
+    for mapping in mappings:
+        index = positions.index(mapping.position)
+        aa = alignment.alignment.query[index]
+
+        pos = PositionScan(mapping=mapping, ammino_acid=aa)
+        result.append(pos)
+
     return result
 
 

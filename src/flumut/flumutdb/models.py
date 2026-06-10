@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 from typing import List
 
@@ -53,6 +54,14 @@ class Segment(BaseModel):
                     Mapping.select(),
                 )
             )
+            ref_by_id = {ref.get_id(): ref for seg in Segment._cache for ref in seg.references}
+            for seg in Segment._cache:
+                for protein in seg.proteins:
+                    for mutation in protein.mutations:
+                        for mapping in mutation.mappings:
+                            ref_by_id[mapping.reference_id].mappings_by_protein[protein].append(mapping)  # type: ignore[attr-defined]
+                    for annotation in protein.annotations:
+                        ref_by_id[annotation.reference_id].annotations_by_protein[protein].append(annotation)  # type: ignore[attr-defined]
         return Segment._cache
 
     @staticmethod
@@ -78,6 +87,11 @@ class Reference(BaseModel):
     source: str = TextField()  # type: ignore[assignment]
     annotations: list['Annotation']
     mappings: list['Mapping']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mappings_by_protein: dict['Protein', list['Mapping']] = defaultdict(list)
+        self.annotations_by_protein: dict['Protein', list['Annotation']] = defaultdict(list)
 
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
@@ -199,6 +213,8 @@ class Marker(BaseModel):
                     Evidence.select(),
                     Paper.select(),
                     Effect.select(),
+                    Host.select(),
+                    Subtype.select(),
                 )
             )
         return Marker._cache
