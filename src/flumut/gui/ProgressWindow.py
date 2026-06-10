@@ -104,6 +104,8 @@ class FluMutOutputReader(QThread):
             line = self.stderr_stream.readline()
             if line:
                 self.stderr.emit(line)
+            else:
+                self.msleep(100)
 
     def stop(self):
         self._stop = True
