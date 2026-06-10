@@ -1,44 +1,162 @@
-from PySide6.QtWidgets import QLabel, QLineEdit
+import peewee
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QPushButton,
+    QVBoxLayout,
+)
 
-from flumut.flumutdb.models import Segment
-from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut.flumutdb.models import Protein, Segment
+from flumut_db_editor.database_operations import DeletionValidator
+from flumut_db_editor.gui.dialogs import ForeignKeyViolationDialog, ValidationErrorDialog
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class SegmentForm(BaseForm):
-    def __init__(self, parent=None, segment=None):
+class SegmentForm(TransactionalForm):
+    def __init__(self, parent=None, segment: Segment | None = None):
         self.segment = segment
         super().__init__(parent, 'Segment')
+        if self.segment:
+            self._begin_transaction()
 
     def init_ui(self):
         super().init_ui()
+        self.setMinimumSize(480, 420)
+
         self.name_field = QLineEdit()
-        self.form_layout.insertWidget(0, QLabel('Name:'))
-        self.form_layout.insertWidget(1, self.name_field)
+        self.form_layout.addWidget(QLabel('Name:'))
+        self.form_layout.addWidget(self.name_field)
+        self.form_layout.addWidget(QLabel('Proteins:'))
+
+        proteins_row = QHBoxLayout()
+        self.proteins_list = QListWidget()
+        proteins_row.addWidget(self.proteins_list, stretch=1)
+
+        btn_col = QVBoxLayout()
+        self.add_protein_btn = QPushButton('Add')
+        self.edit_protein_btn = QPushButton('Edit')
+        self.remove_protein_btn = QPushButton('Remove')
+        btn_col.addWidget(self.add_protein_btn)
+        btn_col.addWidget(self.edit_protein_btn)
+        btn_col.addWidget(self.remove_protein_btn)
+        btn_col.addStretch()
+        proteins_row.addLayout(btn_col)
+
+        self.form_layout.addLayout(proteins_row)
+
+        self.add_protein_btn.clicked.connect(self._add_protein)
+        self.edit_protein_btn.clicked.connect(self._edit_protein)
+        self.remove_protein_btn.clicked.connect(self._remove_protein)
 
         if self.segment:
             self.name_field.setText(self.segment.name)
 
+        self._set_proteins_enabled(self.segment is not None)
+        self._refresh_list()
+
+    def _set_proteins_enabled(self, enabled: bool):
+        self.proteins_list.setEnabled(enabled)
+        self.edit_protein_btn.setEnabled(enabled)
+        self.remove_protein_btn.setEnabled(enabled)
+
+    def _refresh_list(self):
+        self.proteins_list.clear()
+        if self.segment:
+            for p in Protein.select().where(Protein.segment == self.segment):
+                self.proteins_list.addItem(p.name)
+
+    def _add_protein(self):
+        if self.segment is None:
+            segment_name = self.name_field.text().strip()
+            if not segment_name:
+                ValidationErrorDialog.show_validation_error(self, 'Segment Name', 'Please enter a segment name before adding proteins.')
+                return
+            if Segment.select().where(Segment.name == segment_name).exists():
+                ValidationErrorDialog.show_validation_error(self, 'Segment Name', 'A segment with this name already exists.')
+                return
+            self._begin_transaction()
+            self.segment = Segment.create(name=segment_name)
+            self._set_proteins_enabled(True)
+
+        name, ok = QInputDialog.getText(self, 'Add Protein', 'Protein name:')
+        if not ok:
+            return
+        name = name.strip()
+        if not name:
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'Protein name cannot be empty.')
+            return
+
+        try:
+            with self._db.savepoint():
+                Protein.create(name=name, segment=self.segment)
+        except peewee.IntegrityError:
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'A protein with this name already exists.')
+            return
+
+        self._refresh_list()
+
+    def _edit_protein(self):
+        row = self.proteins_list.currentRow()
+        if row < 0:
+            return
+        proteins = list(Protein.select().where(Protein.segment == self.segment))
+        protein = proteins[row]
+
+        name, ok = QInputDialog.getText(self, 'Edit Protein', 'Protein name:', text=protein.name)
+        if not ok:
+            return
+        name = name.strip()
+        if not name:
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'Protein name cannot be empty.')
+            return
+
+        try:
+            with self._db.savepoint():
+                protein.name = name
+                protein.save()
+        except peewee.IntegrityError:
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'A protein with this name already exists.')
+            return
+
+        self._refresh_list()
+        self.proteins_list.setCurrentRow(row)
+
+    def _remove_protein(self):
+        row = self.proteins_list.currentRow()
+        if row < 0:
+            return
+        proteins = list(Protein.select().where(Protein.segment == self.segment))
+        protein = proteins[row]
+
+        can_delete, violations = DeletionValidator.can_delete_protein(protein.id)
+        if not can_delete:
+            ForeignKeyViolationDialog.show_violation(self, 'Protein', protein.name, violations)
+            return
+
+        protein.delete_instance()
+        self._refresh_list()
+
     def validate(self) -> bool:
         name = self.name_field.text().strip()
         if not name:
-            ValidationErrorDialog.show_validation_error(
-                self, 'Name', 'Name cannot be empty.'
-            )
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'Segment name cannot be empty.')
             return False
-        if not self.segment:
-            if Segment.select().where(Segment.name == name).exists():
-                ValidationErrorDialog.show_validation_error(
-                    self, 'Name', 'A segment with this name already exists.'
-                )
+        existing = Segment.get_or_none(Segment.name == name)
+        if existing is not None:
+            if self.segment is None or existing.get_id() != self.segment.get_id():
+                ValidationErrorDialog.show_validation_error(self, 'Name', 'A segment with this name already exists.')
                 return False
         return True
 
     def save_to_db(self) -> None:
         name = self.name_field.text().strip()
-        if self.segment:
+        if self.segment is None:
+            Segment.create(name=name)
+        else:
             self.segment.name = name
             self.segment.save()
-        else:
-            Segment.create(name=name)
-
+            self._commit()
+        Segment.clear_cache()

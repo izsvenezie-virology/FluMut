@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
 from flumut.flumutdb.models import Host
+from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import BaseTableTab
 from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
@@ -47,5 +48,5 @@ class HostsTab(BaseTableTab):
             return
         hosts = list(Host.select())
         host = hosts[row]
-        if delete_with_confirmation(self, 'Host', host.id, lambda hid: None):
+        if delete_with_confirmation(self, 'Host', host.id, DatabaseOperations.delete_host):
             self.load_data()

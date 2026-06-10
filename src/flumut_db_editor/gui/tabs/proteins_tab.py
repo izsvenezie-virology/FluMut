@@ -4,7 +4,6 @@ from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import HierarchicalTab
 from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
-from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
 from flumut_db_editor.models import Protein, Segment
 
@@ -48,16 +47,16 @@ class ProteinsTab(HierarchicalTab):
 
         if data[0] == 'segment':
             segment = Segment.get_by_id(data[1])
-            form = SegmentForm(self, segment)
-            if form.exec():
-                SuccessNotification.show_success(self, 'Segment updated successfully.')
-                self.load_data()
         elif data[0] == 'protein':
             protein = Protein.get_by_id(data[1])
-            form = ProteinForm(self, protein)
-            if form.exec():
-                SuccessNotification.show_success(self, 'Protein updated successfully.')
-                self.load_data()
+            segment = protein.segment
+        else:
+            return
+
+        form = SegmentForm(self, segment)
+        if form.exec():
+            SuccessNotification.show_success(self, 'Segment updated successfully.')
+            self.load_data()
 
     def handle_delete(self):
         item = self.get_selected_item()
@@ -69,13 +68,8 @@ class ProteinsTab(HierarchicalTab):
 
         if data[0] == 'segment':
             segment = Segment.get_by_id(data[1])
-            if delete_with_confirmation(
-                self, 'Segment', segment.id, lambda: DatabaseOperations.delete_segment(segment.name)
-            ):
+            if delete_with_confirmation(self, 'Segment', segment.id, lambda _: DatabaseOperations.delete_segment(segment.name)):
                 self.load_data()
         elif data[0] == 'protein':
-            if delete_with_confirmation(
-                self, 'Protein', data[1], DatabaseOperations.delete_protein
-            ):
+            if delete_with_confirmation(self, 'Protein', data[1], DatabaseOperations.delete_protein):
                 self.load_data()
-

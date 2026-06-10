@@ -170,7 +170,7 @@
       "module": "flumut_db_editor",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "args": []
+      "args": ["src/flumut_db_editor/dummy_db/flumut_db.sqlite"]
     }
   ]
 }

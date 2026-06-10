@@ -7,7 +7,10 @@ from flumut_db_editor.gui.main_window import MainWindow
 
 
 def main():
-    initialize()
+    db = None
+    if len(sys.argv) > 1:
+        db = sys.argv[1]
+    initialize(read_only=False, path=db)
 
     app = QApplication(sys.argv)
     window = MainWindow()

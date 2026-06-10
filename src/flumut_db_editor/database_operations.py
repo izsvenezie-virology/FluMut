@@ -2,6 +2,7 @@ from flumut.flumutdb.models import (
     Annotation,
     Effect,
     Evidence,
+    Host,
     Mapping,
     Marker,
     Mutation,
@@ -104,6 +105,14 @@ class DeletionValidator:
             violations['Evidences'] = evidences
         return len(violations) == 0, violations
 
+    @staticmethod
+    def can_delete_host(host_id: int) -> tuple[bool, dict[str, list]]:
+        evidences = list(Evidence.select().where(Evidence.host_id == host_id))
+        violations = {}
+        if evidences:
+            violations['Evidences'] = evidences
+        return len(violations) == 0, violations
+
 
 class DatabaseOperations:
     """Database CRUD operations with transaction support."""
@@ -198,6 +207,15 @@ class DatabaseOperations:
             raise ForeignKeyViolationError('Subtype', str(subtype_id), violations)
 
         Subtype.delete().where(Subtype.id == subtype_id).execute()
+
+    @staticmethod
+    def delete_host(host_id: int) -> None:
+        """Delete a host (must have no evidences)."""
+        can_delete, violations = DeletionValidator.can_delete_host(host_id)
+        if not can_delete:
+            raise ForeignKeyViolationError('Host', str(host_id), violations)
+
+        Host.delete().where(Host.id == host_id).execute()
 
     @staticmethod
     def delete_evidence(evidence_id: int) -> None:
