@@ -51,6 +51,7 @@ version = {attr = "flumut.__version__"}
 
 [dependency-groups]
 dev = [
+  "pyinstaller>=6.20.0",
   "pyside6>=6.11.1",
   "pytest>=9.0.3",
 ]
