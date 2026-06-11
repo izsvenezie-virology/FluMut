@@ -61,74 +61,73 @@ def mock_adjust_frame():
         yield mock
 
 
-def _make_nucleotides(reference_chars: list[str], query_chars: list[str]) -> MagicMock:
+def _make_nucleotides(
+    reference_chars: list[str],
+    query_chars: list[str],
+    annotations: list | None = None,
+) -> tuple[MagicMock, MagicMock]:
     n = MagicMock()
     n.alignment = Alignment(reference=reference_chars, query=query_chars)
-    return n
+    protein = MagicMock()
+    # get_cds reads the annotations pre-grouped per (reference, protein)
+    n.reference.annotations_by_protein = {protein: annotations or []}
+    return n, protein
 
 
-def _make_annotation(reference: MagicMock, start: int, end: int) -> MagicMock:
+def _make_annotation(start: int, end: int) -> MagicMock:
     ann = MagicMock()
-    ann.reference = reference
     ann.start = start
     ann.end = end
     return ann
 
 
 def test_get_cds_no_annotations_returns_empty_alignment(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    cds = get_cds(n, MagicMock(annotations=[]))
+    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
+    cds = get_cds(n, protein)
     assert cds.alignment.reference == []
     assert cds.alignment.query == []
 
 
 def test_get_cds_matching_annotation_extracts_correct_slice(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T', 'G'], ['K', 'M', 'R', 'V'])
     # positions: [1, 2, 3, 4] — annotation covers positions 2–3 → indices 1:3
-    ann = _make_annotation(reference=n.reference, start=2, end=3)
-    cds = get_cds(n, MagicMock(annotations=[ann]))
+    ann = _make_annotation(start=2, end=3)
+    n, protein = _make_nucleotides(['A', 'C', 'T', 'G'], ['K', 'M', 'R', 'V'], annotations=[ann])
+    cds = get_cds(n, protein)
     assert cds.alignment.reference == ['C', 'T']
     assert cds.alignment.query == ['M', 'R']
 
 
-def test_get_cds_nonmatching_annotation_excluded(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    ann = _make_annotation(reference=MagicMock(), start=1, end=2)
-    cds = get_cds(n, MagicMock(annotations=[ann]))
-    assert cds.alignment.reference == []
-    assert cds.alignment.query == []
-
-
 def test_get_cds_multiple_annotations_concatenated(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T', 'G', 'A'], ['K', 'M', 'R', 'V', 'H'])
     # positions: [1, 2, 3, 4, 5]
-    ann1 = _make_annotation(reference=n.reference, start=1, end=1)  # idx 0:1 → ['A']/['K']
-    ann2 = _make_annotation(reference=n.reference, start=4, end=5)  # idx 3:5 → ['G','A']/['V','H']
-    cds = get_cds(n, MagicMock(annotations=[ann1, ann2]))
+    ann1 = _make_annotation(start=1, end=1)  # idx 0:1 → ['A']/['K']
+    ann2 = _make_annotation(start=4, end=5)  # idx 3:5 → ['G','A']/['V','H']
+    n, protein = _make_nucleotides(
+        ['A', 'C', 'T', 'G', 'A'], ['K', 'M', 'R', 'V', 'H'], annotations=[ann1, ann2]
+    )
+    cds = get_cds(n, protein)
     assert cds.alignment.reference == ['A', 'G', 'A']
     assert cds.alignment.query == ['K', 'V', 'H']
 
 
 def test_get_cds_result_wraps_nucleotides_and_protein(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    protein = MagicMock(annotations=[])
+    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
     cds = get_cds(n, protein)
     assert cds.nucleotides is n
     assert cds.protein is protein
 
 
 def test_get_cds_gap_in_alignment_maps_positions_correctly(mock_adjust_frame) -> None:
-    n = _make_nucleotides([GAP_SYMBOL, 'A', 'C', 'T'], ['X', 'K', 'M', 'R'])
     # positions: [None, 1, 2, 3] — annotation covers positions 2–3 → indices 2:4
-    ann = _make_annotation(reference=n.reference, start=2, end=3)
-    cds = get_cds(n, MagicMock(annotations=[ann]))
+    ann = _make_annotation(start=2, end=3)
+    n, protein = _make_nucleotides([GAP_SYMBOL, 'A', 'C', 'T'], ['X', 'K', 'M', 'R'], annotations=[ann])
+    cds = get_cds(n, protein)
     assert cds.alignment.reference == ['C', 'T']
     assert cds.alignment.query == ['M', 'R']
 
 
 def test_get_cds_calls_adjust_frame_with_cds(mock_adjust_frame) -> None:
-    n = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    cds = get_cds(n, MagicMock(annotations=[]))
+    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
+    cds = get_cds(n, protein)
     mock_adjust_frame.assert_called_once_with(cds)
 
 
