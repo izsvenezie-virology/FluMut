@@ -22,9 +22,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
           cache: 'pip'
@@ -57,9 +57,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
           cache: 'pip'
@@ -71,7 +71,7 @@ jobs:
       - name: Build FluMut
         run: python -m build
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build
           path: dist
@@ -98,9 +98,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.x"
           cache: 'pip'
@@ -116,6 +116,7 @@ jobs:
           splash=()
           if [ "$RUNNER_OS" != "macOS" ]; then
             splash=(--splash docs/images/flumut_splash.png)
+            pip install pillow
           fi
           python -m PyInstaller ./src/flumut/gui/__main__.py \
             --name FluMutGUI-$RUNNER_OS \
@@ -125,7 +126,7 @@ jobs:
             "${splash[@]}" \
             --clean --noconfirm -w --onefile
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: executable-${{ runner.os }}
           path: dist/
@@ -141,9 +142,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
           cache: 'pip'
@@ -157,7 +158,7 @@ jobs:
           mv examples/multiple_samples.fa examples/fasta_input_example.fa
           flumut -x examples/excel_output_example.xlsm examples/fasta_input_example.fa
       - name: Upload examples
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: examples
           path: |
@@ -176,23 +177,23 @@ jobs:
 
     steps:
       - name: Download build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build
           path: dist
       - name: Download executables
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: executable-*
           path: dist
           merge-multiple: true
       - name: Download examples
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: examples
           path: examples
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -213,7 +214,7 @@ jobs:
 
     steps:
     - name: Download dist artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: build
         path: dist
