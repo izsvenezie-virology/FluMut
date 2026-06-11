@@ -28,6 +28,7 @@ jobs:
         with:
           python-version: '3.x'
           cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Install FluMut with test dependencies
         run: |
           python -m pip install --upgrade pip
@@ -51,6 +52,7 @@ jobs:
         with:
           python-version: '3.x'
           cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Verify tag matches package version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -71,12 +73,63 @@ jobs:
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: build
           path: dist
           if-no-files-found: error
 
 
-  create-examples:
+  executables:
+    name: Create executables
+    needs: test
+    permissions:
+      contents: read
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-13, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install ".[gui]"
+      - name: Build with Pyinstaller
+        run: |
+          # PyInstaller's splash screen is not supported on macOS
+          splash=()
+          if [ "$RUNNER_OS" != "macOS" ]; then
+            splash=(--splash docs/images/flumut_splash.png)
+          fi
+          python -m PyInstaller ./src/flumut/gui/__main__.py \
+            --name FluMutGUI-$RUNNER_OS \
+            --icon src/flumut/gui/resources/flumut_icon.ico \
+            --add-data src/flumut/data/:flumut/data/ \
+            --add-data src/flumut/gui/resources/:flumut/gui/resources \
+            "${splash[@]}" \
+            --clean --noconfirm -w --onefile
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable-${{ runner.os }}
+          path: dist/
+          if-no-files-found: error
+
+
+  examples:
     name: Create FluMut examples files
     runs-on: ubuntu-latest
     needs: test
@@ -91,6 +144,7 @@ jobs:
         with:
           python-version: '3.x'
           cache: 'pip'
+          cache-dependency-path: pyproject.toml
       - name: Install FluMut
         run: |
           python -m pip install --upgrade pip
@@ -116,14 +170,20 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
-    needs: [build, create-examples]
+    needs: [build, executables, examples]
 
     steps:
-      - name: Download dist
+      - name: Download build
         uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: build
           path: dist
+      - name: Download executables
+        uses: actions/download-artifact@v4
+        with:
+          pattern: executable-*
+          path: dist
+          merge-multiple: true
       - name: Download examples
         uses: actions/download-artifact@v4
         with:
@@ -153,7 +213,7 @@ jobs:
     - name: Download dist artifact
       uses: actions/download-artifact@v4
       with:
-        name: dist
+        name: build
         path: dist
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

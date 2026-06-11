@@ -23,6 +23,12 @@ dependencies = [
 ]
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+gui = [
+  "pyqtdarktheme>=2.1.0",
+  "pyside6>=6.11.1",
+]
+
 [project.readme]
 content-type = "text/markdown"
 file = "README.md"
@@ -54,10 +60,6 @@ dev = [
   "pyinstaller>=6.20.0",
   "pyside6>=6.11.1",
   "pytest>=9.0.3",
-]
-gui = [
-  "pyqtdarktheme>=2.1.0",
-  "pyside6>=6.11.1",
 ]
 
 [tool.pytest.ini_options]
