@@ -150,7 +150,7 @@ def main() -> None:
     # ── 1. Load v6 dump into an in-memory SQLite ──────────────────────────────
     src = sqlite3.connect(':memory:')
     src.row_factory = sqlite3.Row
-    src.executescript(sql_path.read_text())
+    src.executescript(sql_path.read_text(encoding='utf-8'))
 
     # ── 2. Load auxiliary data ────────────────────────────────────────────────
     with open(BASE / 'data' / 'new_refs.json') as f:
