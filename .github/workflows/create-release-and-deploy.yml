@@ -102,7 +102,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12.x"
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
@@ -155,7 +155,7 @@ jobs:
       - name: Run FluMut
         run: | 
           mv examples/multiple_samples.fa examples/fasta_input_example.fa
-          flumut -x examples/excel_output_example.xlsm examples/multiple_samples.fa
+          flumut -x examples/excel_output_example.xlsm examples/fasta_input_example.fa
       - name: Upload examples
         uses: actions/upload-artifact@v4
         with:
