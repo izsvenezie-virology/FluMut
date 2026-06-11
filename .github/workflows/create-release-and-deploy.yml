@@ -113,9 +113,9 @@ jobs:
       - name: Build with Pyinstaller
         run: |
           # PyInstaller's splash screen is not supported on macOS
-          splash=()
-          if [ "$RUNNER_OS" != "macOS" ]; then
-            splash=(--splash docs/images/flumut_splash.png)
+          splash=(--splash docs/images/flumut_splash.png)
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            splash=()
             pip install pillow
           fi
           python -m PyInstaller ./src/flumut/gui/__main__.py \
