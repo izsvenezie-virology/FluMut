@@ -25,7 +25,7 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 gui = [
-  "pyqtdarktheme>=2.1.0",
+  "pyqtdarktheme-fork>=2.3.0",
   "pyside6>=6.11.1",
 ]
 
