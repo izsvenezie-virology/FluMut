@@ -18,8 +18,7 @@ dependencies = [
   "click >=8.0.0",
   "biopython>=1.87",
   "openpyxl >= 3.1.2",
-  "peewee>=4.0.5",
-  "platformdirs>=4.9.6",
+  "peewee>=3.17",
 ]
 requires-python = ">=3.10"
 
@@ -47,6 +46,7 @@ include-package-data = true
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
+exclude = ["flumut_db_editor*"]
 where = ["src"]
 
 [tool.setuptools.package-data]
@@ -58,7 +58,6 @@ version = {attr = "flumut.__version__"}
 [dependency-groups]
 dev = [
   "pyinstaller>=6.20.0",
-  "pyside6>=6.11.1",
   "pytest>=9.0.3",
 ]
 

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.11'",
@@ -116,7 +116,6 @@ dependencies = [
     { name = "click" },
     { name = "openpyxl" },
     { name = "peewee" },
-    { name = "platformdirs" },
 ]
 
 [package.optional-dependencies]
@@ -128,7 +127,6 @@ gui = [
 [package.dev-dependencies]
 dev = [
     { name = "pyinstaller" },
-    { name = "pyside6" },
     { name = "pytest" },
 ]
 
@@ -137,8 +135,7 @@ requires-dist = [
     { name = "biopython", specifier = ">=1.87" },
     { name = "click", specifier = ">=8.0.0" },
     { name = "openpyxl", specifier = ">=3.1.2" },
-    { name = "peewee", specifier = ">=4.0.5" },
-    { name = "platformdirs", specifier = ">=4.9.6" },
+    { name = "peewee", specifier = ">=3.17" },
     { name = "pyqtdarktheme-fork", marker = "extra == 'gui'", specifier = ">=2.3.0" },
     { name = "pyside6", marker = "extra == 'gui'", specifier = ">=6.11.1" },
 ]
@@ -147,7 +144,6 @@ provides-extras = ["gui"]
 [package.metadata.requires-dev]
 dev = [
     { name = "pyinstaller", specifier = ">=6.20.0" },
-    { name = "pyside6", specifier = ">=6.11.1" },
     { name = "pytest", specifier = ">=9.0.3" },
 ]
 
@@ -321,11 +317,11 @@ wheels = [
 
 [[package]]
 name = "peewee"
-version = "4.0.5"
+version = "4.0.7"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/21/04/8b1f0388389c0595ccf69fec8723983e598edb0303f6227a08bc5d8cd013/peewee-4.0.5.tar.gz", hash = "sha256:b43a21493f19f205a016cb4a9e29c7eca3500576d29447a89732022d193450ba", size = 721062, upload-time = "2026-04-23T21:17:29.419Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/87/4ba5dc4d69bb650846fcb4922fa4b0c3a41e413fd13ce70d8bee220afe45/peewee-4.0.7.tar.gz", hash = "sha256:39ba16d41519de40e83a9681475f981313686d7885425139ef8db2d2bb0dfd15", size = 744667, upload-time = "2026-06-11T13:26:01.962Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/d4/2cf83b5fb7fae8939ed596009465c6de0b8fafa70abd486ed9d192e457f7/peewee-4.0.5-py3-none-any.whl", hash = "sha256:05bf687660f04f925bcb7d744e5af826ca526322f2fad894bfa4f1d0f3bcaf50", size = 144479, upload-time = "2026-04-23T21:17:28.061Z" },
+    { url = "https://files.pythonhosted.org/packages/db/10/2de61e392b878a74baf964215acf16b7c4813f03126d6f6875331b4e351e/peewee-4.0.7-py3-none-any.whl", hash = "sha256:aa6e07c95f9cb784813d14f19910f105e819ac3a2c2b8f9eca71ddb028fdcffd", size = 153433, upload-time = "2026-06-11T13:26:00.686Z" },
 ]
 
 [[package]]
@@ -335,15 +331,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/03/4f/2750f7f6f025a1507cd3b7218691671eecfd0bbebebe8b39aa0fe1d360b8/pefile-2024.8.26.tar.gz", hash = "sha256:3ff6c5d8b43e8c37bb6e6dd5085658d658a7a0bdcd20b6a07b1fcfc1c4e9d632", size = 76008, upload-time = "2024-08-26T20:58:38.155Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/16/12b82f791c7f50ddec566873d5bdd245baa1491bac11d15ffb98aecc8f8b/pefile-2024.8.26-py3-none-any.whl", hash = "sha256:76f8b485dcd3b1bb8166f1128d395fa3d87af26360c2358fb75b80019b957c6f", size = 74766, upload-time = "2024-08-26T21:01:02.632Z" },
-]
-
-[[package]]
-name = "platformdirs"
-version = "4.9.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9f/4a/0883b8e3802965322523f0b200ecf33d31f10991d0401162f4b23c698b42/platformdirs-4.9.6.tar.gz", hash = "sha256:3bfa75b0ad0db84096ae777218481852c0ebc6c727b3168c1b9e0118e458cf0a", size = 29400, upload-time = "2026-04-09T00:04:10.812Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/a6/a0a304dc33b49145b21f4808d763822111e67d1c3a32b524a1baf947b6e1/platformdirs-4.9.6-py3-none-any.whl", hash = "sha256:e61adb1d5e5cb3441b4b7710bea7e4c12250ca49439228cc1021c00dcfac0917", size = 21348, upload-time = "2026-04-09T00:04:09.463Z" },
 ]
 
 [[package]]
