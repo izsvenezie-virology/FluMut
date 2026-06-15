@@ -1,7 +1,10 @@
+import os
 import sys
 import traceback
+from importlib.util import find_spec
 from pathlib import Path
 
+import qdarktheme
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
@@ -297,7 +300,15 @@ def launch_gui():
     app = QApplication(sys.argv)
     app.setStyle('fusion')
 
+    qdarktheme.setup_theme()
+
     win = LauncherWindow()
+
+    if '_PYI_SPLASH_IPC' in os.environ and find_spec('pyi_splash'):
+        import pyi_splash  # type: ignore
+
+        pyi_splash.close()
+
     win.show()
 
     sys.exit(app.exec())

@@ -10,9 +10,8 @@ from flumut.core.nucleotides.models import Alignment
 from flumut.flumutdb.models import MutationType
 
 
-def _make_mapping(position: int, alteration: str, reference: MagicMock) -> MagicMock:
+def _make_mapping(position: int, alteration: str) -> MagicMock:
     mapping = MagicMock()
-    mapping.reference = reference
     mapping.position = position
     mapping.alteration = alteration
     mapping.mutation.type = MutationType.SNP.value
@@ -22,13 +21,12 @@ def _make_mapping(position: int, alteration: str, reference: MagicMock) -> Magic
 def _make_protein_alignment(
     reference_chars: list[str],
     query_chars: list[str],
-    mutations: list | None = None,
-    reference: MagicMock | None = None,
+    mappings: list | None = None,
 ) -> ProteinAlignment:
-    if reference is None:
-        reference = MagicMock()
+    reference = MagicMock()
     protein = MagicMock()
-    protein.mutations = mutations or []
+    # scan_positions reads the mappings pre-grouped per (reference, protein)
+    reference.mappings_by_protein = {protein: mappings or []}
     return ProteinAlignment(
         protein=protein,
         reference=reference,
@@ -41,21 +39,18 @@ def _make_protein_alignment(
 # ---------------------------------------------------------------------------
 
 
-def test_scan_positions_no_mutations_returns_empty() -> None:
+def test_scan_positions_no_mappings_returns_empty() -> None:
     pa = _make_protein_alignment(['A', 'C', 'T'], ['K', 'M', 'R'])
     assert scan_positions(pa) == []
 
 
-def test_scan_positions_matching_reference_returns_position_scan() -> None:
-    reference = MagicMock()
+def test_scan_positions_returns_position_scan_for_protein_mappings() -> None:
     # positions: [1, 2, 3] → position 2 is at index 1 → aa 'M'
-    mapping = _make_mapping(position=2, alteration='M', reference=reference)
-    mutation = MagicMock(mappings=[mapping])
+    mapping = _make_mapping(position=2, alteration='M')
     pa = _make_protein_alignment(
         reference_chars=['A', 'C', 'T'],
         query_chars=['K', 'M', 'R'],
-        mutations=[mutation],
-        reference=reference,
+        mappings=[mapping],
     )
     result = scan_positions(pa)
     assert len(result) == 1
@@ -63,27 +58,13 @@ def test_scan_positions_matching_reference_returns_position_scan() -> None:
     assert result[0].ammino_acid == 'M'
 
 
-def test_scan_positions_nonmatching_reference_excluded() -> None:
-    mapping = _make_mapping(position=1, alteration='K', reference=MagicMock())
-    mutation = MagicMock(mappings=[mapping])
-    # pa.reference is a different object than mapping.reference
-    pa = _make_protein_alignment(
-        reference_chars=['A'],
-        query_chars=['K'],
-        mutations=[mutation],
-    )
-    assert scan_positions(pa) == []
-
-
-def test_scan_positions_multiple_mutations() -> None:
-    reference = MagicMock()
-    mapping1 = _make_mapping(position=1, alteration='K', reference=reference)
-    mapping2 = _make_mapping(position=3, alteration='R', reference=reference)
+def test_scan_positions_multiple_mappings() -> None:
+    mapping1 = _make_mapping(position=1, alteration='K')
+    mapping2 = _make_mapping(position=3, alteration='R')
     pa = _make_protein_alignment(
         reference_chars=['A', 'C', 'T'],
         query_chars=['K', 'M', 'R'],
-        mutations=[MagicMock(mappings=[mapping1]), MagicMock(mappings=[mapping2])],
-        reference=reference,
+        mappings=[mapping1, mapping2],
     )
     result = scan_positions(pa)
     assert len(result) == 2
@@ -93,32 +74,14 @@ def test_scan_positions_multiple_mutations() -> None:
     assert result[1].ammino_acid == 'R'
 
 
-def test_scan_positions_mixed_references_only_matching_included() -> None:
-    reference = MagicMock()
-    matching = _make_mapping(position=1, alteration='K', reference=reference)
-    excluded = _make_mapping(position=2, alteration='M', reference=MagicMock())
-    mutation = MagicMock(mappings=[matching, excluded])
-    pa = _make_protein_alignment(
-        reference_chars=['A', 'C'],
-        query_chars=['K', 'M'],
-        mutations=[mutation],
-        reference=reference,
-    )
-    result = scan_positions(pa)
-    assert len(result) == 1
-    assert result[0].mapping is matching
-
-
 def test_scan_positions_gap_in_alignment_does_not_shift_positions() -> None:
     # reference: ['-', 'A', 'C'] → get_positions() = [None, 1, 2]
     # position 2 → index 2 → aa 'R' (not the character at index 1)
-    reference = MagicMock()
-    mapping = _make_mapping(position=2, alteration='R', reference=reference)
+    mapping = _make_mapping(position=2, alteration='R')
     pa = _make_protein_alignment(
         reference_chars=[GAP_SYMBOL, 'A', 'C'],
         query_chars=['X', 'K', 'R'],
-        mutations=[MagicMock(mappings=[mapping])],
-        reference=reference,
+        mappings=[mapping],
     )
     result = scan_positions(pa)
     assert len(result) == 1
