@@ -298,8 +298,6 @@ class LauncherWindow(QWidget):
 
 def launch_gui():
     app = QApplication(sys.argv)
-    app.setStyle('fusion')
-
     qdarktheme.setup_theme()
 
     win = LauncherWindow()

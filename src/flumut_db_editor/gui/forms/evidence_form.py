@@ -2,13 +2,14 @@ from PySide6.QtWidgets import QComboBox, QLabel, QTextEdit
 
 from flumut.flumutdb.models import Effect, Evidence, Host, Marker, Paper, Subtype
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class EvidenceForm(BaseForm):
-    def __init__(self, parent=None, evidence=None):
-        self.evidence = evidence
-        super().__init__(parent, 'Evidence')
+class EvidenceForm(TransactionalForm):
+    model = Evidence
+
+    def __init__(self, parent=None, instance=None):
+        super().__init__(parent, 'Evidence', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -53,13 +54,13 @@ class EvidenceForm(BaseForm):
         self.form_layout.insertWidget(10, QLabel('Notes:'))
         self.form_layout.insertWidget(11, self.notes_field)
 
-        if self.evidence:
-            self.marker_combo.setCurrentIndex(self.marker_combo.findData(self.evidence.marker_id))
-            self.paper_combo.setCurrentIndex(self.paper_combo.findData(self.evidence.paper_id))
-            self.effect_combo.setCurrentIndex(self.effect_combo.findData(self.evidence.effect_id))
-            self.subtype_combo.setCurrentIndex(self.subtype_combo.findData(self.evidence.subtype_id))
-            self.host_combo.setCurrentIndex(self.host_combo.findData(self.evidence.host_id))
-            self.notes_field.setText(self.evidence.notes or '')
+        if self.instance:
+            self.marker_combo.setCurrentIndex(self.marker_combo.findData(self.instance.marker_id))
+            self.paper_combo.setCurrentIndex(self.paper_combo.findData(self.instance.paper_id))
+            self.effect_combo.setCurrentIndex(self.effect_combo.findData(self.instance.effect_id))
+            self.subtype_combo.setCurrentIndex(self.subtype_combo.findData(self.instance.subtype_id))
+            self.host_combo.setCurrentIndex(self.host_combo.findData(self.instance.host_id))
+            self.notes_field.setText(self.instance.notes or '')
 
     def validate(self) -> bool:
         if self.marker_combo.count() == 0:
@@ -76,28 +77,12 @@ class EvidenceForm(BaseForm):
             return False
         return True
 
-    def save_to_db(self) -> None:
-        marker_id = self.marker_combo.currentData()
-        paper_id = self.paper_combo.currentData()
-        effect_id = self.effect_combo.currentData()
-        subtype_id = self.subtype_combo.currentData()
-        host_id = self.host_combo.currentData()
-        notes = self.notes_field.toPlainText().strip() or None
-
-        if self.evidence:
-            self.evidence.marker_id = marker_id
-            self.evidence.paper_id = paper_id
-            self.evidence.effect_id = effect_id
-            self.evidence.subtype_id = subtype_id
-            self.evidence.host_id = host_id
-            self.evidence.notes = notes
-            self.evidence.save()
-        else:
-            Evidence.create(
-                marker_id=marker_id,
-                paper_id=paper_id,
-                effect_id=effect_id,
-                subtype_id=subtype_id,
-                host_id=host_id,
-                notes=notes,
-            )
+    def field_values(self) -> dict:
+        return {
+            'marker_id': self.marker_combo.currentData(),
+            'paper_id': self.paper_combo.currentData(),
+            'effect_id': self.effect_combo.currentData(),
+            'subtype_id': self.subtype_combo.currentData(),
+            'host_id': self.host_combo.currentData(),
+            'notes': self.notes_field.toPlainText().strip() or None,
+        }

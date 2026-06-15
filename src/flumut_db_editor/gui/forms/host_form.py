@@ -2,13 +2,14 @@ from PySide6.QtWidgets import QLabel, QLineEdit
 
 from flumut.flumutdb.models import Host
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class HostForm(BaseForm):
-    def __init__(self, parent=None, host=None):
-        self.host = host
-        super().__init__(parent, 'Host')
+class HostForm(TransactionalForm):
+    model = Host
+
+    def __init__(self, parent=None, instance=None):
+        super().__init__(parent, 'Host', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -16,8 +17,8 @@ class HostForm(BaseForm):
         self.form_layout.insertWidget(0, QLabel('Name:'))
         self.form_layout.insertWidget(1, self.name_field)
 
-        if self.host:
-            self.name_field.setText(self.host.name)
+        if self.instance:
+            self.name_field.setText(self.instance.name)
 
     def validate(self) -> bool:
         name = self.name_field.text().strip()
@@ -26,10 +27,5 @@ class HostForm(BaseForm):
             return False
         return True
 
-    def save_to_db(self) -> None:
-        name = self.name_field.text().strip()
-        if self.host:
-            self.host.name = name
-            self.host.save()
-        else:
-            Host.create(name=name)
+    def field_values(self) -> dict:
+        return {'name': self.name_field.text().strip()}

@@ -1,5 +1,6 @@
 import sys
 
+import qdarktheme
 from PySide6.QtWidgets import QApplication
 
 from flumut.flumutdb.initializer import initialize
@@ -13,6 +14,8 @@ def main():
     initialize(read_only=False, path=db)
 
     app = QApplication(sys.argv)
+    qdarktheme.setup_theme()
+
     window = MainWindow()
     window.show()
 

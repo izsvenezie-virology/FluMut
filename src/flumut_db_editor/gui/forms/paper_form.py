@@ -2,13 +2,14 @@ from PySide6.QtWidgets import QLabel, QLineEdit, QSpinBox
 
 from flumut.flumutdb.models import Paper
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class PaperForm(BaseForm):
-    def __init__(self, parent=None, paper=None):
-        self.paper = paper
-        super().__init__(parent, 'Paper')
+class PaperForm(TransactionalForm):
+    model = Paper
+
+    def __init__(self, parent=None, instance=None):
+        super().__init__(parent, 'Paper', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -28,50 +29,32 @@ class PaperForm(BaseForm):
         self.form_layout.insertWidget(6, QLabel('Year:'))
         self.form_layout.insertWidget(7, self.year_field)
 
-        if self.paper:
-            self.short_name_field.setText(self.paper.short_name)
-            self.title_field.setText(self.paper.title)
-            self.authors_field.setText(self.paper.authors)
-            self.year_field.setValue(self.paper.year)
+        if self.instance:
+            self.short_name_field.setText(self.instance.short_name)
+            self.title_field.setText(self.instance.title)
+            self.authors_field.setText(self.instance.authors)
+            self.year_field.setValue(self.instance.year)
 
     def validate(self) -> bool:
         short_name = self.short_name_field.text().strip()
         title = self.title_field.text().strip()
-        authors = self.authors_field.text().strip()
-        year = self.year_field.value()
 
         if not short_name:
-            ValidationErrorDialog.show_validation_error(
-                self, 'Short Name', 'Short name cannot be empty.'
-            )
+            ValidationErrorDialog.show_validation_error(self, 'Short Name', 'Short name cannot be empty.')
             return False
         if not title:
-            ValidationErrorDialog.show_validation_error(
-                self, 'Title', 'Title cannot be empty.'
-            )
+            ValidationErrorDialog.show_validation_error(self, 'Title', 'Title cannot be empty.')
             return False
-        if not self.paper:
+        if not self.instance:
             if Paper.select().where(Paper.short_name == short_name).exists():
-                ValidationErrorDialog.show_validation_error(
-                    self, 'Short Name', 'A paper with this short name already exists.'
-                )
+                ValidationErrorDialog.show_validation_error(self, 'Short Name', 'A paper with this short name already exists.')
                 return False
         return True
 
-    def save_to_db(self) -> None:
-        short_name = self.short_name_field.text().strip()
-        title = self.title_field.text().strip()
-        authors = self.authors_field.text().strip()
-        year = self.year_field.value()
-
-        if self.paper:
-            self.paper.short_name = short_name
-            self.paper.title = title
-            self.paper.authors = authors
-            self.paper.year = year
-            self.paper.save()
-        else:
-            Paper.create(
-                short_name=short_name, title=title, authors=authors, year=year
-            )
-
+    def field_values(self) -> dict:
+        return {
+            'short_name': self.short_name_field.text().strip(),
+            'title': self.title_field.text().strip(),
+            'authors': self.authors_field.text().strip(),
+            'year': self.year_field.value(),
+        }

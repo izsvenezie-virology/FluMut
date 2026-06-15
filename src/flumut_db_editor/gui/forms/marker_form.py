@@ -2,13 +2,14 @@ from PySide6.QtWidgets import QLabel, QLineEdit
 
 from flumut.flumutdb.models import Marker
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class MarkerForm(BaseForm):
-    def __init__(self, parent=None, marker=None):
-        self.marker = marker
-        super().__init__(parent, 'Marker')
+class MarkerForm(TransactionalForm):
+    model = Marker
+
+    def __init__(self, parent=None, instance=None):
+        super().__init__(parent, 'Marker', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -16,23 +17,15 @@ class MarkerForm(BaseForm):
         self.form_layout.insertWidget(0, QLabel('Name:'))
         self.form_layout.insertWidget(1, self.name_field)
 
-        if self.marker:
-            self.name_field.setText(self.marker.name or '')
+        if self.instance:
+            self.name_field.setText(self.instance.name or '')
 
     def validate(self) -> bool:
         name = self.name_field.text().strip()
         if not name:
-            ValidationErrorDialog.show_validation_error(
-                self, 'Name', 'Name cannot be empty.'
-            )
+            ValidationErrorDialog.show_validation_error(self, 'Name', 'Name cannot be empty.')
             return False
         return True
 
-    def save_to_db(self) -> None:
-        name = self.name_field.text().strip()
-        if self.marker:
-            self.marker.name = name
-            self.marker.save()
-        else:
-            Marker.create(name=name)
-
+    def field_values(self) -> dict:
+        return {'name': self.name_field.text().strip()}

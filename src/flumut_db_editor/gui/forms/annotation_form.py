@@ -2,14 +2,15 @@ from PySide6.QtWidgets import QComboBox, QLabel, QSpinBox
 
 from flumut.flumutdb.models import Annotation, Protein
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class AnnotationForm(BaseForm):
-    def __init__(self, parent=None, annotation=None, reference_id=None):
-        self.annotation = annotation
+class AnnotationForm(TransactionalForm):
+    model = Annotation
+
+    def __init__(self, parent=None, instance=None, reference_id=None):
         self.reference_id = reference_id
-        super().__init__(parent, 'Annotation')
+        super().__init__(parent, 'Annotation', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -31,10 +32,10 @@ class AnnotationForm(BaseForm):
         self.form_layout.insertWidget(4, QLabel('End:'))
         self.form_layout.insertWidget(5, self.end_field)
 
-        if self.annotation:
-            self.protein_combo.setCurrentText(self.annotation.protein.name)
-            self.start_field.setValue(self.annotation.start)
-            self.end_field.setValue(self.annotation.end)
+        if self.instance:
+            self.protein_combo.setCurrentText(self.instance.protein.name)
+            self.start_field.setValue(self.instance.start)
+            self.end_field.setValue(self.instance.end)
 
     def validate(self) -> bool:
         if self.protein_combo.count() == 0:
@@ -45,20 +46,12 @@ class AnnotationForm(BaseForm):
             return False
         return True
 
-    def save_to_db(self) -> None:
-        protein_id = self.protein_combo.currentData()
-        start = self.start_field.value()
-        end = self.end_field.value()
+    def field_values(self) -> dict:
+        return {
+            'protein_id': self.protein_combo.currentData(),
+            'start': self.start_field.value(),
+            'end': self.end_field.value(),
+        }
 
-        if self.annotation:
-            self.annotation.protein_id = protein_id
-            self.annotation.start = start
-            self.annotation.end = end
-            self.annotation.save()
-        else:
-            Annotation.create(
-                protein_id=protein_id,
-                reference_id=self.reference_id,
-                start=start,
-                end=end,
-            )
+    def create_values(self) -> dict:
+        return {**self.field_values(), 'reference_id': self.reference_id}

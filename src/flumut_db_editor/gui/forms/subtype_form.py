@@ -2,13 +2,14 @@ from PySide6.QtWidgets import QLabel, QLineEdit
 
 from flumut.flumutdb.models import Subtype
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
-from flumut_db_editor.gui.forms.base import BaseForm
+from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class SubtypeForm(BaseForm):
-    def __init__(self, parent=None, subtype=None):
-        self.subtype = subtype
-        super().__init__(parent, 'Subtype')
+class SubtypeForm(TransactionalForm):
+    model = Subtype
+
+    def __init__(self, parent=None, instance=None):
+        super().__init__(parent, 'Subtype', instance)
 
     def init_ui(self):
         super().init_ui()
@@ -16,8 +17,8 @@ class SubtypeForm(BaseForm):
         self.form_layout.insertWidget(0, QLabel('Name:'))
         self.form_layout.insertWidget(1, self.name_field)
 
-        if self.subtype:
-            self.name_field.setText(self.subtype.name)
+        if self.instance:
+            self.name_field.setText(self.instance.name)
 
     def validate(self) -> bool:
         name = self.name_field.text().strip()
@@ -26,10 +27,5 @@ class SubtypeForm(BaseForm):
             return False
         return True
 
-    def save_to_db(self) -> None:
-        name = self.name_field.text().strip()
-        if self.subtype:
-            self.subtype.name = name
-            self.subtype.save()
-        else:
-            Subtype.create(name=name)
+    def field_values(self) -> dict:
+        return {'name': self.name_field.text().strip()}
