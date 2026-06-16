@@ -1,9 +1,7 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
 from flumut.flumutdb.models import Effect
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import BaseTableTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.effect_form import EffectForm
 
@@ -48,8 +46,5 @@ class EffectsTab(BaseTableTab):
             return
         effects = list(Effect.select())
         effect = effects[row]
-        if delete_with_confirmation(
-            self, 'Effect', effect.id, DatabaseOperations.delete_effect
-        ):
+        if delete_with_confirmation(self, 'Effect', effect.id, DatabaseOperations.delete_effect):
             self.load_data()
-

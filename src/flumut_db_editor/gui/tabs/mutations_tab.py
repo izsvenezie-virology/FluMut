@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import HierarchicalTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.mapping_form import MappingForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
@@ -26,14 +24,10 @@ class MutationsTab(HierarchicalTab):
             mut_item.setText(1, f'Type: {mutation.type} | Protein: {mutation.protein.name}')
             mut_item.setData(0, 0x0100, ('mutation', mutation.id))
 
-            mappings: list[Mapping] = Mapping.select().where(
-                Mapping.mutation == mutation
-            )
+            mappings: list[Mapping] = Mapping.select().where(Mapping.mutation == mutation)
             for mapping in mappings:
                 mapping_item = QTreeWidgetItem(mut_item)
-                mapping_item.setText(
-                    0, f'{mapping.reference.name}:{mapping.position}'
-                )
+                mapping_item.setText(0, f'{mapping.reference.name}:{mapping.position}')
                 mapping_item.setText(1, mapping.alteration or '')
                 mapping_item.setData(0, 0x0100, ('mapping', mapping.id))
 
@@ -67,13 +61,8 @@ class MutationsTab(HierarchicalTab):
             return
         item_type, item_id = self.get_item_data(item)
         if item_type == 'mutation':
-            if delete_with_confirmation(
-                self, 'Mutation', item_id, DatabaseOperations.delete_mutation
-            ):
+            if delete_with_confirmation(self, 'Mutation', item_id, DatabaseOperations.delete_mutation):
                 self.load_data()
         elif item_type == 'mapping':
-            if delete_with_confirmation(
-                self, 'Mapping', item_id, DatabaseOperations.delete_mapping
-            ):
+            if delete_with_confirmation(self, 'Mapping', item_id, DatabaseOperations.delete_mapping):
                 self.load_data()
-

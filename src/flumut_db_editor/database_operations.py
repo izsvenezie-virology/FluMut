@@ -1,3 +1,8 @@
+from dataclasses import dataclass, field
+from typing import Callable
+
+from peewee import Model
+
 from flumut.flumutdb.models import (
     Annotation,
     Effect,
@@ -15,215 +20,91 @@ from flumut.flumutdb.models import (
 
 
 class ForeignKeyViolationError(Exception):
-    """Raised when attempting to delete an item with dependent records."""
+    """Raised when deleting a record that still has protected dependents."""
 
     def __init__(self, item_type: str, item_name: str, violations: dict[str, list]):
         self.item_type = item_type
         self.item_name = item_name
         self.violations = violations
-        super().__init__(f"Cannot delete {item_type} '{item_name}': {sum(len(v) for v in violations.values())} dependent records")
+        count = sum(len(rows) for rows in violations.values())
+        super().__init__(f"Cannot delete {item_type} '{item_name}': {count} dependent records")
 
 
-class DeletionValidator:
-    """Validates whether an item can be safely deleted based on FK constraints."""
+@dataclass(frozen=True)
+class DeletePolicy:
+    """How a model may be deleted.
 
-    @staticmethod
-    def can_delete_segment(segment_name: str) -> tuple[bool, dict[str, list]]:
-        proteins = list(Protein.select().where(Protein.segment == segment_name))
-        references = list(Reference.select().where(Reference.segment == segment_name))
-        violations = {}
-        if proteins:
-            violations['Proteins'] = proteins
-        if references:
-            violations['References'] = references
-        return len(violations) == 0, violations
+    Attributes:
+        blocked_by: Maps a human label (e.g. ``'Proteins'``) to the backref
+            attribute on the instance (e.g. ``'proteins'``). A non-empty backref
+            blocks deletion and is reported as a violation.
+        cascade: Callables run (in order) to remove owned children before the
+            record itself is deleted.
+    """
 
-    @staticmethod
-    def can_delete_protein(protein_id: int) -> tuple[bool, dict[str, list]]:
-        annotations = list(Annotation.select().where(Annotation.protein_id == protein_id))
-        mutations = list(Mutation.select().where(Mutation.protein_id == protein_id))
-        violations = {}
-        if annotations:
-            violations['Annotations'] = annotations
-        if mutations:
-            violations['Mutations'] = mutations
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_reference(reference_id: int) -> tuple[bool, dict[str, list]]:
-        annotations = list(Annotation.select().where(Annotation.reference_id == reference_id))
-        mappings = list(Mapping.select().where(Mapping.reference_id == reference_id))
-        violations = {}
-        if annotations:
-            violations['Annotations'] = annotations
-        if mappings:
-            violations['Mappings'] = mappings
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_mutation(mutation_id: int) -> tuple[bool, dict[str, list]]:
-        markers = list(
-            Marker.select().join(Marker.mutations.through_model).where(Marker.mutations.through_model.mutation_id == mutation_id)
-        )
-        mappings = list(Mapping.select().where(Mapping.mutation_id == mutation_id))
-        violations = {}
-        if markers:
-            violations['Markers'] = markers
-        if mappings:
-            violations['Mappings'] = mappings
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_marker(marker_id: int) -> tuple[bool, dict[str, list]]:
-        evidences = list(Evidence.select().where(Evidence.marker_id == marker_id))
-        violations = {}
-        if evidences:
-            violations['Evidences'] = evidences
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_paper(paper_id: int) -> tuple[bool, dict[str, list]]:
-        evidences = list(Evidence.select().where(Evidence.paper_id == paper_id))
-        violations = {}
-        if evidences:
-            violations['Evidences'] = evidences
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_effect(effect_id: int) -> tuple[bool, dict[str, list]]:
-        evidences = list(Evidence.select().where(Evidence.effect_id == effect_id))
-        violations = {}
-        if evidences:
-            violations['Evidences'] = evidences
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_subtype(subtype_id: int) -> tuple[bool, dict[str, list]]:
-        evidences = list(Evidence.select().where(Evidence.subtype_id == subtype_id))
-        violations = {}
-        if evidences:
-            violations['Evidences'] = evidences
-        return len(violations) == 0, violations
-
-    @staticmethod
-    def can_delete_host(host_id: int) -> tuple[bool, dict[str, list]]:
-        evidences = list(Evidence.select().where(Evidence.host_id == host_id))
-        violations = {}
-        if evidences:
-            violations['Evidences'] = evidences
-        return len(violations) == 0, violations
+    blocked_by: dict[str, str] = field(default_factory=dict)
+    cascade: tuple[Callable[[Model], None], ...] = ()
 
 
-class DatabaseOperations:
-    """Database CRUD operations with transaction support."""
+def _delete_mappings(mutation: Mutation) -> None:
+    Mapping.delete().where(Mapping.mutation == mutation).execute()
 
-    @staticmethod
-    def delete_segment(segment_name: str) -> None:
-        """Delete a segment (must have no proteins or references)."""
-        can_delete, violations = DeletionValidator.can_delete_segment(segment_name)
-        if not can_delete:
-            raise ForeignKeyViolationError('Segment', segment_name, violations)
 
-        Segment.delete().where(Segment.name == segment_name).execute()
-        Segment.clear_cache()
+def _clear_marker_mutations(marker: Marker) -> None:
+    marker.mutations.clear()  # remove the M2M through rows
 
-    @staticmethod
-    def delete_protein(protein_id: int) -> None:
-        """Delete a protein (must have no annotations or mutations)."""
-        can_delete, violations = DeletionValidator.can_delete_protein(protein_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Protein', str(protein_id), violations)
 
-        Protein.delete().where(Protein.id == protein_id).execute()
+POLICIES: dict[type[Model], DeletePolicy] = {
+    Segment: DeletePolicy(blocked_by={'Proteins': 'proteins', 'References': 'references'}),
+    Protein: DeletePolicy(blocked_by={'Annotations': 'annotations', 'Mutations': 'mutations'}),
+    Reference: DeletePolicy(blocked_by={'Annotations': 'annotations', 'Mappings': 'mappings'}),
+    Mutation: DeletePolicy(blocked_by={'Markers': 'markers'}, cascade=(_delete_mappings,)),
+    Marker: DeletePolicy(blocked_by={'Evidences': 'evidences'}, cascade=(_clear_marker_mutations,)),
+    Paper: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
+    Effect: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
+    Subtype: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
+    Host: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
+    Annotation: DeletePolicy(),
+    Mapping: DeletePolicy(),
+    Evidence: DeletePolicy(),
+}
 
-    @staticmethod
-    def delete_reference(reference_id: int) -> None:
-        """Delete a reference (must have no annotations or mappings)."""
-        can_delete, violations = DeletionValidator.can_delete_reference(reference_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Reference', str(reference_id), violations)
+# Models that maintain a module-level cache to invalidate after any write.
+_CACHED_MODELS = (Segment, Reference, Marker)
 
-        Reference.delete().where(Reference.id == reference_id).execute()
-        Reference.clear_cache()
 
-    @staticmethod
-    def delete_annotation(annotation_id: int) -> None:
-        """Delete an annotation (no dependencies)."""
-        Annotation.delete().where(Annotation.id == annotation_id).execute()
+def delete(instance: Model) -> None:
+    """Delete a record, blocking if protected dependents exist.
 
-    @staticmethod
-    def delete_mutation(mutation_id: int) -> None:
-        """Delete a mutation (must have no markers, will cascade delete mappings)."""
-        can_delete, violations = DeletionValidator.can_delete_mutation(mutation_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Mutation', str(mutation_id), violations)
+    Owned children (e.g. a mutation's mappings) are removed automatically;
+    protected dependents raise :class:`ForeignKeyViolationError`.
+    """
+    policy = POLICIES[type(instance)]
+    violations = _blocking_dependents(instance, policy)
+    if violations:
+        raise ForeignKeyViolationError(type(instance).__name__, str(instance), violations)
 
-        # Delete mappings first (dependent records)
-        Mapping.delete().where(Mapping.mutation_id == mutation_id).execute()
-        # Delete mutation
-        Mutation.delete().where(Mutation.id == mutation_id).execute()
+    for remove_children in policy.cascade:
+        remove_children(instance)
+    instance.delete_instance()
+    _clear_caches()
 
-    @staticmethod
-    def delete_mapping(mapping_id: int) -> None:
-        """Delete a mapping (no dependencies)."""
-        Mapping.delete().where(Mapping.id == mapping_id).execute()
 
-    @staticmethod
-    def delete_marker(marker_id: int) -> None:
-        """Delete a marker (must have no evidences)."""
-        can_delete, violations = DeletionValidator.can_delete_marker(marker_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Marker', str(marker_id), violations)
+def remove_mutation_from_marker(marker: Marker, mutation: Mutation) -> None:
+    """Remove a single mutation from a marker (M2M edit, not a row delete)."""
+    marker.mutations.remove(mutation)
+    _clear_caches()
 
-        # Delete M2M associations
-        Marker.mutations.get_through_model().delete().where(Marker.mutations.get_through_model().marker_id == marker_id).execute()
-        # Delete marker
-        Marker.delete().where(Marker.id == marker_id).execute()
-        Marker.clear_cache()
 
-    @staticmethod
-    def delete_paper(paper_id: int) -> None:
-        """Delete a paper (must have no evidences)."""
-        can_delete, violations = DeletionValidator.can_delete_paper(paper_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Paper', str(paper_id), violations)
+def _blocking_dependents(instance: Model, policy: DeletePolicy) -> dict[str, list]:
+    found = {}
+    for label, backref in policy.blocked_by.items():
+        rows = list(getattr(instance, backref))
+        if rows:
+            found[label] = rows
+    return found
 
-        Paper.delete().where(Paper.id == paper_id).execute()
 
-    @staticmethod
-    def delete_effect(effect_id: int) -> None:
-        """Delete an effect (must have no evidences)."""
-        can_delete, violations = DeletionValidator.can_delete_effect(effect_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Effect', str(effect_id), violations)
-
-        Effect.delete().where(Effect.id == effect_id).execute()
-
-    @staticmethod
-    def delete_subtype(subtype_id: int) -> None:
-        """Delete a subtype (must have no evidences)."""
-        can_delete, violations = DeletionValidator.can_delete_subtype(subtype_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Subtype', str(subtype_id), violations)
-
-        Subtype.delete().where(Subtype.id == subtype_id).execute()
-
-    @staticmethod
-    def delete_host(host_id: int) -> None:
-        """Delete a host (must have no evidences)."""
-        can_delete, violations = DeletionValidator.can_delete_host(host_id)
-        if not can_delete:
-            raise ForeignKeyViolationError('Host', str(host_id), violations)
-
-        Host.delete().where(Host.id == host_id).execute()
-
-    @staticmethod
-    def delete_evidence(evidence_id: int) -> None:
-        """Delete an evidence (no dependencies)."""
-        Evidence.delete().where(Evidence.id == evidence_id).execute()
-
-    @staticmethod
-    def remove_marker_mutation_association(marker_id: int, mutation_id: int) -> None:
-        """Remove a mutation from a marker (M2M)."""
-        through_model = Marker.mutations.get_through_model()
-        through_model.delete().where((through_model.marker_id == marker_id) & (through_model.mutation_id == mutation_id)).execute()
+def _clear_caches() -> None:
+    for model in _CACHED_MODELS:
+        model.clear_cache()

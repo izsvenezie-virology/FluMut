@@ -9,63 +9,52 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from flumut_db_editor.gui.crud_mixin import TableCrudMixin, TreeCrudMixin
+from flumut_db_editor.gui.crud_mixin import CrudMixin, TableCrudMixin, TreeCrudMixin
 
 
-class BaseTableTab(QWidget, TableCrudMixin):
+class BaseTab(QWidget, CrudMixin):
+    """Common tab chrome: a New/Refresh header above an item view.
+
+    Subclasses implement :meth:`create_view` to supply the table or tree; the
+    CRUD behaviour (context menu, refresh, delete) comes from the mixin.
+    """
+
     def __init__(self):
         super().__init__()
-        self.init_ui()
-
-    def init_ui(self):
         layout = QVBoxLayout(self)
+        layout.addLayout(self._build_header())
 
-        header_layout = QHBoxLayout()
+        view = self.create_view()
+        view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        view.customContextMenuRequested.connect(self.show_context_menu)
+        layout.addWidget(view)
+
+    def _build_header(self) -> QHBoxLayout:
+        header = QHBoxLayout()
         self.new_button = QPushButton('New')
         self.refresh_button = QPushButton('Refresh')
-        header_layout.addWidget(self.new_button)
-        header_layout.addWidget(self.refresh_button)
-        header_layout.addStretch()
-        layout.addLayout(header_layout)
+        self.refresh_button.clicked.connect(self.on_refresh)
+        header.addWidget(self.new_button)
+        header.addWidget(self.refresh_button)
+        header.addStretch()
+        return header
 
+    def create_view(self) -> QAbstractItemView:
+        """Create and return the tab's item view - to be overridden."""
+        raise NotImplementedError
+
+
+class BaseTableTab(BaseTab, TableCrudMixin):
+    def create_view(self) -> QAbstractItemView:
         self.table = QTableWidget()
         self.table.setColumnCount(0)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self.show_context_menu)
-        layout.addWidget(self.table)
-
-        self.refresh_button.clicked.connect(self.on_refresh)
-
-    def show_context_menu(self, pos):
-        pass
+        return self.table
 
 
-class HierarchicalTab(QWidget, TreeCrudMixin):
-    def __init__(self):
-        super().__init__()
-        self.init_ui()
-
-    def init_ui(self):
-        layout = QVBoxLayout(self)
-
-        header_layout = QHBoxLayout()
-        self.new_button = QPushButton('New')
-        self.refresh_button = QPushButton('Refresh')
-        header_layout.addWidget(self.new_button)
-        header_layout.addWidget(self.refresh_button)
-        header_layout.addStretch()
-        layout.addLayout(header_layout)
-
+class HierarchicalTab(BaseTab, TreeCrudMixin):
+    def create_view(self) -> QAbstractItemView:
         self.tree = QTreeWidget()
         self.tree.setColumnCount(1)
         self.tree.setHeaderLabel('Items')
-        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self.show_context_menu)
-        layout.addWidget(self.tree)
-
-        self.refresh_button.clicked.connect(self.on_refresh)
-
-    def show_context_menu(self, pos):
-        pass
-
+        return self.tree

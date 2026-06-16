@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import HierarchicalTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.annotation_form import AnnotationForm
 from flumut_db_editor.gui.forms.reference_form import ReferenceForm
@@ -26,9 +24,7 @@ class ReferencesTab(HierarchicalTab):
             ref_item.setText(1, f'Segment: {ref.segment.name} | Source: {ref.source}')
             ref_item.setData(0, 0x0100, ('reference', ref.id))
 
-            annotations: list[Annotation] = Annotation.select().where(
-                Annotation.reference == ref
-            )
+            annotations: list[Annotation] = Annotation.select().where(Annotation.reference == ref)
             for annot in annotations:
                 annot_item = QTreeWidgetItem(ref_item)
                 annot_item.setText(
@@ -68,13 +64,8 @@ class ReferencesTab(HierarchicalTab):
             return
         item_type, item_id = self.get_item_data(item)
         if item_type == 'reference':
-            if delete_with_confirmation(
-                self, 'Reference', item_id, DatabaseOperations.delete_reference
-            ):
+            if delete_with_confirmation(self, 'Reference', item_id, DatabaseOperations.delete_reference):
                 self.load_data()
         elif item_type == 'annotation':
-            if delete_with_confirmation(
-                self, 'Annotation', item_id, DatabaseOperations.delete_annotation
-            ):
+            if delete_with_confirmation(self, 'Annotation', item_id, DatabaseOperations.delete_annotation):
                 self.load_data()
-

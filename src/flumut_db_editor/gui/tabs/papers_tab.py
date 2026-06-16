@@ -1,9 +1,7 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
 from flumut.flumutdb.models import Paper
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import BaseTableTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.paper_form import PaperForm
 
@@ -54,7 +52,5 @@ class PapersTab(BaseTableTab):
             return
         papers = list(Paper.select())
         paper = papers[row]
-        if delete_with_confirmation(
-            self, 'Paper', paper.id, DatabaseOperations.delete_paper
-        ):
+        if delete_with_confirmation(self, 'Paper', paper.id, DatabaseOperations.delete_paper):
             self.load_data()

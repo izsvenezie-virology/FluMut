@@ -1,11 +1,9 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import HierarchicalTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.marker_form import MarkerForm
-from flumut_db_editor.models import Marker, Mutation
+from flumut_db_editor.models import Marker
 
 
 class MarkersTab(HierarchicalTab):
@@ -28,9 +26,7 @@ class MarkersTab(HierarchicalTab):
             mutations = marker.mutations
             for mutation in mutations:
                 mutation_item = QTreeWidgetItem(marker_item)
-                mutation_item.setText(
-                    0, f'{mutation.name} ({mutation.type})'
-                )
+                mutation_item.setText(0, f'{mutation.name} ({mutation.type})')
                 mutation_item.setText(1, f'Protein: {mutation.protein.name}')
                 mutation_item.setData(0, 0x0100, ('marker_mutation', marker.id, mutation.id))
 
@@ -66,9 +62,7 @@ class MarkersTab(HierarchicalTab):
 
         if data[0] == 'marker':
             marker_id = data[1]
-            if delete_with_confirmation(
-                self, 'Marker', marker_id, DatabaseOperations.delete_marker
-            ):
+            if delete_with_confirmation(self, 'Marker', marker_id, DatabaseOperations.delete_marker):
                 self.load_data()
         elif data[0] == 'marker_mutation':
             marker_id = data[1]
@@ -77,9 +71,6 @@ class MarkersTab(HierarchicalTab):
                 self,
                 'Mutation Association',
                 mutation_id,
-                lambda mid=mutation_id: DatabaseOperations.remove_marker_mutation_association(
-                    marker_id, mid
-                ),
+                lambda mid=mutation_id: DatabaseOperations.remove_marker_mutation_association(marker_id, mid),
             ):
                 self.load_data()
-

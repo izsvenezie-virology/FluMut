@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
-from flumut_db_editor.database_operations import DatabaseOperations
 from flumut_db_editor.gui.base import BaseTableTab
-from flumut_db_editor.gui.crud_mixin import delete_with_confirmation
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.evidence_form import EvidenceForm
 from flumut_db_editor.models import Evidence
@@ -52,7 +50,5 @@ class EvidencesTab(BaseTableTab):
             return
         evidences = list(Evidence.select())
         evidence = evidences[row]
-        if delete_with_confirmation(
-            self, 'Evidence', evidence.id, DatabaseOperations.delete_evidence
-        ):
+        if delete_with_confirmation(self, 'Evidence', evidence.id, DatabaseOperations.delete_evidence):
             self.load_data()
