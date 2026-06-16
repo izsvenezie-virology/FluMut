@@ -41,9 +41,6 @@ class ProteinsTab(BaseTab):
 
     def on_edit_requested(self):
         instance = self.get_selected_instance()
-        if instance is None:
-            return
-
         if isinstance(instance, Segment):
             form = SegmentForm(self, instance)
         elif isinstance(instance, Protein):
@@ -56,9 +53,6 @@ class ProteinsTab(BaseTab):
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
-        if instance is None:
-            return
-
         if isinstance(instance, Segment):
             form = SegmentForm(self, instance)
         elif isinstance(instance, Protein):

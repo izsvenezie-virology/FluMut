@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget
 
 from flumut_db_editor.gui.tabs.proteins_tab import ProteinsTab
+from flumut_db_editor.gui.tabs.references_tab import ReferencesTab
 
 
 class MainWindow(QMainWindow):
@@ -24,7 +25,7 @@ class MainWindow(QMainWindow):
         # effects_tab.addTab(HostsTab(), 'Hosts')
 
         self.tabs.addTab(ProteinsTab(), 'Proteins')
-        # self.tabs.addTab(ReferencesTab(), 'References')
+        self.tabs.addTab(ReferencesTab(), 'References')
         # self.tabs.addTab(MutationsTab(), 'Mutations')
         # self.tabs.addTab(MarkersTab(), 'Markers')
         # self.tabs.addTab(PapersTab(), 'Papers')
