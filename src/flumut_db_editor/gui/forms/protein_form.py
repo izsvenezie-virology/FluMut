@@ -1,4 +1,6 @@
-from PySide6.QtWidgets import QComboBox, QLabel, QLineEdit
+from typing import TYPE_CHECKING
+
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QWidget
 
 from flumut.flumutdb.models import Protein, Segment
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
@@ -8,26 +10,43 @@ from flumut_db_editor.gui.forms.base import TransactionalForm
 class ProteinForm(TransactionalForm):
     model = Protein
 
-    def __init__(self, parent=None, instance=None):
-        super().__init__(parent, instance)
+    def __init__(self, parent: QWidget | None = None, instance: Protein | None = None, segment: Segment | None = None) -> None:
+        self.segment = segment
+        if instance:
+            self.segment = instance.segment
 
-    def init_ui(self):
+        super().__init__(parent, instance)
+        if TYPE_CHECKING:
+            self.instance: Protein | None
+
+    def init_ui(self) -> None:
         super().init_ui()
         self.name_field = QLineEdit()
         self.segment_combo = QComboBox()
 
-        segments = Segment.select()
+        segments: list[Segment] = Segment.select()
         for segment in segments:
-            self.segment_combo.addItem(segment.name, segment.id)
-
-        self.form_layout.insertWidget(0, QLabel('Name:'))
-        self.form_layout.insertWidget(1, self.name_field)
-        self.form_layout.insertWidget(2, QLabel('Segment:'))
-        self.form_layout.insertWidget(3, self.segment_combo)
+            self.segment_combo.addItem(segment.name, segment)
 
         if self.instance:
             self.name_field.setText(self.instance.name)
-            self.segment_combo.setCurrentText(self.instance.segment.name)
+
+        if self.segment:
+            self.segment_combo.setCurrentText(self.segment.name)
+            self.segment_combo.setEnabled(False)
+
+        name_row = QHBoxLayout()
+        name_row.insertWidget(0, QLabel('Name:'))
+        name_row.insertWidget(1, self.name_field)
+        segment_row = QHBoxLayout()
+        segment_row.insertWidget(0, QLabel('Segment:'))
+        segment_row.insertWidget(1, self.segment_combo, 1)
+
+        self.form_layout.addLayout(name_row)
+        self.form_layout.addLayout(segment_row)
+        self.form_layout.addStretch()
+
+        self.name_field.setFocus()
 
     def validate(self) -> bool:
         name = self.name_field.text().strip()
@@ -42,5 +61,5 @@ class ProteinForm(TransactionalForm):
     def field_values(self) -> dict:
         return {
             'name': self.name_field.text().strip(),
-            'segment_id': self.segment_combo.currentData(),
+            'segment': self.segment_combo.currentData(),
         }

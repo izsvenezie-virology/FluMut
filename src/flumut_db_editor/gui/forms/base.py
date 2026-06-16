@@ -67,8 +67,12 @@ class TransactionalForm(BaseForm):
 
     def __init__(self, parent: QWidget | None = None, instance: Model | None = None) -> None:
         self.instance = instance
-        self._db = DATABASE_PROXY
+
         self._exit_stack = ExitStack()
+        self._db = DATABASE_PROXY
+        self._owns_transaction = False
+        # self._savepoint = None
+        self._begin_transaction()
 
         title = f'Edit {instance}' if instance else f'New {self.model.__name__}'
         super().__init__(parent, title)
@@ -100,17 +104,26 @@ class TransactionalForm(BaseForm):
             self.instance.save()
 
     def _begin_transaction(self) -> None:
-        self._exit_stack.enter_context(self._db.manual_commit())
-        self._db.begin()
+        if self._db.in_transaction():
+            self._savepoint = self._db.savepoint()
+            self._savepoint.__enter__()
+        else:
+            self._owns_transaction = True
+            self._exit_stack.enter_context(self._db.manual_commit())
+            self._db.begin()
 
     def _commit(self) -> None:
-        if self._db.in_transaction():
+        if self._owns_transaction:
             self._db.commit()
+        else:
+            self._savepoint.commit(begin=False)
         self._exit_stack.close()
 
     def _rollback(self) -> None:
-        if self._db.in_transaction():
+        if self._owns_transaction:
             self._db.rollback()
+        else:
+            self._savepoint.rollback(begin=False)
         self._exit_stack.close()
 
     def reject(self) -> None:
