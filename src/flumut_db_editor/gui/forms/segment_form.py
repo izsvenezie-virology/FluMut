@@ -13,8 +13,9 @@ from PySide6.QtWidgets import (
 )
 
 from flumut.flumutdb.models import Protein, Segment
-from flumut_db_editor.gui.dialogs import ConfirmationDialog, ValidationErrorDialog
+from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 
 
@@ -77,9 +78,9 @@ class SegmentForm(TransactionalForm):
 
     def _add_protein(self) -> None:
         if self.instance is None:
-            if not self.validate():
+            self.save_to_db()
+            if self.instance is None:
                 return
-            self.instance = Segment.create(name=self.name_field.text().strip())
             self._set_proteins_enabled(True)
 
         protein_form = ProteinForm(self, None, self.instance)
@@ -94,19 +95,20 @@ class SegmentForm(TransactionalForm):
 
     def _remove_protein(self) -> None:
         if protein := self._get_selected_protein():
-            if ConfirmationDialog.ask(self, 'Delete Protein', f'Are you sure you want to delete {protein}?'):
-                protein.delete_instance()
+            if DeleteForm.confirm_and_delete(protein, self):
                 self._refresh_list()
 
     def validate(self) -> bool:
         name = self.name_field.text().strip()
         if not name:
             ValidationErrorDialog.show_validation_error(self, 'Name', 'Segment name cannot be empty.')
+            self.name_field.setFocus()
             return False
         existing = Segment.get_or_none(Segment.name == name)
         if existing is not None:
             if self.instance is None or existing.get_id() != self.instance.get_id():
                 ValidationErrorDialog.show_validation_error(self, 'Name', 'A segment with this name already exists.')
+                self.name_field.setFocus()
                 return False
         return True
 

@@ -1,18 +1,16 @@
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
     QPushButton,
-    QTableWidget,
     QTreeWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from flumut_db_editor.gui.crud_mixin import CrudMixin, TableCrudMixin, TreeCrudMixin
+from flumut_db_editor.gui.crud_mixin import TableCrudMixin, TreeCrudMixin
 
 
-class BaseTab(QWidget, CrudMixin):
+class BaseTab(QWidget):
     """Common tab chrome: a New/Refresh header above an item view.
 
     Subclasses implement :meth:`create_view` to supply the table or tree; the
@@ -21,35 +19,36 @@ class BaseTab(QWidget, CrudMixin):
 
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout(self)
-        layout.addLayout(self._build_header())
+        self._init_header()
 
-        view = self.create_view()
-        view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        view.customContextMenuRequested.connect(self.show_context_menu)
-        layout.addWidget(view)
+    def _init_header(self) -> None:
+        self.tab_layout = QVBoxLayout(self)
 
-    def _build_header(self) -> QHBoxLayout:
         header = QHBoxLayout()
         self.new_button = QPushButton('New')
-        self.refresh_button = QPushButton('Refresh')
-        self.refresh_button.clicked.connect(self.on_refresh)
+        self.edit_button = QPushButton('Edit')
         header.addWidget(self.new_button)
-        header.addWidget(self.refresh_button)
-        header.addStretch()
-        return header
+        header.addWidget(self.edit_button)
 
-    def create_view(self) -> QAbstractItemView:
-        """Create and return the tab's item view - to be overridden."""
-        raise NotImplementedError
+        self.new_button.clicked.connect(self.on_new_requested)
+        self.edit_button.clicked.connect(self.on_edit_requested)
+
+        header.addStretch()
+        self.tab_layout.addLayout(header)
+
+    def on_new_requested(self) -> None:
+        raise NotImplementedError('New requested action must be implemented in child classes.')
+
+    def on_edit_requested(self) -> None:
+        raise NotImplementedError('Edit requested action must be implemented in child classes.')
+
+    def on_delete_requested(self) -> None:
+        raise NotImplementedError('Delete requested action must be implemented in child classes.')
 
 
 class BaseTableTab(BaseTab, TableCrudMixin):
-    def create_view(self) -> QAbstractItemView:
-        self.table = QTableWidget()
-        self.table.setColumnCount(0)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        return self.table
+    def __init__(self):
+        super().__init__()
 
 
 class HierarchicalTab(BaseTab, TreeCrudMixin):

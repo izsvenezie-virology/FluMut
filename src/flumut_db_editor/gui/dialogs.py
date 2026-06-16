@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from flumut_db_editor.delete_validator import DeleteValidator
+
 
 class ConfirmationDialog(QDialog):
     """Confirmation dialog for delete operations."""
@@ -46,14 +48,14 @@ class ConfirmationDialog(QDialog):
 class ForeignKeyViolationDialog(QDialog):
     """Dialog showing FK violations preventing deletion."""
 
-    def __init__(self, parent, item_type: str, item_name: str, violations: dict[str, list]):
+    def __init__(self, parent, validator: DeleteValidator):
         super().__init__(parent)
         self.setWindowTitle('Cannot Delete')
         self.setGeometry(100, 100, 500, 400)
 
         layout = QVBoxLayout(self)
 
-        message = QLabel(f'Cannot delete {item_type} "{item_name}" because the following items depend on it:')
+        message = QLabel(f'Cannot delete {type(validator.instance)} "{validator.instance}" because the following items depend on it:')
         layout.addWidget(message)
 
         scroll = QScrollArea()
@@ -61,17 +63,16 @@ class ForeignKeyViolationDialog(QDialog):
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
 
-        for dep_type, items in violations.items():
-            content_layout.addWidget(QLabel(f'{dep_type}:'))  # Bold header
+        for dep_type, items in validator.blocking_items.items():
+            content_layout.addWidget(QLabel(f'{dep_type} ({len(items)}):'))
             for item in items:
-                item_name_str = getattr(item, 'name', str(item.id))
-                content_layout.addWidget(QLabel(f'  - {item_name_str}'))
+                content_layout.addWidget(QLabel(f'  - {item}'))
 
         content_layout.addStretch()
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
 
-        instruction = QLabel('Please delete these items first, then try deleting this item again.')
+        instruction = QLabel('Please delete these items first, then delete this item again.')
         layout.addWidget(instruction)
 
         ok_button = QPushButton('OK')
@@ -79,8 +80,8 @@ class ForeignKeyViolationDialog(QDialog):
         layout.addWidget(ok_button)
 
     @staticmethod
-    def show_violation(parent, item_type: str, item_name: str, violations: dict[str, list]):
-        dialog = ForeignKeyViolationDialog(parent, item_type, item_name, violations)
+    def show_violation(parent, validator: DeleteValidator):
+        dialog = ForeignKeyViolationDialog(parent, validator)
         dialog.exec()
 
 

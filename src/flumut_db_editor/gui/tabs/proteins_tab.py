@@ -1,21 +1,25 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTreeWidgetItem
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from flumut_db_editor.gui.base import HierarchicalTab
-from flumut_db_editor.gui.dialogs import SuccessNotification
+from flumut_db_editor.gui.base import BaseTab
+from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
 from flumut_db_editor.models import Protein, Segment
 
 
-class ProteinsTab(HierarchicalTab):
+class ProteinsTab(BaseTab):
     def __init__(self):
         super().__init__()
+        self._init_ui()
+
+    def _init_ui(self):
+        self.tree = QTreeWidget()
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(['Name', 'Details'])
-        self.new_button.clicked.connect(self.handle_new)
-        self.load_data()
+        self.tab_layout.addWidget(self.tree)
+        self.refresh()
 
-    def load_data(self):
+    def refresh(self):
         self.tree.clear()
         segments: list[Segment] = Segment.select()
         for segment in segments:
@@ -27,41 +31,45 @@ class ProteinsTab(HierarchicalTab):
             for protein in proteins:
                 protein_item = QTreeWidgetItem(segment_item)
                 protein_item.setText(0, protein.name)
-                protein_item.setText(1, '')
+                protein_item.setText(1, f'{len(protein.mutations)} mutations')
                 protein_item.setData(0, Qt.ItemDataRole.UserRole, protein)
 
-    def handle_new(self):
+    def on_new_requested(self):
         form = SegmentForm(self, None)
         if form.exec():
-            self.load_data()
+            self.refresh()
 
-    def handle_edit(self):
-        item = self.get_selected_item()
-        if item is None:
+    def on_edit_requested(self):
+        instance = self.get_selected_instance()
+        if instance is None:
             return
-        instance = item.data(0, Qt.ItemDataRole.UserRole)
 
         if isinstance(instance, Segment):
-            segment = instance
+            form = SegmentForm(self, instance)
         elif isinstance(instance, Protein):
-            segment = instance.segment
+            form = ProteinForm(self, instance)
         else:
             return
 
-        form = SegmentForm(self, segment)
         if form.exec():
-            SuccessNotification.show_success(self, 'Segment updated successfully.')
-            self.load_data()
+            self.refresh()
 
-    def handle_delete(self):
-        item = self.get_selected_item()
-        if item is None:
+    def on_delete_requested(self):
+        instance = self.get_selected_instance()
+        if instance is None:
             return
-        instance = item.data(0, Qt.ItemDataRole.UserRole)
 
         if isinstance(instance, Segment):
-            if delete_with_confirmation(self, 'Segment', instance.get_id(), lambda _: DatabaseOperations.delete_segment(instance.name)):
-                self.load_data()
+            form = SegmentForm(self, instance)
         elif isinstance(instance, Protein):
-            if delete_with_confirmation(self, 'Protein', instance.get_id(), DatabaseOperations.delete_protein):
-                self.load_data()
+            form = ProteinForm(self, instance)
+        else:
+            return
+
+        if form.exec():
+            self.refresh()
+
+    def get_selected_instance(self) -> Segment | Protein | None:
+        if item := self.tree.currentItem():
+            return item.data(0, Qt.ItemDataRole.UserRole)
+        return None

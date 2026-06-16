@@ -71,7 +71,6 @@ class TransactionalForm(BaseForm):
         self._exit_stack = ExitStack()
         self._db = DATABASE_PROXY
         self._owns_transaction = False
-        # self._savepoint = None
         self._begin_transaction()
 
         title = f'Edit {instance}' if instance else f'New {self.model.__name__}'
@@ -96,6 +95,8 @@ class TransactionalForm(BaseForm):
 
         Override directly in forms that persist more than one model.
         """
+        if not self.validate():
+            return
         if self.instance is None:
             self.instance = self.model.create(**self.create_values())
         else:
