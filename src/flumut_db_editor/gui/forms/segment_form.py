@@ -104,8 +104,7 @@ class SegmentForm(TransactionalForm):
             ValidationErrorDialog.show_validation_error(self, 'Name', 'Segment name cannot be empty.')
             self.name_field.setFocus()
             return False
-        existing = Segment.get_or_none(Segment.name == name)
-        if existing is not None:
+        if existing := Segment.get_or_none(Segment.name == name):
             if self.instance is None or existing.get_id() != self.instance.get_id():
                 ValidationErrorDialog.show_validation_error(self, 'Name', 'A segment with this name already exists.')
                 self.name_field.setFocus()

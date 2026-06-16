@@ -52,9 +52,16 @@ class ProteinForm(TransactionalForm):
         name = self.name_field.text().strip()
         if not name:
             ValidationErrorDialog.show_validation_error(self, 'Name', 'Name cannot be empty.')
+            self.name_field.setFocus()
             return False
+        if existing := Protein.get_or_none(Protein.name == name):
+            if self.instance is None or existing.get_id() != self.instance.get_id():
+                ValidationErrorDialog.show_validation_error(self, 'Name', 'A protein with this name already exists.')
+                self.name_field.setFocus()
+                return False
         if self.segment_combo.count() == 0:
             ValidationErrorDialog.show_validation_error(self, 'Segment', 'Please select a segment.')
+            self.name_field.setFocus()
             return False
         return True
 

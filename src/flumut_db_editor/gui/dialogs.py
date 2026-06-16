@@ -95,7 +95,7 @@ class ErrorDialog:
         msg_box.setText(message)
         if details:
             msg_box.setDetailedText(details)
-        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.setIcon(QMessageBox.Icon.Critical)
         msg_box.exec()
 
 
@@ -107,7 +107,7 @@ class SuccessNotification:
         msg_box = QMessageBox(parent)
         msg_box.setWindowTitle('Success')
         msg_box.setText(message)
-        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setIcon(QMessageBox.Icon.Information)
         msg_box.exec()
 
 
@@ -117,7 +117,7 @@ class ValidationErrorDialog:
     @staticmethod
     def show_validation_error(parent, field: str, message: str):
         msg_box = QMessageBox(parent)
-        msg_box.setWindowTitle('Validation Error')
-        msg_box.setText(f'{field}: {message}')
-        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle(f'Validation Error: {field}')
+        msg_box.setText(f'{message}')
+        msg_box.setIcon(QMessageBox.Icon.Warning)
         msg_box.exec()
