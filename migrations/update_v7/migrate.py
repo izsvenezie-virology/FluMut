@@ -6,15 +6,15 @@ from the original sql_updates.py pipeline, and writes a clean SQLite
 file using the ORM models defined in src/flumutdb/models.py.
 
 Usage:
-    python update_v7/migrate.py [output.sqlite]
+    python migrations/update_v7/migrate.py
 
-Default output path: flumut_db_v7.sqlite (in the project root).
+The result is written next to this script as flumut_db_v7.sqlite.
 """
 
 import json
 import re
 import sqlite3
-import sys
+from collections import defaultdict
 from csv import DictReader
 from pathlib import Path
 
@@ -39,8 +39,6 @@ from flumut.flumutdb.models import (  # noqa: E402
 
 # ── constants ──────────────────────────────────────────────────────────────────
 BASE = Path(__file__).parent
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT / 'src'))
 
 SEQUENCE_IDS = {
     'PB2': 'EPI2414998',
@@ -141,8 +139,8 @@ def transform_mutation_name(
 
 
 def main() -> None:
-    sql_path = PROJECT_ROOT / 'update_v7' / 'data' / 'flumut_db.sql'
-    output_path = PROJECT_ROOT / 'update_v7' / 'flumut_db_v7.sqlite'
+    sql_path = BASE / 'data' / 'flumut_db.sql'
+    output_path = BASE / 'flumut_db_v7.sqlite'
 
     print(f'Source : {sql_path}')
     print(f'Output : {output_path}')
@@ -365,18 +363,55 @@ def main() -> None:
             eff_map[old_name] = eff
             host_for_effect[old_name] = host_obj
 
-        # ── 11. Papers (id → short_name, web_address → url) ──────────────────
-        paper_map: dict[str, Paper] = {}  # old id → Paper
-        for row in src.execute('SELECT id, title, authors, year, journal, web_address, doi FROM papers'):
-            paper_map[row['id']] = Paper.create(
-                short_name=row['id'],
+        # ── 11. Papers ────────────────────────────────────────────────────────
+        # Map old paper columns to the new schema (id → short_name,
+        # web_address → url) while honouring the new UNIQUE constraint on doi:
+        #   * Empty DOIs become NULL: many papers legitimately have no DOI, and
+        #     SQLite allows duplicate NULLs but not duplicate empty strings.
+        #   * A handful of publications were entered twice under one DOI (e.g.
+        #     "Smith, 2006" and "Smith, 2006b"). Merge each pair into a single
+        #     paper built from the cleaned-up "...b" record, drop the trailing
+        #     "b" from its short_name, and route both old ids to it so every
+        #     evidence row is preserved.
+        paper_rows = list(
+            src.execute('SELECT id, title, authors, year, journal, web_address, doi FROM papers')
+        )
+
+        # Group the ids of publications that were entered more than once under
+        # the same DOI, then pick the "...b" record of each group as the keeper.
+        ids_by_doi: dict[str, list[str]] = defaultdict(list)
+        for row in paper_rows:
+            if row['doi']:
+                ids_by_doi[row['doi']].append(row['id'])
+
+        alias_to_keeper: dict[str, str] = {}  # duplicate id → keeper id
+        for duplicate_ids in ids_by_doi.values():
+            if len(duplicate_ids) < 2:
+                continue
+            keeper = next(pid for pid in duplicate_ids if pid.endswith('b'))
+            for pid in duplicate_ids:
+                if pid != keeper:
+                    alias_to_keeper[pid] = keeper
+        keepers = set(alias_to_keeper.values())
+
+        paper_map: dict[str, Paper] = {}  # old id → Paper (aliases reuse their keeper)
+        for row in paper_rows:
+            old_id = row['id']
+            if old_id in alias_to_keeper:
+                continue  # built from its keeper instead; linked up below
+            paper_map[old_id] = Paper.create(
+                short_name=old_id[:-1] if old_id in keepers else old_id,
                 title=row['title'],
                 authors=row['authors'],
                 year=row['year'],
                 journal=row['journal'],
                 url=row['web_address'],
-                doi=row['doi'],
+                doi=row['doi'] or None,
             )
+
+        # Point every duplicate id at the single paper built from its keeper.
+        for alias, keeper in alias_to_keeper.items():
+            paper_map[alias] = paper_map[keeper]
 
         # ── 12. Markers ───────────────────────────────────────────────────────
         marker_map: dict[int, Marker] = {}  # old id → Marker

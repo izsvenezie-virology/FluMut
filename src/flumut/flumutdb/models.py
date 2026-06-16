@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List
 
 from peewee import (
+    DeferredThroughModel,
     ForeignKeyField,
     IntegerField,
     ManyToManyField,
@@ -27,7 +28,8 @@ BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 
 
 class Segment(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+
     proteins: list['Protein']
     references: list['Reference']
 
@@ -71,8 +73,9 @@ class Segment(BaseModel):
 
 
 class Protein(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
-    segment: Segment = ForeignKeyField(Segment, backref='proteins')  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+    segment: Segment = ForeignKeyField(Segment, backref='proteins', on_delete='RESTRICT')  # type: ignore[assignment]
+
     annotations: list['Annotation']
     mutations: list['Mutation']
 
@@ -81,10 +84,11 @@ class Protein(BaseModel):
 
 
 class Reference(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
-    segment: Segment = ForeignKeyField(Segment, backref='references')  # type: ignore[assignment]
-    sequence: str = TextField()  # type: ignore[assignment]
-    source: str = TextField()  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+    segment: Segment = ForeignKeyField(Segment, backref='references', on_delete='RESTRICT')  # type: ignore[assignment]
+    sequence: str = TextField(unique=True)  # type: ignore[assignment]
+    source: str = TextField(unique=True)  # type: ignore[assignment]
+
     annotations: list['Annotation']
     mappings: list['Mapping']
 
@@ -116,8 +120,8 @@ class Reference(BaseModel):
 
 
 class Annotation(BaseModel):
-    protein: Protein = ForeignKeyField(Protein, backref='annotations')  # type: ignore[assignment]
-    reference: Reference = ForeignKeyField(Reference, backref='annotations')  # type: ignore[assignment]
+    protein: Protein = ForeignKeyField(Protein, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
+    reference: Reference = ForeignKeyField(Reference, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
     start: int = IntegerField()  # type: ignore[assignment]
     end: int = IntegerField()  # type: ignore[assignment]
 
@@ -128,8 +132,9 @@ class Annotation(BaseModel):
 class Mutation(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
-    protein: Protein = ForeignKeyField(Protein, backref='mutations')  # type: ignore[assignment]
+    protein: Protein = ForeignKeyField(Protein, backref='mutations', on_delete='RESTRICT')  # type: ignore[assignment]
     default_position: int | None = IntegerField(null=True)  # type: ignore[assignment]
+
     mappings: list['Mapping']
     markers: list['Marker']
 
@@ -138,8 +143,8 @@ class Mutation(BaseModel):
 
 
 class Mapping(BaseModel):
-    mutation: Mutation = ForeignKeyField(Mutation, backref='mappings')  # type: ignore[assignment]
-    reference: Reference = ForeignKeyField(Reference, backref='mappings')  # type: ignore[assignment]
+    mutation: Mutation = ForeignKeyField(Mutation, backref='mappings', on_delete='CASCADE')  # type: ignore[assignment]
+    reference: Reference = ForeignKeyField(Reference, backref='mappings', on_delete='CASCADE')  # type: ignore[assignment]
     mutation_name: str | None = TextField(null=True)  # type: ignore[assignment]
     position: int = IntegerField()  # type: ignore[assignment]
     alteration: str = TextField()  # type: ignore[assignment]
@@ -149,7 +154,8 @@ class Mapping(BaseModel):
 
 
 class Effect(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+
     evidences: list['Evidence']
 
     def __str__(self) -> str:
@@ -157,7 +163,8 @@ class Effect(BaseModel):
 
 
 class Subtype(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+
     evidences: list['Evidence']
 
     def __str__(self) -> str:
@@ -165,7 +172,8 @@ class Subtype(BaseModel):
 
 
 class Host(BaseModel):
-    name: str = TextField()  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+
     evidences: list['Evidence']
 
     def __str__(self) -> str:
@@ -179,16 +187,21 @@ class Paper(BaseModel):
     year: int | None = IntegerField(null=True)  # type: ignore[assignment]
     journal: str | None = TextField(null=True)  # type: ignore[assignment]
     url: str | None = TextField(null=True)  # type: ignore[assignment]
-    doi: str | None = TextField(null=True)  # type: ignore[assignment]
+    doi: str | None = TextField(null=True, unique=True)  # type: ignore[assignment]
+
     evidences: list['Evidence']
 
     def __str__(self) -> str:
         return str(self.short_name)
 
 
+MarkerMutationThrough = DeferredThroughModel()
+
+
 class Marker(BaseModel):
     name: str | None = TextField(unique=True, null=True)  # type: ignore[assignment]
-    mutations: list[Mutation] = ManyToManyField(Mutation, backref='markers')  # type: ignore[assignment]
+    mutations: list[Mutation] = ManyToManyField(Mutation, backref='markers', through_model=MarkerMutationThrough)  # type: ignore[assignment]
+
     evidences: list['Evidence']
 
     def __str__(self) -> str:
@@ -225,12 +238,29 @@ class Marker(BaseModel):
         Marker._cache = []
 
 
+class MarkerMutation(Model):
+    """Through model for the Marker <-> Mutation many-to-many relation.
+
+    Asymmetric delete policy: removing a Marker cascades away its links,
+    while a Mutation cannot be removed while still referenced by a Marker.
+    """
+
+    marker = ForeignKeyField(Marker, on_delete='CASCADE')
+    mutation = ForeignKeyField(Mutation, on_delete='RESTRICT')
+
+    class Meta:
+        database = DATABASE_PROXY
+
+
+MarkerMutationThrough.set_model(MarkerMutation)
+
+
 class Evidence(BaseModel):
-    marker: Marker = ForeignKeyField(Marker, backref='evidences')  # type: ignore[assignment]
-    paper: Paper = ForeignKeyField(Paper, backref='evidences')  # type: ignore[assignment]
-    effect: Effect = ForeignKeyField(Effect, backref='evidences')  # type: ignore[assignment]
-    subtype: Subtype = ForeignKeyField(Subtype, backref='evidences')  # type: ignore[assignment]
-    host: Host | None = ForeignKeyField(Host, backref='evidences', null=True)  # type: ignore[assignment]
+    marker: Marker = ForeignKeyField(Marker, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
+    paper: Paper = ForeignKeyField(Paper, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
+    effect: Effect = ForeignKeyField(Effect, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
+    subtype: Subtype = ForeignKeyField(Subtype, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
+    host: Host | None = ForeignKeyField(Host, backref='evidences', null=True, on_delete='RESTRICT')  # type: ignore[assignment]
 
     def __str__(self) -> str:
         return f'{self.marker}: {self.effect} in {self.subtype} ({self.paper})'
