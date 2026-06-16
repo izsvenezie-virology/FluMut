@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from flumut_db_editor.delete_validator import DeleteValidator
+from flumut_db_editor.validator import DeleteValidator
 
 
 class ConfirmationDialog(QDialog):

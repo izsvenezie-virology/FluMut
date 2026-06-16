@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
 )
 
 from flumut.flumutdb.models import Protein, Segment
-from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
@@ -98,21 +97,15 @@ class SegmentForm(TransactionalForm):
             if DeleteForm.confirm_and_delete(protein, self):
                 self._refresh_list()
 
+    @property
+    def name(self) -> str:
+        return self.name_field.text().strip()
+
     def validate(self) -> bool:
-        name = self.name_field.text().strip()
-        if not name:
-            ValidationErrorDialog.show_validation_error(self, 'Name', 'Segment name cannot be empty.')
-            self.name_field.setFocus()
-            return False
-        if existing := Segment.get_or_none(Segment.name == name):
-            if self.instance is None or existing.get_id() != self.instance.get_id():
-                ValidationErrorDialog.show_validation_error(self, 'Name', 'A segment with this name already exists.')
-                self.name_field.setFocus()
-                return False
-        return True
+        return self.check_unique_required('name', self.name, 'Name', self.name_field)
 
     def field_values(self) -> dict:
-        return {'name': self.name_field.text().strip()}
+        return {'name': self.name}
 
     def _get_selected_protein(self) -> Protein | None:
         if item := self.proteins_list.currentItem():

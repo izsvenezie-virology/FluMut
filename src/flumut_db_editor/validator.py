@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from flumut.flumutdb.models import (
     Annotation,
@@ -65,3 +66,30 @@ POLICIES: dict[type[BaseModel], DeletePolicy] = {
     Mapping: DeletePolicy(),
     Evidence: DeletePolicy(),
 }
+
+
+def validate_not_null(value) -> bool:
+    return bool(value)
+
+
+def validate_unique(model: type[BaseModel], attr: str, value: Any, exclude: BaseModel | None = None) -> bool:
+    """Check that ``value`` is free for ``model.attr``, ignoring ``exclude``.
+
+    Args:
+        model: the model class whose table is queried.
+        attr: the field name to check, given as a string.
+        value: the value that must be unique across the table.
+        exclude: a record to ignore (typically the instance being edited), so a
+            value already held by that same record is not reported as a duplicate.
+
+    Returns:
+        ``True`` if no other record uses ``value``, ``False`` otherwise.
+    """
+    existing = model.get_or_none(getattr(model, attr) == value)
+    if existing is None:
+        return True
+    return exclude is not None and existing.get_id() == exclude.get_id()
+
+
+def validate_not_null_unique(model: type[BaseModel], attr: str, value: Any, exclude: BaseModel | None = None) -> bool:
+    return validate_not_null(value) and validate_unique(model, attr, value, exclude)

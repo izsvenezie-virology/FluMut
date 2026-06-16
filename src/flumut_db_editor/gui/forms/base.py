@@ -1,11 +1,13 @@
 from contextlib import ExitStack
 from typing import ClassVar
 
-from peewee import Model
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget
 
 from flumut.core.globals import DATABASE_PROXY
+from flumut.flumutdb.models import BaseModel
+from flumut_db_editor.gui.dialogs import ValidationErrorDialog
+from flumut_db_editor.validator import validate_not_null, validate_unique
 
 
 class BaseForm(QDialog):
@@ -62,10 +64,10 @@ class TransactionalForm(BaseForm):
     :meth:`save_to_db` directly.
     """
 
-    model: ClassVar[type[Model]]  # subclasses persisting a single model set this
+    model: ClassVar[type[BaseModel]]  # subclasses persisting a single model set this
     submitted = Signal()
 
-    def __init__(self, parent: QWidget | None = None, instance: Model | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, instance: BaseModel | None = None) -> None:
         self.instance = instance
 
         self._exit_stack = ExitStack()
@@ -130,3 +132,27 @@ class TransactionalForm(BaseForm):
     def reject(self) -> None:
         self._rollback()
         super().reject()
+
+    def check_required(self, value, label: str, widget: QWidget | None = None) -> bool:
+        if validate_not_null(value):
+            return True
+        return self.validation_warning(label, f'{label} cannot be empty.', widget)
+
+    def check_unique(self, attr: str, value, label: str, widget: QWidget | None = None) -> bool:
+        if validate_unique(self.model, attr, value, self.instance):
+            return True
+        msg = f'A {self.model.__name__.lower()} with this {label.lower()} already exists.'
+        return self.validation_warning(label, msg, widget)
+
+    def check_unique_required(self, attr: str, value, label: str, widget: QWidget | None = None) -> bool:
+        if not self.check_required(value, label, widget):
+            return False
+        if not self.check_unique(attr, value, label, widget):
+            return False
+        return True
+
+    def validation_warning(self, label: str, message: str, widget: QWidget | None = None) -> bool:
+        ValidationErrorDialog.show_validation_error(self, label, message)
+        if widget is not None:
+            widget.setFocus()
+        return False

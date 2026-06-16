@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QWidget
 
 from flumut.flumutdb.models import Protein, Segment
-from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
@@ -11,9 +10,9 @@ class ProteinForm(TransactionalForm):
     model = Protein
 
     def __init__(self, parent: QWidget | None = None, instance: Protein | None = None, segment: Segment | None = None) -> None:
-        self.segment = segment
+        self.force_segment = segment
         if instance:
-            self.segment = instance.segment
+            self.force_segment = instance.segment
 
         super().__init__(parent, instance)
         if TYPE_CHECKING:
@@ -31,8 +30,8 @@ class ProteinForm(TransactionalForm):
         if self.instance:
             self.name_field.setText(self.instance.name)
 
-        if self.segment:
-            self.segment_combo.setCurrentText(self.segment.name)
+        if self.force_segment:
+            self.segment_combo.setCurrentText(self.force_segment.name)
             self.segment_combo.setEnabled(False)
 
         name_row = QHBoxLayout()
@@ -48,25 +47,21 @@ class ProteinForm(TransactionalForm):
 
         self.name_field.setFocus()
 
+    @property
+    def name(self) -> str:
+        return self.name_field.text().strip()
+
+    @property
+    def segment(self) -> Segment:
+        return self.segment_combo.currentData()
+
     def validate(self) -> bool:
-        name = self.name_field.text().strip()
-        if not name:
-            ValidationErrorDialog.show_validation_error(self, 'Name', 'Name cannot be empty.')
-            self.name_field.setFocus()
-            return False
-        if existing := Protein.get_or_none(Protein.name == name):
-            if self.instance is None or existing.get_id() != self.instance.get_id():
-                ValidationErrorDialog.show_validation_error(self, 'Name', 'A protein with this name already exists.')
-                self.name_field.setFocus()
-                return False
-        if self.segment_combo.count() == 0:
-            ValidationErrorDialog.show_validation_error(self, 'Segment', 'Please select a segment.')
-            self.name_field.setFocus()
+        if not self.check_unique_required('name', self.name, 'Name', self.name_field):
             return False
         return True
 
     def field_values(self) -> dict:
         return {
-            'name': self.name_field.text().strip(),
-            'segment': self.segment_combo.currentData(),
+            'name': self.name,
+            'segment': self.segment,
         }

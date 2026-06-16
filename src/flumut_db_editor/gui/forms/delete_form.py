@@ -8,9 +8,9 @@ from PySide6.QtWidgets import (
 )
 
 from flumut.flumutdb.models import BaseModel
-from flumut_db_editor.delete_validator import DeleteValidator
 from flumut_db_editor.gui.dialogs import ForeignKeyViolationDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
+from flumut_db_editor.validator import DeleteValidator
 
 
 class DeleteForm(TransactionalForm):
@@ -28,7 +28,7 @@ class DeleteForm(TransactionalForm):
 
         if self.validator.cascade_items:
             message = QLabel(
-                f'Delete {type(self.validator.instance)} "{self.validator.instance}" will delete the following items that depend on it:'
+                f'Delete {type(self.validator.instance).__name__} "{self.validator.instance}" will delete the following items that depend on it:'
             )
             self.form_layout.addWidget(message)
 
