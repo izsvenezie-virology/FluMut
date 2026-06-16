@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.gui.base import HierarchicalTab
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.annotation_form import AnnotationForm
 from flumut_db_editor.gui.forms.reference_form import ReferenceForm
+from flumut_db_editor.gui.tabs.base import HierarchicalTab
 from flumut_db_editor.models import Annotation, Reference
 
 

@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
-from flumut_db_editor.gui.base import BaseTableTab
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.evidence_form import EvidenceForm
+from flumut_db_editor.gui.tabs.base import BaseTableTab
 from flumut_db_editor.models import Evidence
 
 

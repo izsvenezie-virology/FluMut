@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.gui.base import HierarchicalTab
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.mapping_form import MappingForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
+from flumut_db_editor.gui.tabs.base import HierarchicalTab
 from flumut_db_editor.models import Mapping, Mutation
 
 

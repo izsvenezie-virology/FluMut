@@ -1,9 +1,9 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
-from flumut_db_editor.gui.base import BaseTab
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
+from flumut_db_editor.gui.tabs.base import BaseTab
 from flumut_db_editor.models import Protein, Segment
 
 

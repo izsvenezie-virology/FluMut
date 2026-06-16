@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from flumut_db_editor.gui.base import HierarchicalTab
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.marker_form import MarkerForm
+from flumut_db_editor.gui.tabs.base import HierarchicalTab
 from flumut_db_editor.models import Marker
 
 

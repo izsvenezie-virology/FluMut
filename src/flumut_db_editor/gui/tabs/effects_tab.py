@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QTableWidgetItem
 
 from flumut.flumutdb.models import Effect
-from flumut_db_editor.gui.base import BaseTableTab
 from flumut_db_editor.gui.dialogs import SuccessNotification
 from flumut_db_editor.gui.forms.effect_form import EffectForm
+from flumut_db_editor.gui.tabs.base import BaseTableTab
 
 
 class EffectsTab(BaseTableTab):
