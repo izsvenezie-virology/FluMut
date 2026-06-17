@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
 from flumut_db_editor.gui.tabs.base import BaseTab
@@ -53,15 +54,9 @@ class ProteinsTab(BaseTab):
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
-        if isinstance(instance, Segment):
-            form = SegmentForm(self, instance)
-        elif isinstance(instance, Protein):
-            form = ProteinForm(self, instance)
-        else:
-            return
-
-        if form.exec():
-            self.refresh()
+        if instance:
+            if DeleteForm.confirm_and_delete(instance, self):
+                self.refresh()
 
     def get_selected_instance(self) -> Segment | Protein | None:
         if item := self.tree.currentItem():
