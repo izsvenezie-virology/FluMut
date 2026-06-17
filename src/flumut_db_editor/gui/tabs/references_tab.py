@@ -49,7 +49,7 @@ class ReferencesTab(BaseTab):
         if isinstance(instance, Reference):
             form = ReferenceForm(self, instance)
         elif isinstance(instance, Annotation):
-            form = AnnotationForm(self, instance)
+            form = AnnotationForm(instance.reference, self, instance=instance)
         else:
             return
 

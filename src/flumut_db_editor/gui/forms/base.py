@@ -73,10 +73,26 @@ class TransactionalForm(BaseForm):
         self._exit_stack = ExitStack()
         self._db = DATABASE_PROXY
         self._owns_transaction = False
-        self._begin_transaction()
+        self._began = False
+        self._finalized = False
 
         title = f'Edit {instance}' if instance else f'New {self.model.__name__}'
         super().__init__(parent, title)
+
+    def exec(self) -> int:
+        """Bracket the dialog's lifetime with the transaction.
+
+        The transaction is started here rather than in ``__init__`` so that a
+        failure while building the UI cannot leave one open, and it is always
+        finalized in ``finally`` — committed by :meth:`accept`, otherwise rolled
+        back — so closing via the window button, Escape, or an unhandled
+        exception can never leak it.
+        """
+        self._begin_transaction()
+        try:
+            return super().exec()
+        finally:
+            self._rollback()  # no-op if accept/reject already finalized it
 
     def on_accept(self) -> None:
         self.save_to_db()
@@ -107,6 +123,9 @@ class TransactionalForm(BaseForm):
             self.instance.save()
 
     def _begin_transaction(self) -> None:
+        if self._began:
+            return
+        self._began = True
         if self._db.in_transaction():
             self._savepoint = self._db.savepoint()
             self._savepoint.__enter__()
@@ -116,6 +135,9 @@ class TransactionalForm(BaseForm):
             self._db.begin()
 
     def _commit(self) -> None:
+        if not self._began or self._finalized:
+            return
+        self._finalized = True
         if self._owns_transaction:
             self._db.commit()
         else:
@@ -123,6 +145,9 @@ class TransactionalForm(BaseForm):
         self._exit_stack.close()
 
     def _rollback(self) -> None:
+        if not self._began or self._finalized:
+            return
+        self._finalized = True
         if self._owns_transaction:
             self._db.rollback()
         else:
