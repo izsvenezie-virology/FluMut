@@ -33,6 +33,6 @@ def read_fasta(fasta: TextIOWrapper) -> list[FastaSequence]:
     LOGGER.debug(f'Reading FASTA file {fasta.name}')
     result = []
     for seq in SeqIO.parse(fasta, 'fasta'):
-        result.append(FastaSequence(seq.name, str(seq.seq), fasta.name))
+        result.append(FastaSequence(seq.name, str(seq.seq).upper(), fasta.name))
     LOGGER.debug(f'Read {len(result)} sequences from {fasta.name}')
     return result
