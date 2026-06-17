@@ -1,10 +1,11 @@
 import re
 from io import TextIOWrapper
 
-from flumut.core.analysis.models import Analysis, Sample
+from flumut.core.analysis.models import Analysis, CDSHasNoValidCodonsCheck, Sample
 from flumut.core.io.input import read_fasta
 from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
+from flumut.core.nucleotides.exceptions import CDSHasNoValidCodonsError, UnknownNucleotideError
 from flumut.core.nucleotides.translator import get_cds, translate
 
 
@@ -56,14 +57,22 @@ def load_nucleotide_fasta(analysis: Analysis, fasta: TextIOWrapper, header_patte
         header_pattern: Compiled regex used to extract sample and segment from headers.
     """
     for sequence in read_fasta(fasta):
-        sample, candidate_hint = parse_header(sequence.header, header_pattern)
+        sample_id, candidate_hint = parse_header(sequence.header, header_pattern)
         candidates = select_candidate_references(candidate_hint)
         nt_alignment = get_best_alignment(sequence, candidates)
 
-        if sample not in analysis.samples:
-            analysis.samples[sample] = Sample(sample)
+        if sample_id not in analysis.samples:
+            analysis.samples[sample_id] = Sample(sample_id)
 
         for protein in nt_alignment.reference.segment.proteins:
-            cds = get_cds(nt_alignment, protein)
-            aa_alignment = translate(cds)
-            analysis.samples[sample].alignments.append(aa_alignment)
+            try:
+                cds = get_cds(nt_alignment, protein)
+            except CDSHasNoValidCodonsError:
+                check = CDSHasNoValidCodonsCheck(sample_id, sequence.header, protein.name)
+                analysis.samples[sample_id].checks.append(check)
+                continue
+            try:
+                aa_alignment = translate(cds)
+            except UnknownNucleotideError as e:
+                raise UnknownNucleotideError(e.nucleotides, sequence.header) from None
+            analysis.samples[sample_id].alignments.append(aa_alignment)

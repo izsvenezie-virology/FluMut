@@ -1,4 +1,5 @@
 from flumut.core.globals import GAP_SYMBOL, WILDCARD
+from flumut.core.nucleotides.exceptions import CDSHasNoValidCodonsError
 from flumut.core.nucleotides.models import CDS, Alignment
 
 
@@ -140,10 +141,10 @@ def get_start_position(query: list[str]) -> int:
         The 0-based index of the first character of the first valid codon.
 
     Raises:
-        ValueError: If no valid codon is found in the entire query sequence.
+        CDSHasNoValidCodonsError: If no valid codon is found in the entire query sequence.
     """
     for i in range(0, len(query), 3):
         codon = query[i : i + 3]
         if WILDCARD not in codon and GAP_SYMBOL not in codon:
             return i
-    raise ValueError('No valid codon found in query sequence')
+    raise CDSHasNoValidCodonsError('No valid codon found in query sequence')

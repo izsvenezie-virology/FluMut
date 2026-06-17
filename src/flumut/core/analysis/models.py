@@ -189,3 +189,18 @@ class DuplicationCheck(Check):
         """
         message = f'Duplicate protein "{protein_name}" detected in sample "{sample_id}"'
         super().__init__(message)
+
+
+class CDSHasNoValidCodonsCheck(Check):
+    """Quality check raised when the CDS has no valid codons."""
+
+    def __init__(self, sample_id: str, sequence_header: str, protein_name: str):
+        """Create a check for CDS without valid codons for the given sample and protein.
+
+        Args:
+            sample_id: ID of the sample containing the CDS without valid codons.
+            sequence_header: Header of the sequence containing the CDS without valid codons.
+            protein_name: Name of the protein with the CDS without valid codons.
+        """
+        message = f'"{sequence_header}" has no valid codon in CDS for protein {protein_name} in sample {sample_id}'
+        super().__init__(message)

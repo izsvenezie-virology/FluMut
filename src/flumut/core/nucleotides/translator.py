@@ -3,6 +3,7 @@ import itertools
 from flumut.core.analysis.models import ProteinAlignment
 from flumut.core.globals import STOP_CODON_SYMBOL as SCS
 from flumut.core.globals import UNKNOWN_AA_SYMBOL, WILDCARD
+from flumut.core.nucleotides.exceptions import UnknownNucleotideError
 from flumut.core.nucleotides.framer import adjust_frame
 from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
 from flumut.flumutdb import Protein
@@ -74,7 +75,7 @@ def translate_codon(codon: list[str]) -> str:
         amino acid symbol when the codon contains a wildcard or is incomplete.
 
     Raises:
-        ValueError: If ``codon`` contains a character absent from the degeneration dict.
+        UnknownNucleotideError: If ``codon`` contains a character absent from the degeneration dict.
     """
     if WILDCARD in codon:
         return UNKNOWN_AA_SYMBOL
@@ -84,7 +85,7 @@ def translate_codon(codon: list[str]) -> str:
     try:
         undegenerated_codon = [_degeneration_dict[nucl] for nucl in codon]
     except KeyError:
-        raise ValueError('Unknown nucleotide found in codon: ' + ''.join(codon))
+        raise UnknownNucleotideError(''.join([nt for nt in codon if nt not in _degeneration_dict.keys()])) from None
 
     codons = list(itertools.product(*undegenerated_codon))
     aas = [_translation_dict.get(''.join(c), UNKNOWN_AA_SYMBOL) for c in codons]
