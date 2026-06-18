@@ -109,23 +109,23 @@ def transform_mutation_name(
     colon = name.index(':')
     name = name[: colon + 1] + name[colon + 2 :]
 
-    # Step 3 – H3 renumbering for HA mutations
-    if name.startswith('HA'):
-        colon = name.index(':')
-        protein = name[:colon]  # "HA1" or "HA2"
-        pos_str = name[colon + 1 : -1]  # everything between ':' and last char
-        alt_aa = name[-1]
+    # # Step 3 – H3 renumbering for HA mutations
+    # if name.startswith('HA'):
+    #     colon = name.index(':')
+    #     protein = name[:colon]  # "HA1" or "HA2"
+    #     pos_str = name[colon + 1 : -1]  # everything between ':' and last char
+    #     alt_aa = name[-1]
 
-        numbering = ha1_numbering if protein == 'HA1' else ha2_numbering
-        h3_pos = numbering.get(pos_str, {}).get('H3', '')
+    #     numbering = ha1_numbering if protein == 'HA1' else ha2_numbering
+    #     h3_pos = numbering.get(pos_str, {}).get('H3', '')
 
-        if h3_pos:
-            name = f'{protein}:{h3_pos}{alt_aa}'
-        # else: keep H5 name as-is (OR IGNORE behaviour)
+    #     if h3_pos:
+    #         name = f'{protein}:{h3_pos}{alt_aa}'
+    #     # else: keep H5 name as-is (OR IGNORE behaviour)
 
-    # Step 4 – special rename for the one H5-only HA position
-    if name == 'HA1:129V':
-        name = 'HA1:129V (H5 numbering)'
+    # # Step 4 – special rename for the one H5-only HA position
+    # if name == 'HA1:129V':
+    #     name = 'HA1:129V (H5 numbering)'
 
     # Extract default_position
     colon = name.index(':')
@@ -373,9 +373,7 @@ def main() -> None:
         #     paper built from the cleaned-up "...b" record, drop the trailing
         #     "b" from its short_name, and route both old ids to it so every
         #     evidence row is preserved.
-        paper_rows = list(
-            src.execute('SELECT id, title, authors, year, journal, web_address, doi FROM papers')
-        )
+        paper_rows = list(src.execute('SELECT id, title, authors, year, journal, web_address, doi FROM papers'))
 
         # Group the ids of publications that were entered more than once under
         # the same DOI, then pick the "...b" record of each group as the keeper.
