@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
+from flumut.core.nucleotides.exceptions import UnknownNucleotideError
 from flumut.core.nucleotides.models import CDS, Alignment
 from flumut.core.nucleotides.translator import get_cds, translate, translate_codon
 
@@ -101,9 +102,7 @@ def test_get_cds_multiple_annotations_concatenated(mock_adjust_frame) -> None:
     # positions: [1, 2, 3, 4, 5]
     ann1 = _make_annotation(start=1, end=1)  # idx 0:1 → ['A']/['K']
     ann2 = _make_annotation(start=4, end=5)  # idx 3:5 → ['G','A']/['V','H']
-    n, protein = _make_nucleotides(
-        ['A', 'C', 'T', 'G', 'A'], ['K', 'M', 'R', 'V', 'H'], annotations=[ann1, ann2]
-    )
+    n, protein = _make_nucleotides(['A', 'C', 'T', 'G', 'A'], ['K', 'M', 'R', 'V', 'H'], annotations=[ann1, ann2])
     cds = get_cds(n, protein)
     assert cds.alignment.reference == ['A', 'G', 'A']
     assert cds.alignment.query == ['K', 'V', 'H']
@@ -170,5 +169,5 @@ def test_translate_codon(codon: list[str], expected: str) -> None:
 
 
 def test_translate_codon_unknown_nucleotide_raises() -> None:
-    with pytest.raises(ValueError, match='Unknown nucleotide'):
+    with pytest.raises(UnknownNucleotideError):
         translate_codon(['X', 'T', 'G'])
