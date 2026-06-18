@@ -1,9 +1,9 @@
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from flumut.core.io.input import FastaSequence, read_fasta
-
 
 # ---------------------------------------------------------------------------
 # FastaSequence tests
@@ -30,7 +30,7 @@ def mock_seqio():
 
 def _make_seq_record(name: str, seq: str) -> MagicMock:
     record = MagicMock()
-    record.name = name
+    record.description = name
     record.seq = seq
     return record
 
@@ -63,6 +63,13 @@ def test_read_fasta_multiple_sequences_all_returned(mock_seqio) -> None:
     assert len(result) == 2
     assert result[0].header == 'seq1'
     assert result[1].header == 'seq2'
+
+
+def test_read_fasta_space_in_header_keeps_whole_header() -> None:
+    fasta = StringIO('>ABC DEF\nATCG')
+    fasta.name = 'seqs.fasta'
+    result = read_fasta(fasta)  # type: ignore
+    assert result[0].header == 'ABC DEF'
 
 
 def test_read_fasta_passes_file_to_seqio(mock_seqio) -> None:
