@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from flumut.core.io.input import sanitize_sequence
 from flumut.flumutdb.models import Annotation, Reference, Segment
 from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.annotation_form import AnnotationForm
@@ -148,7 +149,7 @@ class ReferenceForm(TransactionalForm):
 
     @property
     def sequence(self) -> str:
-        return ''.join(self.sequence_txt.toPlainText().split()).upper()
+        return sanitize_sequence(self.sequence_txt.toPlainText())
 
     def validate(self) -> bool:
         if not self.check_unique_required('name', self.name, 'Name', self.name_field):

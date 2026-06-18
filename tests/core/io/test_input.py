@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flumut.core.io.input import FastaSequence, read_fasta
+from flumut.core.io.input import FastaSequence, read_fasta, sanitize_header, sanitize_sequence
 
 # ---------------------------------------------------------------------------
 # FastaSequence tests
@@ -70,6 +70,30 @@ def test_read_fasta_space_in_header_keeps_whole_header() -> None:
     fasta.name = 'seqs.fasta'
     result = read_fasta(fasta)  # type: ignore
     assert result[0].header == 'ABC DEF'
+
+
+def test_sanitize_header_preserve_case() -> None:
+    header = 'ABC def'
+    result = sanitize_header(header)
+    assert result == 'ABC def'
+
+
+def test_sanitize_header_tab_to_space() -> None:
+    header = 'ABC\tDEF'
+    result = sanitize_header(header)
+    assert result == 'ABC DEF'
+
+
+def test_sanitize_sequence_remove_spaces() -> None:
+    sequence = 'ATG CTG'
+    result = sanitize_sequence(sequence)
+    assert result == 'ATGCTG'
+
+
+def test_sanitize_sequence_lowercase() -> None:
+    sequence = 'atgctg'
+    result = sanitize_sequence(sequence)
+    assert result == 'ATGCTG'
 
 
 def test_read_fasta_passes_file_to_seqio(mock_seqio) -> None:
