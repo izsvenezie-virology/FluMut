@@ -11,7 +11,7 @@ class FastaSequence:
     """A single sequence record parsed from a FASTA file.
 
     Attributes:
-        header: Sequence identifier (the part after ``>`` up to the first space).
+        header: Full sequence header.
         sequence: Nucleotide or amino acid sequence string.
         file: Path to the source FASTA file.
     """
@@ -33,6 +33,6 @@ def read_fasta(fasta: TextIOWrapper) -> list[FastaSequence]:
     LOGGER.debug(f'Reading FASTA file {fasta.name}')
     result = []
     for seq in SeqIO.parse(fasta, 'fasta'):
-        result.append(FastaSequence(seq.name, str(seq.seq).upper(), fasta.name))
+        result.append(FastaSequence(seq.description, str(seq.seq).upper(), fasta.name))
     LOGGER.debug(f'Read {len(result)} sequences from {fasta.name}')
     return result
