@@ -29,6 +29,7 @@ BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 
 class Segment(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
+    order: int = IntegerField(null=True)  # type: ignore[assignment]
 
     proteins: list['Protein']
     references: list['Reference']
@@ -75,6 +76,7 @@ class Segment(BaseModel):
 class Protein(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='proteins', on_delete='RESTRICT')  # type: ignore[assignment]
+    order: int = IntegerField(null=True)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mutations: list['Mutation']
@@ -82,12 +84,17 @@ class Protein(BaseModel):
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
+    @property
+    def global_order(self) -> int:
+        return self.order + self.segment.order * 1000
+
 
 class Reference(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='references', on_delete='RESTRICT')  # type: ignore[assignment]
     sequence: str = TextField(unique=True)  # type: ignore[assignment]
     source: str = TextField(unique=True)  # type: ignore[assignment]
+    order: int = IntegerField(null=True)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mappings: list['Mapping']
@@ -101,6 +108,10 @@ class Reference(BaseModel):
         return f'{self.segment}/{self.name}'
 
     _cache: list['Reference'] = []
+
+    @property
+    def global_order(self) -> int:
+        return self.order + self.segment.order * 1000
 
     @staticmethod
     def all(force_reload: bool = False) -> list['Reference']:
@@ -122,6 +133,7 @@ class Reference(BaseModel):
 class Annotation(BaseModel):
     protein: Protein = ForeignKeyField(Protein, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
     reference: Reference = ForeignKeyField(Reference, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
+    order: int = IntegerField(null=True)  # type: ignore[assignment]
     start: int = IntegerField()  # type: ignore[assignment]
     end: int = IntegerField()  # type: ignore[assignment]
 
@@ -133,13 +145,17 @@ class Mutation(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
     protein: Protein = ForeignKeyField(Protein, backref='mutations', on_delete='RESTRICT')  # type: ignore[assignment]
-    default_position: int | None = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(null=True)  # type: ignore[assignment]
 
     mappings: list['Mapping']
     markers: list['Marker']
 
     def __str__(self) -> str:
         return str(self.name)
+
+    @property
+    def global_order(self) -> int:
+        return self.order + self.protein.global_order * 1000
 
 
 class Mapping(BaseModel):
@@ -151,6 +167,9 @@ class Mapping(BaseModel):
 
     def __str__(self) -> str:
         return f'{self.mutation} @ {self.reference} (pos {self.position}, {self.alteration})'
+
+    def is_valid(self) -> bool:
+        return self.position > 0
 
 
 class Effect(BaseModel):

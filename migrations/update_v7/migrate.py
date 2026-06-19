@@ -194,7 +194,9 @@ def main() -> None:
         # ── 4. Segments ───────────────────────────────────────────────────────
         seg_map: dict[str, Segment] = {}
         for row in src.execute('SELECT name FROM segments'):
-            seg = Segment.create(name=row['name'])
+            seg: Segment = Segment.create(name=row['name'])
+            seg.order = seg.get_id()
+            seg.save()
             seg_map[row['name']] = seg
 
         # ── 5. Proteins (rename NS-1/NS-2) ────────────────────────────────────
@@ -205,6 +207,8 @@ def main() -> None:
                 name=PROTEIN_RENAMES.get(old_name, old_name),
                 segment=seg_map[row['segment_name']],
             )
+            prot.order = prot.get_id()
+            prot.save()
             prot_map[old_name] = prot
 
         # ── 6. References (rename + sequence_id → source) + new refs ─────────
@@ -218,6 +222,8 @@ def main() -> None:
                 sequence=row['sequence'],
                 source=SEQUENCE_IDS.get(old_name, ''),
             )
+            ref.order = ref.get_id()
+            ref.save()
             ref_map[old_name] = ref
             ref_map[new_name] = ref
 
@@ -229,6 +235,8 @@ def main() -> None:
                     sequence=ref_data['sequence'],
                     source=ref_data.get('sequence_id', ''),
                 )
+                ref.order = ref.get_id()
+                ref.save()
                 ref_map[ref_data['subtype']] = ref
 
         # ── 7. Annotations (original + new-ref annotations) ───────────────────
@@ -237,7 +245,9 @@ def main() -> None:
             ref = ref_map.get(ref_name)
             prot = prot_map.get(row['protein_name'])
             if ref and prot:
-                Annotation.create(protein=prot, reference=ref, start=row['start'], end=row['end'])
+                ann = Annotation.create(protein=prot, reference=ref, start=row['start'], end=row['end'])
+                ann.order = ann.get_id()
+                ann.save()
 
         for seg_name, refs in new_refs.items():
             for ref_data in refs:
@@ -245,12 +255,14 @@ def main() -> None:
                 for ann in ref_data.get('proteins', []):
                     prot = prot_map.get(ann['name'])
                     if prot:
-                        Annotation.create(
+                        ann = Annotation.create(
                             protein=prot,
                             reference=ref,
                             start=ann['start'],
                             end=ann['end'],
                         )
+                        ann.order = ann.get_id()
+                        ann.save()
 
         # ── 8. Mutations (delete NA-5:D199G, apply name transformations) ──────
         mut_map: dict[str, Mutation] = {}  # old name → Mutation
@@ -269,6 +281,8 @@ def main() -> None:
                 },
             )
             mut_map[old_name] = mut
+            mut.order = mut.get_id()
+            mut.save()
 
         # ── 9. Mappings ───────────────────────────────────────────────────────
 
