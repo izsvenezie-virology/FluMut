@@ -1,5 +1,6 @@
 from collections import defaultdict
 from enum import Enum
+from functools import total_ordering
 from typing import List
 
 from peewee import (
@@ -27,6 +28,7 @@ class BaseModel(Model):
 BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 
 
+@total_ordering
 class Segment(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     order: int = IntegerField(null=True)  # type: ignore[assignment]
@@ -38,6 +40,9 @@ class Segment(BaseModel):
         return str(self.name)
 
     _cache: list['Segment'] = []
+
+    def __lt__(self, other: 'Segment') -> bool:
+        return self.order < other.order
 
     @staticmethod
     def all(force_reload: bool = False) -> list['Segment']:
@@ -73,6 +78,7 @@ class Segment(BaseModel):
         Segment._cache = []
 
 
+@total_ordering
 class Protein(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='proteins', on_delete='RESTRICT')  # type: ignore[assignment]
@@ -84,11 +90,11 @@ class Protein(BaseModel):
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
-    @property
-    def global_order(self) -> int:
-        return self.order + self.segment.order * 1000
+    def __lt__(self, other: 'Protein') -> bool:
+        return self.segment <= other.segment and self.order < other.order
 
 
+@total_ordering
 class Reference(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='references', on_delete='RESTRICT')  # type: ignore[assignment]
@@ -107,11 +113,10 @@ class Reference(BaseModel):
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
-    _cache: list['Reference'] = []
+    def __lt__(self, other: 'Reference') -> bool:
+        return self.segment <= other.segment and self.order < other.order
 
-    @property
-    def global_order(self) -> int:
-        return self.order + self.segment.order * 1000
+    _cache: list['Reference'] = []
 
     @staticmethod
     def all(force_reload: bool = False) -> list['Reference']:
@@ -130,6 +135,7 @@ class Reference(BaseModel):
         Reference._cache = []
 
 
+@total_ordering
 class Annotation(BaseModel):
     protein: Protein = ForeignKeyField(Protein, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
     reference: Reference = ForeignKeyField(Reference, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
@@ -140,7 +146,11 @@ class Annotation(BaseModel):
     def __str__(self) -> str:
         return f'{self.protein} @ {self.reference}: {self.start}-{self.end}'
 
+    def __lt__(self, other: 'Annotation') -> bool:
+        return self.protein <= other.protein and self.order < other.order
 
+
+@total_ordering
 class Mutation(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
@@ -153,9 +163,8 @@ class Mutation(BaseModel):
     def __str__(self) -> str:
         return str(self.name)
 
-    @property
-    def global_order(self) -> int:
-        return self.order + self.protein.global_order * 1000
+    def __lt__(self, other: 'Mutation') -> bool:
+        return self.protein <= other.protein and self.order < other.order
 
 
 class Mapping(BaseModel):

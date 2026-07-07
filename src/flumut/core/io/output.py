@@ -158,7 +158,7 @@ def get_mutations_data(analysis: Analysis) -> TSV_data:
         A list of row dicts with ``'Sample'`` as the first key followed by one
         key per detected mutation, sorted by default position.
     """
-    mutations = sorted(list(analysis.mutations), key=lambda mut: mut.global_order or 0)
+    mutations = sorted(list(analysis.mutations))
     values = []
 
     for sample in analysis.samples.values():
