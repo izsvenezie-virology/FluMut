@@ -24,17 +24,17 @@ class BaseTab(QWidget):
     def _init_header(self) -> None:
         self.tab_layout = QVBoxLayout(self)
 
-        header = QHBoxLayout()
+        self.header = QHBoxLayout()
         self.new_button = QPushButton('New')
         self.edit_button = QPushButton('Edit')
-        header.addWidget(self.new_button)
-        header.addWidget(self.edit_button)
+        self.header.addWidget(self.new_button)
+        self.header.addWidget(self.edit_button)
 
         self.new_button.clicked.connect(self.on_new_requested)
         self.edit_button.clicked.connect(self.on_edit_requested)
 
-        header.addStretch()
-        self.tab_layout.addLayout(header)
+        self.header.addStretch()
+        self.tab_layout.addLayout(self.header)
 
     def on_new_requested(self) -> None:
         raise NotImplementedError('New requested action must be implemented in child classes.')

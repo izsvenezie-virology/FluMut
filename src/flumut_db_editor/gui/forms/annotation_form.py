@@ -82,6 +82,7 @@ class AnnotationForm(TransactionalForm):
         self.form_layout.addLayout(protein_row)
         self.form_layout.addLayout(start_row)
         self.form_layout.addLayout(end_row)
+        self.form_layout.addStretch()
 
     @property
     def reference(self) -> Reference:
