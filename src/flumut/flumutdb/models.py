@@ -31,7 +31,7 @@ BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 @total_ordering
 class Segment(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
-    order: int = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     proteins: list['Protein']
     references: list['Reference']
@@ -82,7 +82,7 @@ class Segment(BaseModel):
 class Protein(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='proteins', on_delete='RESTRICT')  # type: ignore[assignment]
-    order: int = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mutations: list['Mutation']
@@ -100,7 +100,7 @@ class Reference(BaseModel):
     segment: Segment = ForeignKeyField(Segment, backref='references', on_delete='RESTRICT')  # type: ignore[assignment]
     sequence: str = TextField(unique=True)  # type: ignore[assignment]
     source: str = TextField(unique=True)  # type: ignore[assignment]
-    order: int = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mappings: list['Mapping']
@@ -139,7 +139,7 @@ class Reference(BaseModel):
 class Annotation(BaseModel):
     protein: Protein = ForeignKeyField(Protein, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
     reference: Reference = ForeignKeyField(Reference, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
-    order: int = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
     start: int = IntegerField()  # type: ignore[assignment]
     end: int = IntegerField()  # type: ignore[assignment]
 
@@ -155,7 +155,7 @@ class Mutation(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
     protein: Protein = ForeignKeyField(Protein, backref='mutations', on_delete='RESTRICT')  # type: ignore[assignment]
-    order: int = IntegerField(null=True)  # type: ignore[assignment]
+    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     mappings: list['Mapping']
     markers: list['Marker']

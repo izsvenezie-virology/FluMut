@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton, QSpacerItem, QTreeWidget, QTreeWidgetItem
 
@@ -21,31 +23,27 @@ class ProteinsTab(BaseTab):
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(['Name', 'Details'])
         self.tab_layout.addWidget(self.tree)
-        self.refresh()
+        self.refresh_tree()
 
+        self.new_protein_btn = QPushButton('New protein')
         self.up_btn = QPushButton('Move up')
         self.down_btn = QPushButton('Move down')
 
+        self.header.itemAt(0).widget().setText('New segment')  # type: ignore
+        self.header.insertWidget(1, self.new_protein_btn)
         self.header.addSpacerItem(QSpacerItem(10, 10))
         self.header.addWidget(self.up_btn)
         self.header.addWidget(self.down_btn)
 
-        self.up_btn.clicked.connect(self.move_up)
-        self.down_btn.clicked.connect(self.move_down)
+        self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
+        self.up_btn.clicked.connect(self.on_move_up_requested)
+        self.down_btn.clicked.connect(self.on_move_down_requested)
         self.tree.itemExpanded.connect(self.on_item_expanded)
         self.tree.itemCollapsed.connect(self.on_item_collapsed)
 
-    def on_item_expanded(self, item: QTreeWidgetItem):
-        if segment := item.data(0, Qt.ItemDataRole.UserRole):
-            self._expansion_status[segment] = True
-
-    def on_item_collapsed(self, item: QTreeWidgetItem):
-        if segment := item.data(0, Qt.ItemDataRole.UserRole):
-            self._expansion_status[segment] = False
-
-    def refresh(self, selected: Segment | Protein | None = None):
+    def refresh_tree(self, selected: Segment | Protein | None = None):
         self.tree.clear()
-        segments: list[Segment] = sorted(Segment.select())
+        segments: Sequence[Segment] = sorted(Segment.select())
         for segment in segments:
             segment_item = QTreeWidgetItem(self.tree)
             segment_item.setText(0, segment.name)
@@ -56,7 +54,7 @@ class ProteinsTab(BaseTab):
                 self.tree.setCurrentItem(segment_item)
                 self.tree.scrollToItem(segment_item)
 
-            proteins: list[Protein] = sorted(segment.proteins)
+            proteins: Sequence[Protein] = sorted(segment.proteins)
             for protein in proteins:
                 protein_item = QTreeWidgetItem(segment_item)
                 protein_item.setText(0, protein.name)
@@ -69,45 +67,101 @@ class ProteinsTab(BaseTab):
 
     def on_new_requested(self):
         form = SegmentForm(self, None)
-        if form.exec():
-            self.refresh()
+        if form.exec() and form.instance:
+            lst = self.get_sorted_list(form.instance)
+
+            if selected := self.get_selected_segment():
+                lst.remove(form.instance)
+                lst.insert(lst.index(selected) + 1, form.instance)
+
+            self.update_order(lst)
+            self.refresh_tree(form.instance)
+
+    def on_new_protein_requested(self):
+        form = ProteinForm(self, None, self.get_selected_segment())
+        if form.exec() and form.instance:
+            lst = self.get_sorted_list(form.instance)
+
+            selected_protein = self.get_selected_protein()
+            if selected_protein and selected_protein.segment == form.instance.segment:
+                lst.remove(form.instance)
+                lst.insert(lst.index(selected_protein) + 1, form.instance)
+
+            self.update_order(lst)
+            self.refresh_tree(form.instance)
 
     def on_edit_requested(self):
-        instance = self.get_selected_instance()
-        if isinstance(instance, Segment):
-            form = SegmentForm(self, instance)
-        elif isinstance(instance, Protein):
-            form = ProteinForm(self, instance)
-        else:
-            return
+        match instance := self.get_selected_instance():
+            case Segment():
+                form = SegmentForm(self, instance)
+            case Protein():
+                form = ProteinForm(self, instance)
+            case _:
+                return
 
         if form.exec():
-            self.refresh()
+            self.refresh_tree()
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
         if instance:
             if DeleteForm.confirm_and_delete(instance, self):
-                if isinstance(instance, Segment):
-                    list_to_order: list[Segment | Protein] = sorted(Segment.select())
-                elif isinstance(instance, Protein):
-                    list_to_order = sorted(instance.segment.proteins)
-                else:
-                    return
+                list_to_order = self.get_sorted_list(instance)
                 self.update_order(list_to_order)
-                self.refresh()
+                self.refresh_tree()
+
+    def on_move_up_requested(self) -> None:
+        self.move_selected_instance(True)
+
+    def on_move_down_requested(self) -> None:
+        self.move_selected_instance(False)
+
+    def on_item_expanded(self, item: QTreeWidgetItem):
+        if segment := item.data(0, Qt.ItemDataRole.UserRole):
+            self._expansion_status[segment] = True
+
+    def on_item_collapsed(self, item: QTreeWidgetItem):
+        if segment := item.data(0, Qt.ItemDataRole.UserRole):
+            self._expansion_status[segment] = False
 
     def get_selected_instance(self) -> Segment | Protein | None:
         if item := self.tree.currentItem():
             return item.data(0, Qt.ItemDataRole.UserRole)
         return None
 
-    def move_instance(self, instance: Segment | Protein, up: bool) -> None:
-        if isinstance(instance, Segment):
-            list_to_move: list[Segment | Protein] = sorted(Segment.select())
-        elif isinstance(instance, Protein):
-            list_to_move = sorted(instance.segment.proteins)
-        else:
+    def get_selected_segment(self) -> Segment | None:
+        selected = self.get_selected_instance()
+        match selected:
+            case Segment():
+                return selected
+            case Protein():
+                return selected.segment
+            case _:
+                return None
+
+    def get_selected_protein(self) -> Protein | None:
+        selected = self.get_selected_instance()
+        match selected:
+            case Protein():
+                return selected
+            case _:
+                return None
+
+    def get_sorted_list(self, instance: Segment | Protein) -> list[Segment | Protein]:
+        match instance:
+            case Segment():
+                return sorted(Segment.select())
+            case Protein():
+                return sorted(instance.segment.proteins)
+            case _:
+                return []
+
+    def move_selected_instance(self, up: bool) -> None:
+        instance = self.get_selected_instance()
+        if not instance:
+            return
+        list_to_move = self.get_sorted_list(instance)
+        if not list_to_move:
             return
 
         idx = list_to_move.index(instance)
@@ -117,19 +171,9 @@ class ProteinsTab(BaseTab):
 
         list_to_move.insert(new_idx, list_to_move.pop(idx))
         self.update_order(list_to_move)
-        self.refresh(instance)
+        self.refresh_tree(instance)
 
-    def update_order(self, values: list[Segment | Protein]) -> None:
+    def update_order(self, values: Sequence[Segment | Protein]) -> None:
         for order, instance in enumerate(values):
             instance.order = order
             instance.save()
-
-    def move_up(self) -> None:
-        instance = self.get_selected_instance()
-        if isinstance(instance, Segment | Protein):
-            self.move_instance(instance, True)
-
-    def move_down(self) -> None:
-        instance = self.get_selected_instance()
-        if isinstance(instance, Segment | Protein):
-            self.move_instance(instance, False)
