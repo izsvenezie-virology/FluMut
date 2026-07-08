@@ -20,10 +20,12 @@ class ProteinForm(TransactionalForm):
 
     def init_ui(self) -> None:
         super().init_ui()
+        self.resize(480, 120)
+
         self.name_field = QLineEdit()
         self.segment_combo = QComboBox()
 
-        segments: list[Segment] = Segment.select()
+        segments: list[Segment] = sorted(Segment.select())
         for segment in segments:
             self.segment_combo.addItem(segment.name, segment)
 
