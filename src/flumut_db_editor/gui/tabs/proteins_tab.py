@@ -1,29 +1,21 @@
 from collections.abc import Sequence
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QPushButton, QSpacerItem, QTreeWidget, QTreeWidgetItem
+from PySide6.QtWidgets import QPushButton, QSpacerItem, QTreeWidgetItem
 
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
-from flumut_db_editor.gui.tabs.base import BaseTab
+from flumut_db_editor.gui.tabs.base import BaseTreeTab
 from flumut_db_editor.models import Protein, Segment
 
 
-class ProteinsTab(BaseTab):
+class ProteinsTab(BaseTreeTab[Segment | Protein]):
     def __init__(self):
         super().__init__()
 
-        self._expansion_status: dict[Segment, bool] = {}
-
-        self._init_ui()
-
     def _init_ui(self):
-        self.tree = QTreeWidget()
-        self.tree.setColumnCount(2)
-        self.tree.setHeaderLabels(['Name', 'Details'])
-        self.tab_layout.addWidget(self.tree)
-        self.refresh_tree()
+        super()._init_ui()
+        self.refresh()
 
         self.new_protein_btn = QPushButton('New protein')
         self.up_btn = QPushButton('Move up')
@@ -38,18 +30,16 @@ class ProteinsTab(BaseTab):
         self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
         self.up_btn.clicked.connect(self.on_move_up_requested)
         self.down_btn.clicked.connect(self.on_move_down_requested)
-        self.tree.itemExpanded.connect(self.on_item_expanded)
-        self.tree.itemCollapsed.connect(self.on_item_collapsed)
 
-    def refresh_tree(self, selected: Segment | Protein | None = None):
+    def refresh(self, selected: Segment | Protein | None = None):
         self.tree.clear()
         segments: Sequence[Segment] = sorted(Segment.select())
         for segment in segments:
             segment_item = QTreeWidgetItem(self.tree)
             segment_item.setText(0, segment.name)
             segment_item.setText(1, f'{len(segment.proteins)} proteins, {len(segment.references)} references')
-            segment_item.setData(0, Qt.ItemDataRole.UserRole, segment)
-            segment_item.setExpanded(self._expansion_status.get(segment, False))
+            self.set_data(segment_item, segment)
+            segment_item.setExpanded(self.is_expanded(segment))
             if segment == selected:
                 self.tree.setCurrentItem(segment_item)
                 self.tree.scrollToItem(segment_item)
@@ -59,7 +49,7 @@ class ProteinsTab(BaseTab):
                 protein_item = QTreeWidgetItem(segment_item)
                 protein_item.setText(0, protein.name)
                 protein_item.setText(1, f'{len(protein.mutations)} mutations')
-                protein_item.setData(0, Qt.ItemDataRole.UserRole, protein)
+                self.set_data(protein_item, protein)
                 if protein == selected:
                     segment_item.setExpanded(True)
                     self.tree.setCurrentItem(protein_item)
@@ -75,7 +65,7 @@ class ProteinsTab(BaseTab):
                 lst.insert(lst.index(selected) + 1, form.instance)
 
             self.update_order(lst)
-            self.refresh_tree(form.instance)
+            self.refresh(form.instance)
 
     def on_new_protein_requested(self):
         form = ProteinForm(self, None, self.get_selected_segment())
@@ -88,7 +78,7 @@ class ProteinsTab(BaseTab):
                 lst.insert(lst.index(selected_protein) + 1, form.instance)
 
             self.update_order(lst)
-            self.refresh_tree(form.instance)
+            self.refresh(form.instance)
 
     def on_edit_requested(self):
         match instance := self.get_selected_instance():
@@ -100,7 +90,7 @@ class ProteinsTab(BaseTab):
                 return
 
         if form.exec():
-            self.refresh_tree()
+            self.refresh()
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
@@ -108,26 +98,13 @@ class ProteinsTab(BaseTab):
             if DeleteForm.confirm_and_delete(instance, self):
                 list_to_order = self.get_sorted_list(instance)
                 self.update_order(list_to_order)
-                self.refresh_tree()
+                self.refresh()
 
     def on_move_up_requested(self) -> None:
         self.move_selected_instance(True)
 
     def on_move_down_requested(self) -> None:
         self.move_selected_instance(False)
-
-    def on_item_expanded(self, item: QTreeWidgetItem):
-        if segment := item.data(0, Qt.ItemDataRole.UserRole):
-            self._expansion_status[segment] = True
-
-    def on_item_collapsed(self, item: QTreeWidgetItem):
-        if segment := item.data(0, Qt.ItemDataRole.UserRole):
-            self._expansion_status[segment] = False
-
-    def get_selected_instance(self) -> Segment | Protein | None:
-        if item := self.tree.currentItem():
-            return item.data(0, Qt.ItemDataRole.UserRole)
-        return None
 
     def get_selected_segment(self) -> Segment | None:
         selected = self.get_selected_instance()
@@ -171,7 +148,7 @@ class ProteinsTab(BaseTab):
 
         list_to_move.insert(new_idx, list_to_move.pop(idx))
         self.update_order(list_to_move)
-        self.refresh_tree(instance)
+        self.refresh(instance)
 
     def update_order(self, values: Sequence[Segment | Protein]) -> None:
         for order, instance in enumerate(values):
