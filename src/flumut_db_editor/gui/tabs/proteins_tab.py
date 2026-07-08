@@ -1,35 +1,28 @@
 from collections.abc import Sequence
 
-from PySide6.QtWidgets import QPushButton, QSpacerItem, QTreeWidgetItem
+from PySide6.QtWidgets import QPushButton, QTreeWidgetItem
 
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
-from flumut_db_editor.gui.tabs.base import BaseTreeTab
+from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
 from flumut_db_editor.models import Protein, Segment
 
 
-class ProteinsTab(BaseTreeTab[Segment | Protein]):
+class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
     def __init__(self):
         super().__init__()
+        self._init_ui()
 
     def _init_ui(self):
-        super()._init_ui()
         self.refresh()
 
         self.new_protein_btn = QPushButton('New protein')
-        self.up_btn = QPushButton('Move up')
-        self.down_btn = QPushButton('Move down')
 
         self.header.itemAt(0).widget().setText('New segment')  # type: ignore
         self.header.insertWidget(1, self.new_protein_btn)
-        self.header.addSpacerItem(QSpacerItem(10, 10))
-        self.header.addWidget(self.up_btn)
-        self.header.addWidget(self.down_btn)
 
         self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
-        self.up_btn.clicked.connect(self.on_move_up_requested)
-        self.down_btn.clicked.connect(self.on_move_down_requested)
 
     def refresh(self, selected: Segment | Protein | None = None):
         self.tree.clear()
@@ -81,16 +74,10 @@ class ProteinsTab(BaseTreeTab[Segment | Protein]):
             self.refresh(form.instance)
 
     def on_edit_requested(self):
-        match instance := self.get_selected_instance():
-            case Segment():
-                form = SegmentForm(self, instance)
-            case Protein():
-                form = ProteinForm(self, instance)
-            case _:
-                return
-
-        if form.exec():
-            self.refresh()
+        if instance := self.get_selected_instance():
+            form = self.get_form(instance)
+            if form.exec() and form.instance:
+                self.refresh(form.instance)
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
@@ -99,12 +86,6 @@ class ProteinsTab(BaseTreeTab[Segment | Protein]):
                 list_to_order = self.get_sorted_list(instance)
                 self.update_order(list_to_order)
                 self.refresh()
-
-    def on_move_up_requested(self) -> None:
-        self.move_selected_instance(True)
-
-    def on_move_down_requested(self) -> None:
-        self.move_selected_instance(False)
 
     def get_selected_segment(self) -> Segment | None:
         selected = self.get_selected_instance()
@@ -133,24 +114,9 @@ class ProteinsTab(BaseTreeTab[Segment | Protein]):
             case _:
                 return []
 
-    def move_selected_instance(self, up: bool) -> None:
-        instance = self.get_selected_instance()
-        if not instance:
-            return
-        list_to_move = self.get_sorted_list(instance)
-        if not list_to_move:
-            return
-
-        idx = list_to_move.index(instance)
-        new_idx = idx + (-1 if up else 1)
-        if not 0 <= new_idx < len(list_to_move):
-            return
-
-        list_to_move.insert(new_idx, list_to_move.pop(idx))
-        self.update_order(list_to_move)
-        self.refresh(instance)
-
-    def update_order(self, values: Sequence[Segment | Protein]) -> None:
-        for order, instance in enumerate(values):
-            instance.order = order
-            instance.save()
+    def get_form(self, instance: Segment | Protein) -> SegmentForm | ProteinForm:
+        match instance:
+            case Segment():
+                return SegmentForm(self, instance)
+            case Protein():
+                return ProteinForm(self, instance)
