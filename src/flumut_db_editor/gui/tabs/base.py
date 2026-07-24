@@ -89,6 +89,22 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
             return self.get_data(item)
         return None
 
+    def create_item(self, instance: ModelT, texts: Sequence[str], parent: QTreeWidgetItem | None = None) -> QTreeWidgetItem:
+        item = QTreeWidgetItem(parent or self.tree)
+        for i, text in enumerate(texts):
+            item.setText(i, text)
+        self.set_data(item, instance)
+        item.setExpanded(self.is_expanded(instance))
+        return item
+
+    def set_selected_item(self, item: QTreeWidgetItem) -> None:
+        parent = item.parent()
+        while isinstance(parent, QTreeWidgetItem):
+            parent.setExpanded(True)
+            parent = parent.parent()
+        self.tree.setCurrentItem(item)
+        self.tree.scrollToItem(item)
+
     def set_data(self, item: QTreeWidgetItem, instance: ModelT) -> None:
         item.setData(0, Qt.ItemDataRole.UserRole, instance)
 

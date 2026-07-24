@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from PySide6.QtWidgets import QPushButton, QTreeWidgetItem
+from PySide6.QtWidgets import QPushButton
 
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
@@ -24,29 +24,21 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
 
         self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
 
-    def refresh(self, selected: Segment | Protein | None = None):
+    def refresh(self, selected=None):
         self.tree.clear()
         segments: Sequence[Segment] = sorted(Segment.select())
         for segment in segments:
-            segment_item = QTreeWidgetItem(self.tree)
-            segment_item.setText(0, segment.name)
-            segment_item.setText(1, f'{len(segment.proteins)} proteins, {len(segment.references)} references')
-            self.set_data(segment_item, segment)
-            segment_item.setExpanded(self.is_expanded(segment))
+            segment_item = self.create_item(
+                segment, [segment.name, f'{len(segment.proteins)} proteins, {len(segment.references)} references']
+            )
             if segment == selected:
-                self.tree.setCurrentItem(segment_item)
-                self.tree.scrollToItem(segment_item)
+                self.set_selected_item(segment_item)
 
             proteins: Sequence[Protein] = sorted(segment.proteins)
             for protein in proteins:
-                protein_item = QTreeWidgetItem(segment_item)
-                protein_item.setText(0, protein.name)
-                protein_item.setText(1, f'{len(protein.mutations)} mutations')
-                self.set_data(protein_item, protein)
+                protein_item = self.create_item(protein, [protein.name, f'{len(protein.mutations)} mutations'], segment_item)
                 if protein == selected:
-                    segment_item.setExpanded(True)
-                    self.tree.setCurrentItem(protein_item)
-                    self.tree.scrollToItem(protein_item)
+                    self.set_selected_item(protein_item)
 
     def on_new_requested(self):
         form = SegmentForm(self, None)
