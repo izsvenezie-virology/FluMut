@@ -65,6 +65,7 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
         self.tree = QTreeWidget()
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(['Name', 'Details'])
+        self.tree.setColumnWidth(0, 200)
         self.tab_layout.addWidget(self.tree)
 
         self.tree.itemExpanded.connect(self.on_item_expanded)
@@ -128,7 +129,7 @@ class BaseSortableTreeTab(BaseTreeTab[ModelT]):
         self.up_btn.clicked.connect(self.on_move_up_requested)
         self.down_btn.clicked.connect(self.on_move_down_requested)
 
-    def get_sorted_list(self, instance: ModelT) -> list[ModelT]:
+    def get_sorted_list(self, instance: ModelT) -> Sequence[ModelT]:
         raise NotImplementedError('Get sorted list action must be implemented in child classes.')
 
     def on_move_up_requested(self) -> None:
@@ -141,13 +142,13 @@ class BaseSortableTreeTab(BaseTreeTab[ModelT]):
         instance = self.get_selected_instance()
         if not instance:
             return
-        list_to_move = self.get_sorted_list(instance)
+        list_to_move = list(self.get_sorted_list(instance))
         if not list_to_move:
             return
 
         idx = list_to_move.index(instance)
         new_idx = idx + (-1 if up else 1)
-        if not 0 <= new_idx < len(list_to_move):
+        if not 0 <= new_idx <= len(list_to_move):
             return
 
         list_to_move.insert(new_idx, list_to_move.pop(idx))
@@ -156,5 +157,5 @@ class BaseSortableTreeTab(BaseTreeTab[ModelT]):
 
     def update_order(self, sorted_list: Sequence[ModelT]) -> None:
         for index, instance in enumerate(sorted_list):
-            instance.order = index  # type: ignore
+            instance.order = index + 1  # type: ignore
             instance.save()
