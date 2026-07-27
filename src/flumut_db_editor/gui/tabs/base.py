@@ -1,4 +1,5 @@
-from typing import Generic, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Generic, TypeVar
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -31,16 +32,16 @@ class BaseTab(QWidget):
         self.tab_layout = QVBoxLayout(self)
 
         self.header = QHBoxLayout()
-        self.new_button = QPushButton('New')
-        self.edit_button = QPushButton('Edit')
-        self.delete_button = QPushButton('Delete')
-        self.header.addWidget(self.new_button)
-        self.header.addWidget(self.edit_button)
-        self.header.addWidget(self.delete_button)
+        self.new_btn = QPushButton('New')
+        self.edit_btn = QPushButton('Edit')
+        self.delete_btn = QPushButton('Delete')
+        self.header.addWidget(self.new_btn)
+        self.header.addWidget(self.edit_btn)
+        self.header.addWidget(self.delete_btn)
 
-        self.new_button.clicked.connect(self.on_new_requested)
-        self.edit_button.clicked.connect(self.on_edit_requested)
-        self.delete_button.clicked.connect(self.on_delete_requested)
+        self.new_btn.clicked.connect(self.on_new_requested)
+        self.edit_btn.clicked.connect(self.on_edit_requested)
+        self.delete_btn.clicked.connect(self.on_delete_requested)
 
         self.header.addStretch()
         self.tab_layout.addLayout(self.header)

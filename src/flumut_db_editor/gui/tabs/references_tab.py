@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from PySide6.QtWidgets import QPushButton
 
@@ -16,14 +16,13 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.refresh()
-
         self.new_annotation_btn = QPushButton('New annotation')
+        self.new_annotation_btn.clicked.connect(self.on_new_annotation_requested)
 
-        self.header.itemAt(0).widget().setText('New reference')  # type: ignore
+        self.new_btn.setText('New reference')  # type: ignore
         self.header.insertWidget(1, self.new_annotation_btn)
 
-        self.new_annotation_btn.clicked.connect(self.on_new_annotation_requested)
+        self.refresh()
 
     def refresh(self, selected=None) -> None:
         self.tree.clear()
@@ -90,17 +89,15 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
 
     def on_edit_requested(self):
         instance = self.get_selected_instance()
-        if form := self.get_form(instance):
-            if form.exec() and form.instance:
-                self.refresh()
+        if (form := self.get_form(instance)) and form.exec() and form.instance:
+            self.refresh()
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
-        if instance:
-            if DeleteForm.confirm_and_delete(instance, self):
-                list_to_order = self.get_sorted_list(instance)
-                self.update_order(list_to_order)
-                self.refresh()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
+            list_to_order = self.get_sorted_list(instance)
+            self.update_order(list_to_order)
+            self.refresh()
 
     def get_reference_description_text(self, reference: Reference) -> str:
         missing_annotated_proteins = {a.protein for a in reference.annotations} - set(reference.segment.proteins)

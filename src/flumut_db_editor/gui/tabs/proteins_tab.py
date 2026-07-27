@@ -15,14 +15,13 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
         self._init_ui()
 
     def _init_ui(self):
-        self.refresh()
-
         self.new_protein_btn = QPushButton('New protein')
+        self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
 
-        self.header.itemAt(0).widget().setText('New segment')  # type: ignore
+        self.new_btn.setText('New segment')  # type: ignore
         self.header.insertWidget(1, self.new_protein_btn)
 
-        self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
+        self.refresh()
 
     def refresh(self, selected=None):
         self.tree.clear()
@@ -73,11 +72,10 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
 
     def on_delete_requested(self):
         instance = self.get_selected_instance()
-        if instance:
-            if DeleteForm.confirm_and_delete(instance, self):
-                list_to_order = self.get_sorted_list(instance)
-                self.update_order(list_to_order)
-                self.refresh()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
+            list_to_order = self.get_sorted_list(instance)
+            self.update_order(list_to_order)
+            self.refresh()
 
     def get_selected_segment(self) -> Segment | None:
         selected = self.get_selected_instance()
