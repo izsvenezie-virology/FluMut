@@ -1,34 +1,43 @@
-from typing import TYPE_CHECKING
-
+from peewee import DatabaseError
 from PySide6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
     QLabel,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
+from flumut.core.globals import DATABASE_PROXY
 from flumut.flumutdb.models import BaseModel
-from flumut_db_editor.gui.dialogs import ForeignKeyViolationDialog
-from flumut_db_editor.gui.forms.base import TransactionalForm
+from flumut_db_editor.gui.dialogs import ErrorDialog, ForeignKeyViolationDialog
 from flumut_db_editor.validator import DeleteValidator
 
 
-class DeleteForm(TransactionalForm):
-    def __init__(self, instance: BaseModel, validator: DeleteValidator, parent: QWidget | None = None) -> None:
-        self.validator = validator  # set before super() so init_ui() can use it
-        super().__init__(parent, instance)
-        if TYPE_CHECKING:
-            self.instance: BaseModel
+class DeleteForm(QDialog):
+    def __init__(self, validator: DeleteValidator, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.validator = validator
+        self.instance = validator.instance
 
-    def init_ui(self) -> None:
-        super().init_ui()
-        self.setMinimumSize(480, 420)
+        self._init_ui()
+
+    def _init_ui(self) -> None:
+        self.resize(400, 300)
+        self.setWindowTitle(f'Deleting {type(self.instance).__name__}')
+
+        self.form_layout = QVBoxLayout()
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.addLayout(self.form_layout)
+        main_layout.addWidget(self.buttons)
 
         self.form_layout.addWidget(QLabel(f'Are you sure you want to delete {self.instance}?'))
 
         if self.validator.cascade_items:
             message = QLabel(
-                f'Delete {type(self.validator.instance).__name__} "{self.validator.instance}" will delete the following items that depend on it:'
+                f'Delete {type(self.instance).__name__} "{self.validator.instance}" will delete the following items that depend on it:'
             )
             self.form_layout.addWidget(message)
 
@@ -46,9 +55,21 @@ class DeleteForm(TransactionalForm):
             scroll.setWidget(content_widget)
             self.form_layout.addWidget(scroll)
 
-    def save_to_db(self) -> None:
-        """Persist the form by deleting the instance (committed by ``on_accept``)."""
-        self.instance.delete_instance()
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+    def accept(self) -> None:
+        if self.save_to_db():
+            super().accept()
+
+    def save_to_db(self) -> bool:
+        try:
+            with DATABASE_PROXY.atomic():
+                self.instance.delete_instance()
+        except DatabaseError as error:
+            ErrorDialog.show_error(self, 'Deletion failed', f'Could not delete {type(self.instance).__name__}.', str(error))
+            return False
+        return True
 
     @staticmethod
     def confirm_and_delete(instance: BaseModel, parent: QWidget | None = None) -> bool:
@@ -57,4 +78,4 @@ class DeleteForm(TransactionalForm):
         if not validator.can_delete():
             ForeignKeyViolationDialog.show_violation(parent, validator)
             return False
-        return bool(DeleteForm(instance, validator, parent).exec())
+        return bool(DeleteForm(validator, parent).exec())

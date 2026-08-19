@@ -8,47 +8,45 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from flumut_db_editor.validator import DeleteValidator
+from flumut_db_editor.validator import DataValidator, DeleteValidator
 
 
-class ConfirmationDialog(QDialog):
-    """Confirmation dialog for delete operations."""
-
-    def __init__(self, parent, title: str, message: str, details: str = ''):
+class DataErrorDialog(QDialog):
+    def __init__(self, parent: QWidget | None, validator: DataValidator) -> None:
         super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setGeometry(100, 100, 400, 200)
-        self.result_value = False
+        self.setWindowTitle('Data validation errors')
+        self.setGeometry(100, 100, 500, 400)
 
         layout = QVBoxLayout(self)
 
-        layout.addWidget(QLabel(message))
-        if details:
-            layout.addWidget(QLabel(details))
+        message = QLabel(f'Cannot save {type(validator.instance)} "{validator.instance}" because of the following errors:')
+        layout.addWidget(message)
 
-        button_layout = QVBoxLayout()
-        ok_button = QPushButton('Yes, Delete')
-        cancel_button = QPushButton('Cancel')
-        ok_button.clicked.connect(self.confirm)
-        cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
 
-    def confirm(self):
-        self.result_value = True
-        self.accept()
+        for attr, items in validator.errors.items():
+            for msg in items:
+                content_layout.addWidget(QLabel(f'{attr}: {msg}'))
 
-    @staticmethod
-    def ask(parent, title: str, message: str, details: str = '') -> bool:
-        dialog = ConfirmationDialog(parent, title, message, details)
-        return dialog.exec() == QDialog.Accepted and dialog.result_value
+        content_layout.addStretch()
+        scroll.setWidget(content_widget)
+        layout.addWidget(scroll)
+
+        instruction = QLabel('Please, solve these errors, then try to save again.')
+        layout.addWidget(instruction)
+
+        ok_button = QPushButton('OK')
+        ok_button.clicked.connect(self.accept)
+        layout.addWidget(ok_button)
 
 
 class ForeignKeyViolationDialog(QDialog):
     """Dialog showing FK violations preventing deletion."""
 
-    def __init__(self, parent, validator: DeleteValidator):
+    def __init__(self, parent: QWidget | None, validator: DeleteValidator):
         super().__init__(parent)
         self.setWindowTitle('Cannot Delete')
         self.setGeometry(100, 100, 500, 400)

@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -11,11 +9,10 @@ from PySide6.QtWidgets import (
 
 from flumut.core.io.input import sanitize_sequence
 from flumut.flumutdb.models import Reference, Segment
-from flumut_db_editor.gui.dialogs import ValidationErrorDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class ReferenceForm(TransactionalForm):
+class ReferenceForm(TransactionalForm[Reference]):
     model = Reference
 
     def __init__(self, parent: QWidget | None = None, instance: Reference | None = None, segment: Segment | None = None) -> None:
@@ -24,29 +21,27 @@ class ReferenceForm(TransactionalForm):
             self.force_segment = instance.segment
 
         super().__init__(parent, instance)
-        if TYPE_CHECKING:
-            self.instance: Reference | None
 
-    def init_ui(self):
-        super().init_ui()
+    def _init_ui(self):
+        super()._init_ui()
+        self.resize(1000, 500)
 
         self.name_field = QLineEdit()
         self.segment_combo = QComboBox()
         self.source_field = QLineEdit()
         self.sequence_txt = QTextEdit()
 
-        segments: list[Segment] = Segment.select()
+        segments: list[Segment] = sorted(Segment.select())
         for segment in segments:
             self.segment_combo.addItem(segment.name, segment)
+        if self.force_segment:
+            self.segment_combo.setCurrentText(self.force_segment.name)
+            self.segment_combo.setEnabled(False)
 
         if self.instance:
             self.name_field.setText(self.instance.name)
             self.source_field.setText(self.instance.source)
             self.sequence_txt.setPlainText(self.instance.sequence)
-
-        if self.force_segment:
-            self.segment_combo.setCurrentText(self.force_segment.name)
-            self.segment_combo.setEnabled(False)
 
         name_row = QHBoxLayout()
         name_row.insertWidget(0, QLabel('Name:'))
@@ -63,7 +58,6 @@ class ReferenceForm(TransactionalForm):
         self.form_layout.addLayout(source_row)
         self.form_layout.addWidget(QLabel('Sequence:'))
         self.form_layout.addWidget(self.sequence_txt)
-        self.form_layout.addStretch()
 
         self.name_field.setFocus()
 
@@ -82,20 +76,6 @@ class ReferenceForm(TransactionalForm):
     @property
     def sequence(self) -> str:
         return sanitize_sequence(self.sequence_txt.toPlainText())
-
-    def validate(self) -> bool:
-        if not self.check_unique_required('name', self.name, 'Name', self.name_field):
-            return False
-        if not self.check_unique_required('source', self.source, 'Source', self.source_field):
-            return False
-        if not self.check_unique_required('sequence', self.sequence, 'Sequence', self.sequence_txt):
-            return False
-        if unknown_nucleotides := set(self.sequence).difference(set(['A', 'T', 'C', 'G'])):
-            ValidationErrorDialog.show_validation_error(
-                self, 'Sequence', f'Reference sequences must contain only ATCG. Found unknown nucleotides: {", ".join(unknown_nucleotides)}'
-            )
-            return False
-        return True
 
     def field_values(self) -> dict:
         return {

@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -11,16 +9,14 @@ from flumut.flumutdb.models import Segment
 from flumut_db_editor.gui.forms.base import TransactionalForm
 
 
-class SegmentForm(TransactionalForm):
+class SegmentForm(TransactionalForm[Segment]):
     model = Segment
 
     def __init__(self, parent: QWidget | None = None, instance: Segment | None = None) -> None:
         super().__init__(parent, instance)
-        if TYPE_CHECKING:
-            self.instance: Segment | None
 
-    def init_ui(self) -> None:
-        super().init_ui()
+    def _init_ui(self) -> None:
+        super()._init_ui()
         self.resize(480, 85)
 
         name_layout = QHBoxLayout()
@@ -39,9 +35,6 @@ class SegmentForm(TransactionalForm):
     @property
     def name(self) -> str:
         return self.name_field.text().strip()
-
-    def validate(self) -> bool:
-        return self.check_unique_required('name', self.name, 'Name', self.name_field)
 
     def field_values(self) -> dict:
         return {'name': self.name}
