@@ -31,6 +31,8 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
             segment_item = self.create_item(
                 segment, [f'Segment: {segment.name}', f'{len(segment.proteins)} proteins, {len(segment.references)} references']
             )
+            if segment not in self._expansion_status:
+                self._expansion_status[segment] = True
             if segment == selected:
                 self.set_selected_item(segment_item)
 

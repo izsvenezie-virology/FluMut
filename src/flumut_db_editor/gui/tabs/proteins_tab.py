@@ -28,14 +28,14 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
         segments: Sequence[Segment] = sorted(Segment.select())
         for segment in segments:
             segment_item = self.create_item(
-                segment, [segment.name, f'{len(segment.proteins)} proteins, {len(segment.references)} references']
+                segment, [f'Segment: {segment.name}', f'{len(segment.proteins)} proteins, {len(segment.references)} references']
             )
             if segment == selected:
                 self.set_selected_item(segment_item)
 
             proteins: Sequence[Protein] = sorted(segment.proteins)
             for protein in proteins:
-                protein_item = self.create_item(protein, [protein.name, f'{len(protein.mutations)} mutations'], segment_item)
+                protein_item = self.create_item(protein, [f'Protein: {protein.name}', f'{len(protein.mutations)} mutations'], segment_item)
                 if protein == selected:
                     self.set_selected_item(protein_item)
 
