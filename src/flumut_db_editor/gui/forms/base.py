@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from typing import Generic, TypeVar
 
 from peewee import DatabaseError
-from PySide6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
 from flumut.core.globals import DATABASE_PROXY
 from flumut.flumutdb.models import BaseModel
@@ -168,3 +168,32 @@ class MultiInstanceForm(BaseForm, Generic[ModelT]):
         for instance in self.instances:
             for field, value in values.items():
                 setattr(instance, field, value)
+
+
+class NameForm(TransactionalForm[ModelT]):
+    def __init__(self, parent: QWidget | None = None, instance: ModelT | None = None) -> None:
+        super().__init__(parent, instance)
+        self.__init_ui()
+
+    def __init_ui(self) -> None:
+        self.resize(480, 85)
+
+        name_layout = QHBoxLayout()
+
+        self.name_field = QLineEdit()
+        name_layout.addWidget(QLabel('Name:'))
+        name_layout.addWidget(self.name_field)
+
+        self.form_layout.addLayout(name_layout)
+        self.form_layout.addStretch()
+
+        if self.instance:
+            self.name_field.setText(self.instance.name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.name_field.setFocus()
+
+    @property
+    def name(self) -> str:
+        return self.name_field.text().strip()
+
+    def field_values(self) -> dict:
+        return {'name': self.name}
