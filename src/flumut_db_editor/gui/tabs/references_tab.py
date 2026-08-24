@@ -13,9 +13,9 @@ from flumut_db_editor.models import Annotation, Reference
 class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotation]):
     def __init__(self):
         super().__init__()
-        self._init_ui()
+        self.__init_ui()
 
-    def _init_ui(self) -> None:
+    def __init_ui(self) -> None:
         self.new_annotation_btn = QPushButton('New annotation')
         self.new_annotation_btn.clicked.connect(self.on_new_annotation_requested)
 

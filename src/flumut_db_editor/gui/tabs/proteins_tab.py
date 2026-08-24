@@ -12,9 +12,9 @@ from flumut_db_editor.models import Protein, Segment
 class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
     def __init__(self):
         super().__init__()
-        self._init_ui()
+        self.__init_ui()
 
-    def _init_ui(self):
+    def __init_ui(self):
         self.new_protein_btn = QPushButton('New protein')
         self.new_protein_btn.clicked.connect(self.on_new_protein_requested)
 

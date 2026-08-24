@@ -8,9 +8,9 @@ from flumut_db_editor.models import Mapping, Mutation
 class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
     def __init__(self) -> None:
         super().__init__()
-        self._init_ui()
+        self.__init_ui()
 
-    def _init_ui(self) -> None:
+    def __init_ui(self) -> None:
 
         self.new_btn.setText('New mutation')
 

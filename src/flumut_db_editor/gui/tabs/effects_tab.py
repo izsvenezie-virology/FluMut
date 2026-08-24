@@ -1,50 +1,36 @@
-from PySide6.QtWidgets import QTableWidgetItem
-
 from flumut.flumutdb.models import Effect
-from flumut_db_editor.gui.dialogs import SuccessNotification
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.effect_form import EffectForm
 from flumut_db_editor.gui.tabs.base import BaseTableTab
 
 
-class EffectsTab(BaseTableTab):
+class EffectsTab(BaseTableTab[Effect]):
     def __init__(self):
         super().__init__()
-        self.new_button.clicked.connect(self.handle_new)
         self.load_data()
 
     def load_data(self):
-        header = ['Name', 'Notes']
-        self.table.setColumnCount(len(header))
-        self.table.setHorizontalHeaderLabels(header)
-        effects: list[Effect] = Effect.select()
-        self.table.setRowCount(len(effects))
-        for row, effect in enumerate(effects):
-            self.table.setItem(row, 0, QTableWidgetItem(effect.name))
-            self.table.setItem(row, 1, QTableWidgetItem(effect.notes or ''))
+        effects: list[Effect] = list(Effect.select())
+        rows = {}
+        for effect in effects:
+            rows[effect] = [effect.name, effect.notes or '']
+        self.populate_table(rows)
         self.table.resizeColumnsToContents()
 
-    def handle_new(self):
+    def on_new_requested(self):
         form = EffectForm(self, None)
         if form.exec():
-            SuccessNotification.show_success(self, 'Effect created successfully.')
             self.load_data()
 
-    def handle_edit(self):
-        row = self.get_selected_item()
-        if row is None:
+    def on_edit_requested(self):
+        instance = self.get_selected_item()
+        if instance is None:
             return
-        effects = list(Effect.select())
-        effect = effects[row]
-        form = EffectForm(self, effect)
+        form = EffectForm(self, instance)
         if form.exec():
-            SuccessNotification.show_success(self, 'Effect updated successfully.')
             self.load_data()
 
-    def handle_delete(self):
-        row = self.get_selected_item()
-        if row is None:
-            return
-        effects = list(Effect.select())
-        effect = effects[row]
-        if delete_with_confirmation(self, 'Effect', effect.id, DatabaseOperations.delete_effect):
+    def on_delete_requested(self):
+        instance = self.get_selected_item()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
             self.load_data()

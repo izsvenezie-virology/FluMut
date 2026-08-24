@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QSpacerItem,
+    QTableWidget,
+    QTableWidgetItem,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -26,9 +28,9 @@ class BaseTab(QWidget):
 
     def __init__(self):
         super().__init__()
-        self._init_header()
+        self.__init_ui()
 
-    def _init_header(self) -> None:
+    def __init_ui(self) -> None:
         self.tab_layout = QVBoxLayout(self)
 
         self.header = QHBoxLayout()
@@ -47,23 +49,78 @@ class BaseTab(QWidget):
         self.tab_layout.addLayout(self.header)
 
     def on_new_requested(self) -> None:
-        raise NotImplementedError('New requested action must be implemented in child classes.')
+        raise NotImplementedError('on_new_requested must be implemented in child classes.')
 
     def on_edit_requested(self) -> None:
-        raise NotImplementedError('Edit requested action must be implemented in child classes.')
+        raise NotImplementedError('on_edit_requested must be implemented in child classes.')
 
     def on_delete_requested(self) -> None:
-        raise NotImplementedError('Delete requested action must be implemented in child classes.')
+        raise NotImplementedError('on_delete_requested must be implemented in child classes.')
+
+
+class BaseTableTab(BaseTab, Generic[ModelT]):
+    def __init__(self):
+        super().__init__()
+        self.__init_ui()
+
+    def __init_ui(self) -> None:
+        self.table = QTableWidget(self)
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderLabels(['Name', 'Notes'])
+        self.table.verticalHeader().setVisible(False)
+        self.table.setColumnWidth(0, 200)
+        self.tab_layout.addWidget(self.table)
+
+    def refresh(self, selected: ModelT | None = None) -> None:
+        raise NotImplementedError('Refresh action must be implemented in child classes.')
+
+    def get_selected_instance(self) -> ModelT | None:
+        if item := self.table.currentItem():
+            return self.get_data(item)
+        return None
+
+    def populate_table(self, rows: dict[ModelT, Sequence[str]]) -> None:
+        self.table.clearContents()
+        self.table.setRowCount(len(rows))
+        for row, (instance, texts) in enumerate(rows.items()):
+            items = self.create_item(instance, texts)
+            for col, item in enumerate(items):
+                self.table.setItem(row, col, item)
+
+    def create_item(self, instance: ModelT, texts: Sequence[str]) -> list[QTableWidgetItem]:
+        row = []
+        for text in texts:
+            item = QTableWidgetItem(text)
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            row.append(item)
+        self.set_data(row[0], instance)
+        return row
+
+    def set_selected_item(self, item: QTableWidgetItem) -> None:
+        self.table.setCurrentItem(item)
+        self.table.scrollToItem(item)
+
+    def get_selected_item(self) -> ModelT | None:
+        row = self.table.currentRow()
+        return self.get_data(self.table.item(row, 0))
+
+    def set_data(self, item: QTableWidgetItem, instance: ModelT) -> None:
+        item.setData(Qt.ItemDataRole.UserRole, instance)
+
+    def get_data(self, item: QTableWidgetItem | None) -> ModelT | None:
+        if item is None:
+            return None
+        return item.data(Qt.ItemDataRole.UserRole)
 
 
 class BaseTreeTab(BaseTab, Generic[ModelT]):
     def __init__(self):
         super().__init__()
         self._expansion_status: dict[ModelT, bool] = {}
-        self._init_tree()
+        self.__init_ui()
 
-    def _init_tree(self) -> None:
-        self.tree = QTreeWidget()
+    def __init_ui(self) -> None:
+        self.tree = QTreeWidget(self)
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(['Name', 'Details'])
         self.tree.setColumnWidth(0, 200)
@@ -117,9 +174,9 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
 class BaseSortableTreeTab(BaseTreeTab[ModelT]):
     def __init__(self):
         super().__init__()
-        self._init_sort_buttons()
+        self.__init_ui()
 
-    def _init_sort_buttons(self) -> None:
+    def __init_ui(self) -> None:
         self.up_btn = QPushButton('Move up')
         self.down_btn = QPushButton('Move down')
 
