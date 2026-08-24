@@ -62,7 +62,7 @@ class DeleteValidator:
 
 def validate_sequence(instance: Reference) -> list[str]:
     messages = []
-    if unknown_nucleotides := set(instance.sequence).difference(set(['A', 'T', 'C', 'G'])):
+    if unknown_nucleotides := set(instance.sequence).difference({'A', 'T', 'C', 'G'}):
         messages.append(f'sequence contains unknown nucleotides "{", ".join(unknown_nucleotides)}"')
     return messages
 
@@ -76,6 +76,17 @@ def validate_annotation_positions(instance: Annotation) -> list[str]:
         messages.append(f'end position must be between 1 and {max_value}')
     if not instance.start < instance.end:
         messages.append('start position must be lower than end position')
+    return messages
+
+
+def validate_mutation_mappings(instance: Mutation) -> list[str]:
+    messages = []
+    if instance.protein is None:
+        return
+    valid_references = instance.protein.segment.references
+    for mapping in instance.mappings:
+        if mapping.reference not in valid_references:
+            messages.append(f'mapping has reference {mapping.reference} that is invalid.')
     return messages
 
 
@@ -145,6 +156,7 @@ VALIDATION_POLICIES: dict[type[BaseModel], ValidatePolicy] = {
     Mutation: ValidatePolicy(
         not_null_unique={'Name': 'name'},
         not_null={'Type': 'type', 'Protein': 'protein'},
+        extra_validators={'Consistency': validate_mutation_mappings},
     ),
     Mapping: ValidatePolicy(
         not_null={'Mutation': 'mutation', 'Reference': 'reference'},

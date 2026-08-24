@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QPushButton
 
 from flumut.flumutdb.models import Protein
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
-from flumut_db_editor.gui.forms.mapping_form import MappingForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
 from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
 from flumut_db_editor.models import Mapping, Mutation
@@ -59,7 +58,7 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
         if isinstance(instance, Mutation):
             form = MutationForm(self, instance)
         elif isinstance(instance, Mapping):
-            form = MappingForm(self, instance)
+            form = MutationForm(self, instance.mutation)
         else:
             return
 
