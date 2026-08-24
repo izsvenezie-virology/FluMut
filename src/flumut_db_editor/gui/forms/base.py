@@ -24,10 +24,10 @@ class BaseForm(QDialog):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.__init_ui()
 
-    def _init_ui(self) -> None:
+    def __init_ui(self) -> None:
         self.resize(400, 300)
-        self.setWindowTitle(self.form_title())
 
         self.form_layout = QVBoxLayout()
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -91,12 +91,12 @@ class TransactionalForm(BaseForm, Generic[ModelT]):
 
     def __init__(self, parent: QWidget | None = None, instance: ModelT | None = None) -> None:
         super().__init__(parent)
-        self._init_state(instance)
-        self._init_ui()
-
-    def _init_state(self, instance: ModelT | None) -> None:
         self.instance: ModelT = self.model.get_by_id(instance.get_id()) if instance is not None else self.model()
         self.validator = DataValidator(self.instance)
+        self.__init_ui()
+
+    def __init_ui(self) -> None:
+        self.setWindowTitle(self.form_title())
 
     def form_title(self) -> str:
         return f'New {self.model.__name__}' if self.instance.get_id() is None else f'Edit {self.instance}'
@@ -123,8 +123,8 @@ class MasterDetailForm(TransactionalForm[ModelT], Generic[ModelT, RelatedT]):
     saved first, so related rows can reference it even when it is new.
     """
 
-    def _init_state(self, instance: ModelT | None) -> None:
-        super()._init_state(instance)
+    def __init__(self, parent: QWidget | None = None, instance: ModelT | None = None) -> None:
+        super().__init__(parent, instance)
         self.related: list[RelatedT] = list(self.load_related())
         self.removed_related: list[RelatedT] = []
 
@@ -152,7 +152,10 @@ class MultiInstanceForm(BaseForm, Generic[ModelT]):
         self.instances: list[ModelT] = [
             self.model.get_by_id(instance.get_id()) if instance.get_id() is not None else instance for instance in instances
         ]
-        self._init_ui()
+        self.__init_ui()
+
+    def __init_ui(self) -> None:
+        self.setWindowTitle(self.form_title())
 
     def form_title(self) -> str:
         return f'Edit {len(self.instances)} {self.model.__name__} instances'

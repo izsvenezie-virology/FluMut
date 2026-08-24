@@ -22,16 +22,15 @@ class MutationForm(MasterDetailForm[Mutation, Mapping]):
     model = Mutation
 
     def __init__(self, parent: QWidget | None = None, instance: Mutation | None = None, protein: Protein | None = None) -> None:
+        super().__init__(parent, instance)
         self.force_protein = protein
         if instance:
             self.force_protein = instance.protein
 
         self._mapping_editors: list[tuple[Mapping, QSpinBox, QLineEdit, QPushButton]] = []
+        self.__init_ui()
 
-        super().__init__(parent, instance)
-
-    def _init_ui(self):
-        super()._init_ui()
+    def __init_ui(self):
         self.setMinimumSize(560, 560)
 
         self.name_field = QLineEdit()

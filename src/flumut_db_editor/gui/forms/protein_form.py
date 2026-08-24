@@ -8,14 +8,13 @@ class ProteinForm(TransactionalForm[Protein]):
     model = Protein
 
     def __init__(self, parent: QWidget | None = None, instance: Protein | None = None, segment: Segment | None = None) -> None:
+        super().__init__(parent, instance)
         self.force_segment = segment
         if instance:
             self.force_segment = instance.segment
+        self.__init_ui()
 
-        super().__init__(parent, instance)
-
-    def _init_ui(self) -> None:
-        super()._init_ui()
+    def __init_ui(self) -> None:
         self.resize(480, 120)
 
         self.name_field = QLineEdit()

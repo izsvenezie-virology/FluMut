@@ -14,17 +14,15 @@ class AnnotationForm(TransactionalForm[Annotation]):
         instance: Annotation | None = None,
         protein: Protein | None = None,
     ) -> None:
+        super().__init__(parent, instance)
         self.force_reference = reference
         self.force_protein = protein
         if instance:
             self.force_reference = instance.reference
             self.force_protein = instance.protein
+        self.__init_ui()
 
-        super().__init__(parent, instance)
-
-    def _init_ui(self):
-        super()._init_ui()
-
+    def __init_ui(self):
         self.reference_combo = QComboBox()
         self.protein_combo = QComboBox()
         self.start_field = QSpinBox()

@@ -16,14 +16,13 @@ class ReferenceForm(TransactionalForm[Reference]):
     model = Reference
 
     def __init__(self, parent: QWidget | None = None, instance: Reference | None = None, segment: Segment | None = None) -> None:
+        super().__init__(parent, instance)
         self.force_segment = segment
         if instance:
             self.force_segment = instance.segment
+        self.__init_ui()
 
-        super().__init__(parent, instance)
-
-    def _init_ui(self):
-        super()._init_ui()
+    def __init_ui(self):
         self.resize(1000, 500)
 
         self.name_field = QLineEdit()

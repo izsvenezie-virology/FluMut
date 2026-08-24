@@ -1,5 +1,3 @@
-from PySide6.QtWidgets import QPushButton
-
 from flumut.flumutdb.models import Protein
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
@@ -13,11 +11,8 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.add_mapping_btn = QPushButton('Add mapping')
-        self.add_mapping_btn.clicked.connect(self.on_add_mapping_requested)
 
         self.new_btn.setText('New mutation')
-        self.header.insertWidget(1, self.add_mapping_btn)
 
         self.refresh()
 
@@ -49,9 +44,6 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
 
             self.update_order(lst)
             self.refresh(form.instance)
-
-    def on_add_mapping_requested(self):
-        pass
 
     def on_edit_requested(self):
         instance = self.get_selected_instance()
