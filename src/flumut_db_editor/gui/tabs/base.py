@@ -14,11 +14,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from flumut.flumutdb.models import BaseModel
+from flumut.flumutdb.models import BaseModel, SortableModel
 from flumut_db_editor.gui.forms.base import EvidenceTermsForm
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 
 ModelT = TypeVar('ModelT', bound=BaseModel)
+ModelS = TypeVar('ModelS', bound=SortableModel)
 
 
 class BaseTab(QWidget):
@@ -208,7 +209,7 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
         return item.data(0, Qt.ItemDataRole.UserRole)
 
 
-class BaseSortableTreeTab(BaseTreeTab[ModelT]):
+class BaseSortableTreeTab(BaseTreeTab[ModelS]):
     def __init__(self):
         super().__init__()
         self.__init_ui()
@@ -224,7 +225,7 @@ class BaseSortableTreeTab(BaseTreeTab[ModelT]):
         self.up_btn.clicked.connect(self.on_move_up_requested)
         self.down_btn.clicked.connect(self.on_move_down_requested)
 
-    def get_sorted_list(self, instance: ModelT) -> Sequence[ModelT]:
+    def get_sorted_list(self, instance: ModelS) -> Sequence[ModelS]:
         raise NotImplementedError('Get sorted list action must be implemented in child classes.')
 
     def on_move_up_requested(self) -> None:
@@ -250,7 +251,7 @@ class BaseSortableTreeTab(BaseTreeTab[ModelT]):
         self.update_order(list_to_move)
         self.refresh(instance)
 
-    def update_order(self, sorted_list: Sequence[ModelT]) -> None:
+    def update_order(self, sorted_list: Sequence[ModelS]) -> None:
         for index, instance in enumerate(sorted_list):
-            instance.order = index + 1  # type: ignore
+            instance.order = index + 1
             instance.save()

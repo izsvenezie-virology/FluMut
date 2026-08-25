@@ -1,7 +1,6 @@
 from collections import defaultdict
 from enum import Enum
 from functools import total_ordering
-from typing import List
 
 from peewee import (
     DeferredThroughModel,
@@ -29,9 +28,19 @@ BaseModel._meta.database = DATABASE_PROXY  # type: ignore[attr-defined]
 
 
 @total_ordering
-class Segment(BaseModel):
-    name: str = TextField(unique=True)  # type: ignore[assignment]
+class SortableModel(BaseModel):
     order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
+
+    @property
+    def sort_key(self) -> tuple[int, ...]:
+        return (self.order,)
+
+    def __lt__(self, other: 'SortableModel') -> bool:
+        return self.sort_key < other.sort_key
+
+
+class Segment(SortableModel):
+    name: str = TextField(unique=True)  # type: ignore[assignment]
 
     proteins: list['Protein']
     references: list['Reference']
@@ -40,9 +49,6 @@ class Segment(BaseModel):
         return str(self.name)
 
     _cache: list['Segment'] = []
-
-    def __lt__(self, other: 'Segment') -> bool:
-        return self.order < other.order
 
     @staticmethod
     def all(force_reload: bool = False) -> list['Segment']:
@@ -78,11 +84,9 @@ class Segment(BaseModel):
         Segment._cache = []
 
 
-@total_ordering
-class Protein(BaseModel):
+class Protein(SortableModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='proteins', on_delete='RESTRICT')  # type: ignore[assignment]
-    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mutations: list['Mutation']
@@ -90,31 +94,31 @@ class Protein(BaseModel):
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
-    def __lt__(self, other: 'Protein') -> bool:
-        return self.segment <= other.segment and self.order < other.order
+    @property
+    def sort_key(self) -> tuple[int, ...]:
+        return self.segment.sort_key + (self.order,)
 
 
-@total_ordering
-class Reference(BaseModel):
+class Reference(SortableModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     segment: Segment = ForeignKeyField(Segment, backref='references', on_delete='RESTRICT')  # type: ignore[assignment]
     sequence: str = TextField(unique=True)  # type: ignore[assignment]
     source: str = TextField(unique=True)  # type: ignore[assignment]
-    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     annotations: list['Annotation']
     mappings: list['Mapping']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mappings_by_protein: dict['Protein', list['Mapping']] = defaultdict(list)
-        self.annotations_by_protein: dict['Protein', list['Annotation']] = defaultdict(list)
+        self.mappings_by_protein: dict[Protein, list[Mapping]] = defaultdict(list)
+        self.annotations_by_protein: dict[Protein, list[Annotation]] = defaultdict(list)
 
     def __str__(self) -> str:
         return f'{self.segment}/{self.name}'
 
-    def __lt__(self, other: 'Reference') -> bool:
-        return self.segment <= other.segment and self.order < other.order
+    @property
+    def sort_key(self) -> tuple[int, ...]:
+        return self.segment.sort_key + (self.order,)
 
     _cache: list['Reference'] = []
 
@@ -135,27 +139,24 @@ class Reference(BaseModel):
         Reference._cache = []
 
 
-@total_ordering
-class Annotation(BaseModel):
+class Annotation(SortableModel):
     protein: Protein = ForeignKeyField(Protein, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
     reference: Reference = ForeignKeyField(Reference, backref='annotations', on_delete='CASCADE')  # type: ignore[assignment]
-    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
     start: int = IntegerField()  # type: ignore[assignment]
     end: int = IntegerField()  # type: ignore[assignment]
 
     def __str__(self) -> str:
         return f'{self.protein} @ {self.reference}: {self.start}-{self.end}'
 
-    def __lt__(self, other: 'Annotation') -> bool:
-        return self.protein <= other.protein and self.order < other.order
+    @property
+    def sort_key(self) -> tuple[int, ...]:
+        return self.reference.sort_key + (self.protein.order, self.order)
 
 
-@total_ordering
-class Mutation(BaseModel):
+class Mutation(SortableModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     type: str = TextField(choices=[(t.value, t.name) for t in MutationType])  # type: ignore[assignment]
     protein: Protein = ForeignKeyField(Protein, backref='mutations', on_delete='RESTRICT')  # type: ignore[assignment]
-    order: int = IntegerField(default=1_000_000)  # type: ignore[assignment]
 
     mappings: list['Mapping']
     markers: list['Marker']
@@ -163,8 +164,9 @@ class Mutation(BaseModel):
     def __str__(self) -> str:
         return str(self.name)
 
-    def __lt__(self, other: 'Mutation') -> bool:
-        return self.protein <= other.protein and self.order < other.order
+    @property
+    def sort_key(self) -> tuple[int, ...]:
+        return self.protein.sort_key + (self.order,)
 
 
 class Mapping(BaseModel):
@@ -236,7 +238,7 @@ class Marker(BaseModel):
         mutations = ', '.join(str(m) for m in self.mutations)
         return f'Marker({mutations})'
 
-    _cache: List['Marker'] = []
+    _cache: list['Marker'] = []
 
     @staticmethod
     def all(force_reload: bool = False) -> list['Marker']:
