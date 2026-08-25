@@ -5,6 +5,7 @@ from flumut.core.io.input import FastaSequence
 from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.models import Alignment, Nucleotide
 from flumut.flumutdb import Reference
+from flumut.flumutdb.loader import load_references
 
 _aligner = PairwiseAligner()
 _aligner.wildcard = WILDCARD
@@ -29,16 +30,16 @@ def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
         A non-empty list of Reference objects to consider during alignment.
     """
     if not candidate_hint:
-        return Reference.all()
+        return load_references()
 
     candidates: list[Reference] = []
 
-    for reference in Reference.all():
+    for reference in load_references():
         if _is_candidate_reference(reference, candidate_hint):
             candidates.append(reference)
 
     if not candidates:
-        candidates = Reference.all()
+        candidates = load_references()
 
     return candidates
 

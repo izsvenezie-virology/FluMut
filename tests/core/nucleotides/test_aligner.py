@@ -15,9 +15,9 @@ def _make_reference(name: str, segment_name: str) -> MagicMock:
 
 
 @pytest.fixture
-def mock_all():
-    with patch('flumut.core.nucleotides.aligner.Reference') as mock_ref_class:
-        yield mock_ref_class.all
+def mock_load_references():
+    with patch('flumut.core.nucleotides.aligner.load_references') as mock_load:
+        yield mock_load
 
 
 # ---------------------------------------------------------------------------
@@ -25,43 +25,43 @@ def mock_all():
 # ---------------------------------------------------------------------------
 
 
-def test_none_hint_returns_all_references(mock_all) -> None:
+def test_none_hint_returns_all_references(mock_load_references) -> None:
     refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_all.return_value = refs
+    mock_load_references.return_value = refs
     assert select_candidate_references(None) is refs
 
 
-def test_empty_string_hint_returns_all_references(mock_all) -> None:
+def test_empty_string_hint_returns_all_references(mock_load_references) -> None:
     refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_all.return_value = refs
+    mock_load_references.return_value = refs
     assert select_candidate_references('') is refs
 
 
-def test_hint_matches_nothing_returns_all_references(mock_all) -> None:
+def test_hint_matches_nothing_returns_all_references(mock_load_references) -> None:
     refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_all.return_value = refs
+    mock_load_references.return_value = refs
     assert select_candidate_references('UNKNOWN') is refs
 
 
-def test_hint_matches_reference_name(mock_all) -> None:
+def test_hint_matches_reference_name(mock_load_references) -> None:
     pb2 = _make_reference('PB2_ref', 'PB2')
     pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_all.return_value = [pb2, pb1]
+    mock_load_references.return_value = [pb2, pb1]
     assert select_candidate_references('PB2_ref') == [pb2]
 
 
-def test_hint_matches_segment_name(mock_all) -> None:
+def test_hint_matches_segment_name(mock_load_references) -> None:
     pb2 = _make_reference('PB2_ref', 'PB2')
     pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_all.return_value = [pb2, pb1]
+    mock_load_references.return_value = [pb2, pb1]
     assert select_candidate_references('PB2') == [pb2]
 
 
-def test_hint_matches_multiple_references_in_same_segment(mock_all) -> None:
+def test_hint_matches_multiple_references_in_same_segment(mock_load_references) -> None:
     pb2_a = _make_reference('PB2_ref_A', 'PB2')
     pb2_b = _make_reference('PB2_ref_B', 'PB2')
     pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_all.return_value = [pb2_a, pb2_b, pb1]
+    mock_load_references.return_value = [pb2_a, pb2_b, pb1]
     assert select_candidate_references('PB2') == [pb2_a, pb2_b]
 
 

@@ -1,6 +1,6 @@
 from flumut.core.analysis.models import Analysis, MarkerScan, PositionScan, ProteinAlignment
 from flumut.core.logger import LOGGER
-from flumut.flumutdb import Marker
+from flumut.flumutdb.loader import load_markers
 
 
 def analyse(analysis: Analysis, relaxed: bool = True) -> None:
@@ -80,7 +80,7 @@ def scan_markers(positions: list[PositionScan], relaxed: bool) -> list[MarkerSca
     markers = []
     mapping = {pos.mutation: pos for pos in positions}
 
-    for marker in Marker.all():
+    for marker in load_markers():
         marker_positions = []
         for mutation in marker.mutations:
             pos = mapping.get(mutation, None)

@@ -9,7 +9,6 @@ from peewee import (
     ManyToManyField,
     Model,
     TextField,
-    prefetch,
 )
 
 from flumut.core.globals import DATABASE_PROXY, DB_MAJOR_VERSION
@@ -48,41 +47,6 @@ class Segment(SortableModel):
     def __str__(self) -> str:
         return str(self.name)
 
-    _cache: list['Segment'] = []
-
-    @staticmethod
-    def all(force_reload: bool = False) -> list['Segment']:
-        """Return all Segment instances, cached after first call.
-
-        Args:
-            force_reload: Re-fetch from the database even if already cached.
-        """
-        if not Segment._cache or force_reload:
-            Segment._cache = list(
-                prefetch(
-                    Segment.select(),
-                    Reference.select(),
-                    Protein.select(),
-                    Annotation.select(),
-                    Mutation.select(),
-                    Mapping.select(),
-                )
-            )
-            ref_by_id = {ref.get_id(): ref for seg in Segment._cache for ref in seg.references}
-            for seg in Segment._cache:
-                for protein in seg.proteins:
-                    for mutation in protein.mutations:
-                        for mapping in mutation.mappings:
-                            ref_by_id[mapping.reference_id].mappings_by_protein[protein].append(mapping)  # type: ignore[attr-defined]
-                    for annotation in protein.annotations:
-                        ref_by_id[annotation.reference_id].annotations_by_protein[protein].append(annotation)  # type: ignore[attr-defined]
-        return Segment._cache
-
-    @staticmethod
-    def clear_cache():
-        """Clear the Segment cache, forcing a reload on next access."""
-        Segment._cache = []
-
 
 class Protein(SortableModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
@@ -119,24 +83,6 @@ class Reference(SortableModel):
     @property
     def sort_key(self) -> tuple[int, ...]:
         return self.segment.sort_key + (self.order,)
-
-    _cache: list['Reference'] = []
-
-    @staticmethod
-    def all(force_reload: bool = False) -> list['Reference']:
-        """Return all Reference instances, cached after first call.
-
-        Args:
-            force_reload: Re-fetch from the database even if already cached.
-        """
-        if not Reference._cache or force_reload:
-            Reference._cache = [ref for seg in Segment.all() for ref in seg.references]
-        return Reference._cache
-
-    @staticmethod
-    def clear_cache():
-        """Clear the Reference cache, forcing a reload on next access."""
-        Reference._cache = []
 
 
 class Annotation(SortableModel):
@@ -237,35 +183,6 @@ class Marker(BaseModel):
     def __str__(self) -> str:
         mutations = ', '.join(str(m) for m in self.mutations)
         return f'Marker({mutations})'
-
-    _cache: list['Marker'] = []
-
-    @staticmethod
-    def all(force_reload: bool = False) -> list['Marker']:
-        """Returns a list of all Marker instances, cached after first call.
-
-        Args:
-            force_reload: Re-fetch from the database even if already cached.
-        """
-        if not Marker._cache or force_reload:
-            Marker._cache = list(
-                prefetch(
-                    Marker.select(),
-                    Marker.mutations.through_model.select(),  # type: ignore[union-attr]
-                    Mutation.select(),
-                    Evidence.select(),
-                    Paper.select(),
-                    Effect.select(),
-                    Host.select(),
-                    Subtype.select(),
-                )
-            )
-        return Marker._cache
-
-    @staticmethod
-    def clear_cache():
-        """Clear the Marker cache, forcing a reload on next access."""
-        Marker._cache = []
 
 
 class MarkerMutation(Model):
