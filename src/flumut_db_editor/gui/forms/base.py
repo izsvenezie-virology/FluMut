@@ -5,6 +5,7 @@ from peewee import DatabaseError
 from PySide6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
 from flumut.core.globals import DATABASE_PROXY
+from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel
 from flumut_db_editor.gui.dialogs import DataErrorDialog, ErrorDialog
 from flumut_db_editor.validator import DataValidator
@@ -62,6 +63,7 @@ class BaseForm(QDialog):
             name = type(target).__name__ if target is not None else 'data'
             ErrorDialog.show_error(self, 'Save failed', f'Could not save {name}.', str(error))
             return False
+        loader.clear()
         return True
 
     def validators(self) -> Iterable[DataValidator]:

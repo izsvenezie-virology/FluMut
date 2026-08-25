@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel, SortableModel
 from flumut_db_editor.gui.forms.base import EvidenceTermsForm
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
@@ -255,3 +256,4 @@ class BaseSortableTreeTab(BaseTreeTab[ModelS]):
         for index, instance in enumerate(sorted_list):
             instance.order = index + 1
             instance.save()
+        loader.clear()

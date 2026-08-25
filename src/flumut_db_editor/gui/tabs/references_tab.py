@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 from PySide6.QtWidgets import QPushButton
 
+from flumut.flumutdb.loader import load_segments
 from flumut.flumutdb.models import Protein, Segment
 from flumut_db_editor.gui.forms.annotation_form import AnnotationForm
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
@@ -26,7 +27,7 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
 
     def refresh(self, selected=None) -> None:
         self.tree.clear()
-        segments: Sequence[Segment] = sorted(Segment.select())
+        segments: Sequence[Segment] = sorted(load_segments())
         for segment in segments:
             segment_item = self.create_item(
                 segment, [f'Segment: {segment.name}', f'{len(segment.proteins)} proteins, {len(segment.references)} references']
@@ -43,8 +44,8 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
                 if reference == selected:
                     self.set_selected_item(reference_item)
 
-                for protein in sorted({a.protein for a in reference.annotations}):
-                    annotations = self.get_annotations(reference, protein)
+                for protein in sorted(reference.annotations_by_protein):
+                    annotations = reference.annotations_by_protein[protein]
                     if protein not in self._expansion_status:
                         self._expansion_status[protein] = True
                     protein_item = self.create_item(
@@ -102,8 +103,9 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
             self.refresh()
 
     def get_reference_description_text(self, reference: Reference) -> str:
-        missing_annotated_proteins = {a.protein for a in reference.annotations} - set(reference.segment.proteins)
-        message = f'{len(reference.sequence)} bp, {len(reference.mappings)} mapped mutations'
+        missing_annotated_proteins = set(reference.annotations_by_protein) - set(reference.segment.proteins)
+        mapped_mutations = sum(len(mappings) for mappings in reference.mappings_by_protein.values())
+        message = f'{len(reference.sequence)} bp, {mapped_mutations} mapped mutations'
         if missing_annotated_proteins:
             message = f'⚠ Missing annotation for protein(s) {missing_annotated_proteins} - {message}'
         return message

@@ -1,3 +1,4 @@
+from flumut.flumutdb.loader import load_segments
 from flumut.flumutdb.models import Protein
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
@@ -18,7 +19,7 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
 
     def refresh(self, selected=None):
         self.tree.clear()
-        proteins: list[Protein] = sorted(Protein.select())
+        proteins: list[Protein] = sorted(protein for segment in load_segments() for protein in segment.proteins)
         for protein in proteins:
             protein_item = self.create_item(protein, [f'Protein {protein}', f'{len(protein.mutations)} mutations'])
             if protein == selected:

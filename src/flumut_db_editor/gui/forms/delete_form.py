@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from flumut.core.globals import DATABASE_PROXY
+from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel
 from flumut_db_editor.gui.dialogs import ErrorDialog, ForeignKeyViolationDialog
 from flumut_db_editor.validator import DeleteValidator
@@ -69,6 +70,7 @@ class DeleteForm(QDialog):
         except DatabaseError as error:
             ErrorDialog.show_error(self, 'Deletion failed', f'Could not delete {type(self.instance).__name__}.', str(error))
             return False
+        loader.clear()
         return True
 
     @staticmethod

@@ -3,6 +3,7 @@ from typing import Callable
 
 from peewee import Model
 
+from flumut.flumutdb import loader
 from flumut.flumutdb.models import (
     Annotation,
     Effect,
@@ -69,10 +70,6 @@ POLICIES: dict[type[Model], DeletePolicy] = {
     Evidence: DeletePolicy(),
 }
 
-# Models that maintain a module-level cache to invalidate after any write.
-_CACHED_MODELS = (Segment, Reference, Marker)
-
-
 def delete(instance: Model) -> None:
     """Delete a record, blocking if protected dependents exist.
 
@@ -106,5 +103,5 @@ def _blocking_dependents(instance: Model, policy: DeletePolicy) -> dict[str, lis
 
 
 def _clear_caches() -> None:
-    for model in _CACHED_MODELS:
-        model.clear_cache()
+    """Invalidate the loaded model graph after any write."""
+    loader.clear()

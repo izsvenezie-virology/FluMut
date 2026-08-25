@@ -22,13 +22,8 @@ def whole_workflow(
     if not fasta_files:
         raise Exception("Missing argument 'FASTA_FILES'")
 
-    LOGGER.info('Loading alignment data...')
+    LOGGER.info('Loading data...')
     loader.load_segments()
-
-    LOGGER.info('Loading markers data...')
-    loader.load_markers()
-
-    LOGGER.info('Starting analysis...')
     analysis = Analysis()
     pattern = re.compile(name_regex)
 
