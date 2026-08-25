@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
 )
 
 from flumut.flumutdb.models import BaseModel
+from flumut_db_editor.gui.forms.base import EvidenceTermsForm
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 
 ModelT = TypeVar('ModelT', bound=BaseModel)
 
@@ -111,6 +113,41 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
         if item is None:
             return None
         return item.data(Qt.ItemDataRole.UserRole)
+
+
+class EvidenceTermsTab(BaseTableTab[ModelT]):
+    model: type[ModelT]
+    form: type[EvidenceTermsForm]
+
+    def __init__(self):
+        super().__init__()
+        self.load_data()
+
+    def load_data(self):
+        effects: list[ModelT] = list(self.model.select())
+        rows = {}
+        for effect in effects:
+            rows[effect] = [effect.name, effect.notes or '']  # pyright: ignore[reportAttributeAccessIssue]
+        self.populate_table(rows)
+        self.table.resizeColumnsToContents()
+
+    def on_new_requested(self):
+        form = self.form(self, None)
+        if form.exec():
+            self.load_data()
+
+    def on_edit_requested(self):
+        instance = self.get_selected_item()
+        if instance is None:
+            return
+        form = self.form(self, instance)
+        if form.exec():
+            self.load_data()
+
+    def on_delete_requested(self):
+        instance = self.get_selected_item()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
+            self.load_data()
 
 
 class BaseTreeTab(BaseTab, Generic[ModelT]):

@@ -170,7 +170,7 @@ class MultiInstanceForm(BaseForm, Generic[ModelT]):
                 setattr(instance, field, value)
 
 
-class NameForm(TransactionalForm[ModelT]):
+class EvidenceTermsForm(TransactionalForm[ModelT]):
     def __init__(self, parent: QWidget | None = None, instance: ModelT | None = None) -> None:
         super().__init__(parent, instance)
         self.__init_ui()

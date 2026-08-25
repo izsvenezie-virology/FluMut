@@ -1,6 +1,6 @@
 from flumut.flumutdb.models import Effect
-from flumut_db_editor.gui.forms.base import NameForm
+from flumut_db_editor.gui.forms.base import EvidenceTermsForm
 
 
-class EffectForm(NameForm[Effect]):
+class EffectForm(EvidenceTermsForm[Effect]):
     model = Effect
