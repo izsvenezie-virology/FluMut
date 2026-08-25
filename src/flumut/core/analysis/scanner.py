@@ -55,8 +55,6 @@ def scan_positions(alignment: ProteinAlignment) -> list[PositionScan]:
     result = []
 
     for mapping in mappings:
-        if not mapping.is_valid():
-            continue
         index = positions.index(mapping.position)
         aa = alignment.alignment.query[index]
 

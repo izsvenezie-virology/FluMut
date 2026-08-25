@@ -125,9 +125,6 @@ class Mapping(BaseModel):
     def __str__(self) -> str:
         return f'{self.mutation} @ {self.reference} (pos {self.position}, {self.alteration})'
 
-    def is_valid(self) -> bool:
-        return self.position > 0
-
 
 class Effect(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
