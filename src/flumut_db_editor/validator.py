@@ -122,7 +122,7 @@ def validate_mapping_alteration(instance: Mapping):
 
 def validate_paper_title(instance: Paper):
     messages = []
-    titles = [paper.title.lower() for paper in Paper.get() if paper != instance]
+    titles = [paper.title.lower() for paper in Paper.select() if paper != instance]
     if instance.title.lower() in titles:
         messages.append('title already exists')
     return messages
@@ -173,7 +173,7 @@ VALIDATION_POLICIES: dict[type[BaseModel], ValidatePolicy] = {
     ),
     Paper: ValidatePolicy(
         not_null_unique={'Short name': 'short_name'},
-        not_null={'Authors': 'authors'},
+        not_null={'Title': 'title', 'Authors': 'authors'},
         unique={'DOI': 'doi'},
         extra_validators={'Title': validate_paper_title},
     ),

@@ -83,15 +83,18 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
             return self.get_data(item)
         return None
 
-    def populate_table(self, rows: dict[ModelT, Sequence[str]]) -> None:
+    def populate_table(self, rows: dict[ModelT, Sequence[str]], selected: ModelT | None = None) -> None:
         self.table.clearContents()
         self.table.setRowCount(len(rows))
         for row, (instance, texts) in enumerate(rows.items()):
-            items = self.create_item(instance, texts)
+            items = self.create_row(instance, texts)
             for col, item in enumerate(items):
                 self.table.setItem(row, col, item)
+            if instance == selected:
+                self.table.selectRow(row)
+                self.table.scrollTo(self.table.selectedIndexes()[0])
 
-    def create_item(self, instance: ModelT, texts: Sequence[str]) -> list[QTableWidgetItem]:
+    def create_row(self, instance: ModelT, texts: Sequence[str]) -> list[QTableWidgetItem]:
         row = []
         for text in texts:
             item = QTableWidgetItem(text)
@@ -123,20 +126,20 @@ class EvidenceTermsTab(BaseTableTab[ModelT]):
 
     def __init__(self):
         super().__init__()
-        self.load_data()
+        self.refresh()
 
-    def load_data(self):
-        effects: list[ModelT] = list(self.model.select())
+    def refresh(self, selected: ModelT | None = None):
+        terms: list[ModelT] = list(self.model.select())
         rows = {}
-        for effect in effects:
-            rows[effect] = [effect.name, effect.notes or '']  # pyright: ignore[reportAttributeAccessIssue]
-        self.populate_table(rows)
+        for term in terms:
+            rows[term] = [term.name, term.notes or '']  # pyright: ignore[reportAttributeAccessIssue]
+        self.populate_table(rows, selected)
         self.table.resizeColumnsToContents()
 
     def on_new_requested(self):
         form = self.form(self, None)
         if form.exec():
-            self.load_data()
+            self.refresh(form.instance)
 
     def on_edit_requested(self):
         instance = self.get_selected_item()
@@ -144,12 +147,12 @@ class EvidenceTermsTab(BaseTableTab[ModelT]):
             return
         form = self.form(self, instance)
         if form.exec():
-            self.load_data()
+            self.refresh(form.instance)
 
     def on_delete_requested(self):
         instance = self.get_selected_item()
         if instance and DeleteForm.confirm_and_delete(instance, self):
-            self.load_data()
+            self.refresh()
 
 
 class BaseTreeTab(BaseTab, Generic[ModelT]):

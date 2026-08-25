@@ -6,7 +6,7 @@ from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
 from flumut_db_editor.models import Mapping, Mutation
 
 
-class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):
+class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):  # pyright: ignore[reportInvalidTypeArguments]
     def __init__(self) -> None:
         super().__init__()
         self.__init_ui()
