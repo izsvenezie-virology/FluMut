@@ -4,8 +4,7 @@ from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE,
 from flumut.core.io.input import FastaSequence
 from flumut.core.logger import LOGGER
 from flumut.core.nucleotides.models import Alignment, Nucleotide
-from flumut.flumutdb import Reference
-from flumut.flumutdb.loader import load_references
+from flumut.flumutdb import Reference, loader
 
 _aligner = PairwiseAligner()
 _aligner.wildcard = WILDCARD
@@ -29,19 +28,16 @@ def select_candidate_references(candidate_hint: str | None) -> list[Reference]:
     Returns:
         A non-empty list of Reference objects to consider during alignment.
     """
+    references = loader.get(Reference)
     if not candidate_hint:
-        return load_references()
+        return references
 
     candidates: list[Reference] = []
 
-    for reference in load_references():
+    for reference in references:
         if _is_candidate_reference(reference, candidate_hint):
             candidates.append(reference)
-
-    if not candidates:
-        candidates = load_references()
-
-    return candidates
+    return candidates or references
 
 
 def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nucleotide:
@@ -95,6 +91,4 @@ def _is_candidate_reference(reference: Reference, candidate_hint: str) -> bool:
     """
     if reference.name == candidate_hint:
         return True
-    if reference.segment.name == candidate_hint:
-        return True
-    return False
+    return reference.segment.name == candidate_hint

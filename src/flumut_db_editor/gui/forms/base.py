@@ -63,7 +63,7 @@ class BaseForm(QDialog):
             name = type(target).__name__ if target is not None else 'data'
             ErrorDialog.show_error(self, 'Save failed', f'Could not save {name}.', str(error))
             return False
-        loader.clear()
+        loader.load()
         return True
 
     def validators(self) -> Iterable[DataValidator]:

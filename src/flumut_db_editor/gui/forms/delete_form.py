@@ -70,7 +70,7 @@ class DeleteForm(QDialog):
         except DatabaseError as error:
             ErrorDialog.show_error(self, 'Deletion failed', f'Could not delete {type(self.instance).__name__}.', str(error))
             return False
-        loader.clear()
+        loader.load()
         return True
 
     @staticmethod

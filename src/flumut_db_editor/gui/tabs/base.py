@@ -259,4 +259,4 @@ class BaseSortableTreeTab(BaseTreeTab[ModelS]):
         for index, instance in enumerate(sorted_list):
             instance.order = index + 1
             instance.save()
-        loader.clear()
+        loader.load()

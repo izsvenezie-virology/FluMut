@@ -10,7 +10,7 @@ import flumut
 from flumut.core.analysis.models import Analysis
 from flumut.core.globals import EXCEL_TEMPLATE
 from flumut.core.logger import LOGGER
-from flumut.flumutdb.models import DbVersion
+from flumut.flumutdb import DbVersion
 
 TSV_data = list[dict[str, str]]
 
@@ -158,7 +158,7 @@ def get_mutations_data(analysis: Analysis) -> TSV_data:
         A list of row dicts with ``'Sample'`` as the first key followed by one
         key per detected mutation, sorted by default position.
     """
-    mutations = sorted(list(analysis.mutations))
+    mutations = sorted(analysis.mutations)
     values = []
 
     for sample in analysis.samples.values():

@@ -1,9 +1,8 @@
-from flumut.flumutdb.loader import load_segments
-from flumut.flumutdb.models import Protein
+from flumut.flumutdb import loader
+from flumut.flumutdb.models import Mapping, Mutation, Protein
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
 from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
-from flumut_db_editor.models import Mapping, Mutation
 
 
 class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):  # pyright: ignore[reportInvalidTypeArguments]
@@ -19,7 +18,7 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):  # pyrigh
 
     def refresh(self, selected=None):
         self.tree.clear()
-        proteins: list[Protein] = sorted(protein for segment in load_segments() for protein in segment.proteins)
+        proteins: list[Protein] = sorted(loader.get(Protein))
         for protein in proteins:
             protein_item = self.create_item(protein, [f'Protein {protein}', f'{len(protein.mutations)} mutations'])
             if protein == selected:

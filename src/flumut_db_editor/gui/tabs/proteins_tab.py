@@ -2,11 +2,11 @@ from collections.abc import Sequence
 
 from PySide6.QtWidgets import QPushButton
 
+from flumut.flumutdb.models import Protein, Segment
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
 from flumut_db_editor.gui.forms.segment_form import SegmentForm
 from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
-from flumut_db_editor.models import Protein, Segment
 
 
 class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):

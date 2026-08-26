@@ -17,4 +17,4 @@ def initialize(path: str | None = None, read_only: bool = True) -> None:
     DATABASE_PROXY.initialize(new_db)
 
     DbVersion.is_compatible()
-    loader.clear()
+    loader.load()

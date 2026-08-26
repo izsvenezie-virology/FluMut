@@ -2,13 +2,12 @@ from collections.abc import Sequence
 
 from PySide6.QtWidgets import QPushButton
 
-from flumut.flumutdb.loader import load_segments
-from flumut.flumutdb.models import Protein, Segment
+from flumut.flumutdb import loader
+from flumut.flumutdb.models import Annotation, Protein, Reference, Segment
 from flumut_db_editor.gui.forms.annotation_form import AnnotationForm
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.reference_form import ReferenceForm
 from flumut_db_editor.gui.tabs.base import BaseSortableTreeTab
-from flumut_db_editor.models import Annotation, Reference
 
 
 class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotation]):
@@ -27,7 +26,7 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
 
     def refresh(self, selected=None) -> None:
         self.tree.clear()
-        segments: Sequence[Segment] = sorted(load_segments())
+        segments: Sequence[Segment] = sorted(loader.get(Segment))
         for segment in segments:
             segment_item = self.create_item(
                 segment, [f'Segment: {segment.name}', f'{len(segment.proteins)} proteins, {len(segment.references)} references']
