@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 from PySide6.QtWidgets import QPushButton
 
+from flumut.flumutdb import loader
 from flumut.flumutdb.models import Protein, Segment
 from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.protein_form import ProteinForm
@@ -25,7 +26,7 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
 
     def refresh(self, selected=None):
         self.tree.clear()
-        segments: Sequence[Segment] = sorted(Segment.select())
+        segments = sorted(loader.get(Segment))
         for segment in segments:
             segment_item = self.create_item(
                 segment, [f'Segment: {segment.name}', f'{len(segment.proteins)} proteins, {len(segment.references)} references']

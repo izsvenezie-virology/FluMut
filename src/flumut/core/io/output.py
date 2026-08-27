@@ -134,8 +134,8 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
             for (effect, subtype), papers in papers_collect.items():
                 marker_evidence = {
                     'Sample': sample.id,
-                    'Marker': scan.marker.name if scan.marker.name else ', '.join([m.name for m in scan.marker.mutations]),
-                    'Mutations in your sample': ', '.join([m.mutation.name for m in scan.detected_mutations]),
+                    'Marker': scan.marker.name,
+                    'Mutations in your sample': '; '.join([m.mutation.name for m in scan.detected_mutations]),
                     'Effect': effect,
                     'Subtype': subtype,
                     'Literature': '; '.join(papers),

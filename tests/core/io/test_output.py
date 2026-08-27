@@ -128,23 +128,6 @@ def test_get_markers_data_evidence_with_host_appends_host_to_effect() -> None:
     assert result[0]['Effect'] == 'Increased replication in Chicken'
 
 
-def test_get_markers_data_marker_without_name_joins_mutation_names() -> None:
-    evidence = _make_evidence('Some effect', 'H5N1', 'Doe2020')
-    scan = _make_scan(marker_name='', mutation_names=['I97T', 'D701N'], evidences=[evidence])
-    # Force marker.name to be falsy
-    scan.marker.name = ''
-    m1, m2 = MagicMock(), MagicMock()
-    m1.name, m2.name = 'I97T', 'D701N'
-    scan.marker.mutations = [m1, m2]
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.marker_scans = [scan]
-    analysis = MagicMock()
-    analysis.samples = {'sample1': sample}
-    result = get_markers_data(analysis)
-    assert result[0]['Marker'] == 'I97T, D701N'
-
-
 def test_get_markers_data_multiple_papers_same_effect_joined_with_semicolon() -> None:
     ev1 = _make_evidence('Increased replication', 'H5N1', 'Doe2020')
     ev2 = _make_evidence('Increased replication', 'H5N1', 'Smith2021')

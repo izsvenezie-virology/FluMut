@@ -172,25 +172,24 @@ MarkerMutationThrough = DeferredThroughModel()
 
 
 class Marker(BaseModel):
-    name: str | None = TextField(unique=True, null=True)  # type: ignore[assignment]
+    name: str = TextField(unique=True)  # type: ignore[assignment]
     mutations: list[Mutation] = ManyToManyField(Mutation, backref='markers', through_model=MarkerMutationThrough)  # type: ignore[assignment]
 
     evidences: list['Evidence']
 
     def __str__(self) -> str:
-        mutations = ', '.join(str(m) for m in self.mutations)
-        return f'Marker({mutations})'
+        return self.name
 
 
-class MarkerMutation(Model):
+class MarkerMutation(BaseModel):
     """Through model for the Marker <-> Mutation many-to-many relation.
 
     Asymmetric delete policy: removing a Marker cascades away its links,
     while a Mutation cannot be removed while still referenced by a Marker.
     """
 
-    marker = ForeignKeyField(Marker, on_delete='CASCADE')
-    mutation = ForeignKeyField(Mutation, on_delete='RESTRICT')
+    marker: Marker = ForeignKeyField(Marker, on_delete='CASCADE')  # type: ignore[assignment]
+    mutation: Mutation = ForeignKeyField(Mutation, on_delete='RESTRICT')  # type: ignore[assignment]
 
     class Meta:
         database = DATABASE_PROXY

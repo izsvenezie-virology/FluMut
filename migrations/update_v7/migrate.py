@@ -18,10 +18,10 @@ from collections import defaultdict
 from csv import DictReader
 from pathlib import Path
 
-from peewee import SqliteDatabase  # noqa: E402
+from peewee import SqliteDatabase
 
 from flumut.core.globals import DATABASE_PROXY
-from flumut.flumutdb.models import (  # noqa: E402
+from flumut.flumutdb.models import (
     Annotation,
     DbVersion,
     Effect,
@@ -170,7 +170,7 @@ def main() -> None:
     new_db = SqliteDatabase(str(output_path), pragmas={'foreign_keys': 1})
     DATABASE_PROXY.initialize(new_db)
 
-    MarkerMutation = Marker.mutations.get_through_model()
+    MarkerMutation = Marker.mutations.get_through_model()  # pyright: ignore[reportAttributeAccessIssue]
     new_db.create_tables(
         [
             Segment,
@@ -225,7 +225,7 @@ def main() -> None:
             ref.order = ref.get_id()
             ref.save()
             ref_map[old_name] = ref
-            ref_map[new_name] = ref
+            ref_map[new_name] = ref  # pyright: ignore[reportArgumentType]
 
         for seg_name, refs in new_refs.items():
             for ref_data in refs:
@@ -242,7 +242,7 @@ def main() -> None:
         # ── 7. Annotations (original + new-ref annotations) ───────────────────
         for row in src.execute('SELECT protein_name, reference_name, start, end FROM annotations'):
             ref_name = REF_RENAMES.get(row['reference_name'], row['reference_name'])
-            ref = ref_map.get(ref_name)
+            ref = ref_map.get(ref_name)  # pyright: ignore[reportArgumentType]
             prot = prot_map.get(row['protein_name'])
             if ref and prot:
                 ann = Annotation.create(protein=prot, reference=ref, start=row['start'], end=row['end'])
@@ -292,7 +292,7 @@ def main() -> None:
             if mut is None:
                 continue  # deleted mutation (NA-5:D199G)
             ref_name = REF_RENAMES.get(row['reference_name'], row['reference_name'])
-            ref = ref_map.get(ref_name)
+            ref = ref_map.get(ref_name)  # pyright: ignore[reportArgumentType]
             if ref is None:
                 continue
             Mapping.create(
@@ -425,17 +425,43 @@ def main() -> None:
         for alias, keeper in alias_to_keeper.items():
             paper_map[alias] = paper_map[keeper]
 
-        # ── 12. Markers ───────────────────────────────────────────────────────
-        marker_map: dict[int, Marker] = {}  # old id → Marker
-        for row in src.execute('SELECT id, notes FROM markers'):
-            marker_map[row['id']] = Marker.create(notes=row['notes'])
-
-        # ── 13. Marker↔Mutation M2M ───────────────────────────────────────────
+        # ── 12. Markers + Marker↔Mutation M2M ─────────────────────────────────
+        # v7 requires a unique marker name, which v6 had no column for, so each
+        # marker is named after its own mutations joined by "; ".  Two knock-on
+        # effects of that rule:
+        #   * A marker with no mutations cannot be named.  The single v6 case
+        #     (id 351, "A(H1N1)pdm09 WHO") has no evidence either, so it is
+        #     dropped rather than given a placeholder name.
+        #   * Two v6 markers can end up with the same mutation set once the
+        #     ref-AA is stripped (E186V and T186V both become HA1:186V), which
+        #     the unique name would reject.  A marker *is* its set of mutations,
+        #     so they are merged and every evidence row of both is routed to the
+        #     survivor, mirroring how duplicate papers are handled above.
+        mutations_by_marker: dict[int, list[Mutation]] = {}
         for row in src.execute('SELECT marker_id, mutation_name FROM markers_mutations'):
             mut = mut_map.get(row['mutation_name'])
-            marker = marker_map.get(row['marker_id'])
-            if mut and marker:
-                marker.mutations.add(mut)
+            if mut is None:
+                continue  # deleted mutation (NA-5:D199G)
+            mutations = mutations_by_marker.setdefault(row['marker_id'], [])
+            if mut not in mutations:
+                mutations.append(mut)  # two old names can collapse onto one mutation
+
+        marker_map: dict[int, Marker] = {}  # old id → Marker (merged ids share one)
+        marker_by_name: dict[str, Marker] = {}
+        for row in src.execute('SELECT id, notes FROM markers'):
+            mutations = mutations_by_marker.get(row['id'])
+            if not mutations:
+                continue  # unnameable and unreferenced
+            name = '; '.join(mutation.name for mutation in mutations)
+            marker = marker_by_name.get(name)
+            if marker is None:
+                marker = Marker.create(name=name, notes=row['notes'])
+                marker.mutations.add(mutations)
+                marker_by_name[name] = marker
+            elif row['notes'] and row['notes'] != marker.notes:
+                marker.notes = f'{marker.notes}\n{row["notes"]}' if marker.notes else row['notes']
+                marker.save()
+            marker_map[row['id']] = marker
 
         # ── 14. Evidence ──────────────────────────────────────────────────────
         subtype_map: dict[str, Subtype] = {}

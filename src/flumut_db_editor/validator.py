@@ -178,7 +178,7 @@ VALIDATION_POLICIES: dict[type[BaseModel], ValidatePolicy] = {
         extra_validators={'Title': validate_paper_title},
     ),
     Marker: ValidatePolicy(
-        unique={'Name': 'name'},
+        not_null_unique={'Name': 'name'},
     ),
     Evidence: ValidatePolicy(
         not_null={'Marker': 'marker', 'Paper': 'paper', 'Effect': 'effect', 'Subtype': 'subtype'},

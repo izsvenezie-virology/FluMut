@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget
 from flumut_db_editor.gui.tabs.base import BaseTreeTab
 from flumut_db_editor.gui.tabs.effects_tab import EffectsTab
 from flumut_db_editor.gui.tabs.hosts_tab import HostsTab
+from flumut_db_editor.gui.tabs.markers_tab import MarkersTab
 from flumut_db_editor.gui.tabs.mutations_tab import MutationsTab
 from flumut_db_editor.gui.tabs.papers_tab import PapersTab
 from flumut_db_editor.gui.tabs.proteins_tab import ProteinsTab
@@ -34,7 +35,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(ReferencesTab(), 'References')
         self.tabs.addTab(MutationsTab(), 'Mutations')
         self.tabs.addTab(evidence_terms_tab, 'Evidence Terms')
-        # self.tabs.addTab(MarkersTab(), 'Markers')
+        self.tabs.addTab(MarkersTab(), 'Markers')
         self.tabs.addTab(PapersTab(), 'Papers')
         # self.tabs.addTab(EvidencesTab(), 'Evidences')
 

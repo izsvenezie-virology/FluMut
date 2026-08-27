@@ -1,76 +1,53 @@
-from PySide6.QtWidgets import QTreeWidgetItem
-
-from flumut_db_editor.gui.dialogs import SuccessNotification
+from flumut.flumutdb import loader
+from flumut.flumutdb.models import Marker, Mutation
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.marker_form import MarkerForm
-from flumut_db_editor.gui.tabs.base import HierarchicalTab
-from flumut_db_editor.models import Marker
+from flumut_db_editor.gui.tabs.base import BaseTreeTab
 
 
-class MarkersTab(HierarchicalTab):
+class MarkersTab(BaseTreeTab[Marker | Mutation]):
     def __init__(self):
         super().__init__()
-        self.tree.setColumnCount(2)
-        self.tree.setHeaderLabels(['Name', 'Details'])
-        self.new_button.clicked.connect(self.handle_new)
-        self.load_data()
+        self.__init_ui()
 
-    def load_data(self):
+    def __init_ui(self) -> None:
+        self.new_btn.setText('New marker')
+        self.refresh()
+
+    def refresh(self, selected=None):
         self.tree.clear()
-        markers: list[Marker] = Marker.select()
+        markers = loader.get(Marker)
         for marker in markers:
-            marker_item = QTreeWidgetItem(self.tree)
-            marker_item.setText(0, marker.name)
-            marker_item.setText(1, '')
-            marker_item.setData(0, 0x0100, ('marker', marker.id))
+            marker_item = self.create_item(marker, [f'Marker: {marker.name}', f'{len(marker.mutations)} mutations'])
+            if marker == selected:
+                self.set_selected_item(marker_item)
 
-            mutations = marker.mutations
-            for mutation in mutations:
-                mutation_item = QTreeWidgetItem(marker_item)
-                mutation_item.setText(0, f'{mutation.name} ({mutation.type})')
-                mutation_item.setText(1, f'Protein: {mutation.protein.name}')
-                mutation_item.setData(0, 0x0100, ('marker_mutation', marker.id, mutation.id))
+            for mutation in marker.mutations:
+                mutation_item = self.create_item(mutation, [f'Mutation: {mutation.name}'], marker_item)
+                if mutation == selected:
+                    self.set_selected_item(mutation_item)
 
-    def handle_new(self):
+    def on_new_requested(self) -> None:
         form = MarkerForm(self, None)
         if form.exec():
-            SuccessNotification.show_success(self, 'Marker created successfully.')
-            self.load_data()
+            self.refresh(form.instance)
 
-    def handle_edit(self):
-        item = self.get_selected_item()
-        if item is None:
-            return
-        data = item.data(0, 0x0100)
-        if not data:
-            return
+    def on_edit_requested(self) -> None:
+        form = MarkerForm(self, self.get_selected_marker())
+        if form.exec():
+            self.refresh(form.instance)
 
-        if data[0] == 'marker':
-            marker_id = data[1]
-            marker = Marker.get_by_id(marker_id)
-            form = MarkerForm(self, marker)
-            if form.exec():
-                SuccessNotification.show_success(self, 'Marker updated successfully.')
-                self.load_data()
+    def on_delete_requested(self) -> None:
+        instance = self.get_selected_instance()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
+            self.refresh()
 
-    def handle_delete(self):
-        item = self.get_selected_item()
-        if item is None:
-            return
-        data = item.data(0, 0x0100)
-        if not data:
-            return
-
-        if data[0] == 'marker':
-            marker_id = data[1]
-            if delete_with_confirmation(self, 'Marker', marker_id, DatabaseOperations.delete_marker):
-                self.load_data()
-        elif data[0] == 'marker_mutation':
-            marker_id = data[1]
-            mutation_id = data[2]
-            if delete_with_confirmation(
-                self,
-                'Mutation Association',
-                mutation_id,
-                lambda mid=mutation_id: DatabaseOperations.remove_marker_mutation_association(marker_id, mid),
-            ):
-                self.load_data()
+    def get_selected_marker(self) -> Marker | None:
+        selected = self.get_selected_instance()
+        match selected:
+            case Marker():
+                return selected
+            case Mutation():
+                return self.get_data(self.tree.currentItem().parent())  # pyright: ignore[reportReturnType]
+            case _:
+                return None
