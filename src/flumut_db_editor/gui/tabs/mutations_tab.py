@@ -16,7 +16,7 @@ class MutationsTab(BaseSortableTreeTab[Protein | Mutation | Mapping]):  # pyrigh
 
         self.refresh()
 
-    def refresh(self, selected=None):
+    def populate(self, selected=None):
         self.tree.clear()
         proteins: list[Protein] = sorted(loader.get(Protein))
         for protein in proteins:

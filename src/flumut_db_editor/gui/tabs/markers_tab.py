@@ -14,7 +14,7 @@ class MarkersTab(BaseTreeTab[Marker | Mutation]):
         self.new_btn.setText('New marker')
         self.refresh()
 
-    def refresh(self, selected=None):
+    def populate(self, selected=None):
         self.tree.clear()
         markers = loader.get(Marker)
         for marker in markers:

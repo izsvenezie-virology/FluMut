@@ -24,7 +24,7 @@ class ProteinsTab(BaseSortableTreeTab[Segment | Protein]):
 
         self.refresh()
 
-    def refresh(self, selected=None):
+    def populate(self, selected=None):
         self.tree.clear()
         segments = sorted(loader.get(Segment))
         for segment in segments:

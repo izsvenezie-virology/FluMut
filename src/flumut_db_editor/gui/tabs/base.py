@@ -4,6 +4,7 @@ from typing import Generic, TypeVar
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QHBoxLayout,
+    QLineEdit,
     QPushButton,
     QSpacerItem,
     QTableWidget,
@@ -41,16 +42,34 @@ class BaseTab(QWidget):
         self.new_btn = QPushButton('New')
         self.edit_btn = QPushButton('Edit')
         self.delete_btn = QPushButton('Delete')
+        self.filter_field = QLineEdit()
+        self.filter_field.setPlaceholderText('Filter...')
+        self.filter_field.setClearButtonEnabled(True)
+        self.filter_field.setMinimumWidth(200)
+
         self.header.addWidget(self.new_btn)
         self.header.addWidget(self.edit_btn)
         self.header.addWidget(self.delete_btn)
+        self.header.addWidget(self.filter_field)
 
         self.new_btn.clicked.connect(self.on_new_requested)
         self.edit_btn.clicked.connect(self.on_edit_requested)
         self.delete_btn.clicked.connect(self.on_delete_requested)
+        self.filter_field.textChanged.connect(self.apply_filter)
 
         self.header.addStretch()
         self.tab_layout.addLayout(self.header)
+
+    def refresh(self, selected: BaseModel | None = None) -> None:
+        """Rebuild the view, then hide again whatever the filter leaves out."""
+        self.populate(selected)
+        self.apply_filter(self.filter_field.text())
+
+    def populate(self, selected: BaseModel | None = None) -> None:
+        raise NotImplementedError('populate must be implemented in child classes.')
+
+    def apply_filter(self, text: str) -> None:
+        raise NotImplementedError('apply_filter must be implemented in child classes.')
 
     def on_new_requested(self) -> None:
         raise NotImplementedError('on_new_requested must be implemented in child classes.')
@@ -75,8 +94,11 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
         self.table.setColumnWidth(0, 200)
         self.tab_layout.addWidget(self.table)
 
-    def refresh(self, selected: ModelT | None = None) -> None:
-        raise NotImplementedError('Refresh action must be implemented in child classes.')
+    def apply_filter(self, text: str) -> None:
+        needle = text.strip().lower()
+        for row in range(self.table.rowCount()):
+            items = (self.table.item(row, column) for column in range(self.table.columnCount()))
+            self.table.setRowHidden(row, needle not in ' '.join(item.text() for item in items if item).lower())
 
     def get_selected_instance(self) -> ModelT | None:
         if item := self.table.currentItem():
@@ -133,12 +155,12 @@ class EvidenceTermsTab(BaseTableTab[ModelT]):
         super().__init__()
         self.refresh()
 
-    def refresh(self, selected: ModelT | None = None):
+    def populate(self, selected=None):
         terms: list[ModelT] = list(self.model.select())
         rows = {}
         for term in terms:
             rows[term] = [term.name, term.notes or '']  # pyright: ignore[reportAttributeAccessIssue]
-        self.populate_table(rows, selected)
+        self.populate_table(rows, selected)  # pyright: ignore[reportArgumentType]
         self.table.resizeColumnsToContents()
 
     def on_new_requested(self):
@@ -176,8 +198,20 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
         self.tree.itemExpanded.connect(self.on_item_expanded)
         self.tree.itemCollapsed.connect(self.on_item_collapsed)
 
-    def refresh(self, selected: ModelT | None = None) -> None:
-        raise NotImplementedError('Refresh action must be implemented in child classes.')
+    def apply_filter(self, text: str) -> None:
+        needle = text.strip().lower()
+        for row in range(self.tree.topLevelItemCount()):
+            self.filter_item(self.tree.topLevelItem(row), needle)  # pyright: ignore[reportArgumentType]
+
+    def filter_item(self, item: QTreeWidgetItem, needle: str) -> bool:
+        """Hide `item` unless it or one of its children matches `needle`. Returns whether it stayed visible."""
+        children = [self.filter_item(item.child(row), needle) for row in range(item.childCount())]
+        texts = ' '.join(item.text(column) for column in range(self.tree.columnCount())).lower()
+        matches = any(children) or needle in texts
+        item.setHidden(not matches)
+        if needle and any(children):
+            item.setExpanded(True)
+        return matches
 
     def on_item_expanded(self, item: QTreeWidgetItem):
         if instance := item.data(0, Qt.ItemDataRole.UserRole):

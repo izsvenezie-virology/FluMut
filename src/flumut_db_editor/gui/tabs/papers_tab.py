@@ -16,7 +16,7 @@ class PapersTab(BaseTableTab[Paper]):
 
         self.refresh()
 
-    def refresh(self, selected: Paper | None = None):
+    def populate(self, selected=None):
         papers: list[Paper] = sorted(Paper.select(), key=lambda p: p.short_name)
         self.table.clearContents()
         self.table.setRowCount(len(papers))
@@ -33,7 +33,7 @@ class PapersTab(BaseTableTab[Paper]):
                 paper.url or '',
                 paper.notes or '',
             ]
-        self.populate_table(rows, selected)
+        self.populate_table(rows, selected)  # pyright: ignore[reportArgumentType]
 
     def on_new_requested(self):
         form = PaperForm(self, None)

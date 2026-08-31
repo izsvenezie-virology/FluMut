@@ -46,7 +46,7 @@ class EvidencesTab(BaseTreeTab[Evidence | BaseModel]):
 
         self.refresh()
 
-    def refresh(self, selected: Evidence | BaseModel | None = None) -> None:
+    def populate(self, selected: Evidence | BaseModel | None = None) -> None:
         self.tree.clear()
 
         for key, evidences in self.grouped_evidences().items():

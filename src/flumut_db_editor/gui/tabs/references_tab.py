@@ -24,7 +24,7 @@ class ReferencesTab(BaseSortableTreeTab[Segment | Reference | Protein | Annotati
 
         self.refresh()
 
-    def refresh(self, selected=None) -> None:
+    def populate(self, selected=None) -> None:
         self.tree.clear()
         segments: Sequence[Segment] = sorted(loader.get(Segment))
         for segment in segments:
