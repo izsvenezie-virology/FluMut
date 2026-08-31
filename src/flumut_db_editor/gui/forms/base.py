@@ -60,11 +60,15 @@ class BaseForm(QDialog):
                 for target in self.instances_to_delete():
                     target.delete_instance()
         except DatabaseError as error:
-            name = type(target).__name__ if target is not None else 'data'
-            ErrorDialog.show_error(self, 'Save failed', f'Could not save {name}.', str(error))
+            title, message = self.failure_message(target)
+            ErrorDialog.show_error(self, title, message, str(error))
             return False
         loader.load()
         return True
+
+    def failure_message(self, target: BaseModel | None) -> tuple[str, str]:
+        name = type(target).__name__ if target is not None else 'data'
+        return 'Save failed', f'Could not save {name}.'
 
     def validators(self) -> Iterable[DataValidator]:
         return (DataValidator(instance) for instance in self.instances_to_save())
