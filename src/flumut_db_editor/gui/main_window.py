@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget
 
-from flumut_db_editor.gui.tabs.base import BaseTreeTab
+from flumut_db_editor.gui.tabs.base import BaseTableTab, BaseTreeTab
 from flumut_db_editor.gui.tabs.effects_tab import EffectsTab
+from flumut_db_editor.gui.tabs.evidences_tab import EvidencesTab
 from flumut_db_editor.gui.tabs.hosts_tab import HostsTab
 from flumut_db_editor.gui.tabs.markers_tab import MarkersTab
 from flumut_db_editor.gui.tabs.mutations_tab import MutationsTab
@@ -37,13 +38,13 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(evidence_terms_tab, 'Evidence Terms')
         self.tabs.addTab(MarkersTab(), 'Markers')
         self.tabs.addTab(PapersTab(), 'Papers')
-        # self.tabs.addTab(EvidencesTab(), 'Evidences')
+        self.tabs.addTab(EvidencesTab(), 'Evidences')
 
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
     def on_tab_changed(self):
         match widget := self.tabs.currentWidget():
-            case BaseTreeTab():
+            case BaseTreeTab() | BaseTableTab():
                 widget.refresh()
             case _:
                 return

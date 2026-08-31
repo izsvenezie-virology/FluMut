@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Generic, TypeVar
 
 from PySide6.QtCore import Qt
@@ -83,7 +83,7 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
             return self.get_data(item)
         return None
 
-    def populate_table(self, rows: dict[ModelT, Sequence[str]], selected: ModelT | None = None) -> None:
+    def populate_table(self, rows: Mapping[ModelT, Iterable[str]], selected: ModelT | None = None) -> None:
         self.table.clearContents()
         self.table.setRowCount(len(rows))
         for row, (instance, texts) in enumerate(rows.items()):
@@ -94,7 +94,7 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
                 self.table.selectRow(row)
                 self.table.scrollTo(self.table.selectedIndexes()[0])
 
-    def create_row(self, instance: ModelT, texts: Sequence[str]) -> list[QTableWidgetItem]:
+    def create_row(self, instance: ModelT, texts: Iterable[str]) -> list[QTableWidgetItem]:
         row = []
         for text in texts:
             item = QTableWidgetItem(text)
@@ -110,6 +110,11 @@ class BaseTableTab(BaseTab, Generic[ModelT]):
     def get_selected_item(self) -> ModelT | None:
         row = self.table.currentRow()
         return self.get_data(self.table.item(row, 0))
+
+    def get_selected_items(self) -> list[ModelT]:
+        """Every selected instance. Only meaningful while the table selects whole rows."""
+        rows = self.table.selectionModel().selectedRows()
+        return [instance for index in rows if (instance := self.get_data(self.table.item(index.row(), 0)))]
 
     def set_data(self, item: QTableWidgetItem, instance: ModelT) -> None:
         item.setData(Qt.ItemDataRole.UserRole, instance)

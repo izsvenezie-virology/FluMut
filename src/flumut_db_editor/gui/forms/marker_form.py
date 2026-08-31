@@ -1,11 +1,13 @@
 from collections.abc import Iterable, Iterator
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QListWidgetItem, QPushButton, QVBoxLayout
 
 from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel, Marker, MarkerMutation, Mutation
 from flumut_db_editor.gui.forms.base import TransactionalForm
+from flumut_db_editor.gui.forms.mutation_form import MutationForm
+from flumut_db_editor.gui.widgets import FilterableList
 
 
 class MarkerForm(TransactionalForm[Marker]):
@@ -27,8 +29,9 @@ class MarkerForm(TransactionalForm[Marker]):
         name_row.addWidget(self.generate_name_btn)
         self.form_layout.addLayout(name_row)
 
-        self.selectable_mutations_list = QListWidget()
-        self.selected_mutations_list = QListWidget()
+        self.selectable_mutations_list = FilterableList[Mutation]('Mutations', self)
+        self.selected_mutations_list = FilterableList[Mutation]('', self)
+        self.selected_mutations_list.new_btn.setVisible(False)
 
         self.add_mutation_btn = QPushButton('>')
         self.remove_mutation_btn = QPushButton('<')
@@ -38,59 +41,45 @@ class MarkerForm(TransactionalForm[Marker]):
         mutation_btn_column.addWidget(self.remove_mutation_btn)
         mutation_btn_column.addStretch()
 
-        self.form_layout.addWidget(QLabel('Mutations'))
         mutations_row = QHBoxLayout()
         mutations_row.addWidget(self.selectable_mutations_list)
         mutations_row.addLayout(mutation_btn_column)
         mutations_row.addWidget(self.selected_mutations_list)
         self.form_layout.addLayout(mutations_row)
 
-        self.add_mutation_btn.clicked.connect(self.add_mutation)
+        self.add_mutation_btn.clicked.connect(self.add_mutations)
         self.remove_mutation_btn.clicked.connect(self.remove_mutation)
-        self.selectable_mutations_list.doubleClicked.connect(self.add_mutation)
-        self.selected_mutations_list.doubleClicked.connect(self.remove_mutation)
+        self.selectable_mutations_list.list.doubleClicked.connect(self.add_mutations)
+        self.selected_mutations_list.list.doubleClicked.connect(self.remove_mutation)
         self.generate_name_btn.clicked.connect(self.on_generate_name_requested)
+        self.selectable_mutations_list.new_btn.clicked.connect(self.on_new_mutation_requested)
 
         if self.instance:
             self.name_field.setText(self.instance.name)
 
         self.refresh_lists()
 
-    def add_mutation(self) -> None:
-        item = self.selectable_mutations_list.currentItem()
-        if item:
-            self.selected_mutations.append(self.get_data(item))
+    def on_new_mutation_requested(self):
+        form = MutationForm(self)
+        if form.exec():
+            self.selected_mutations.append(form.instance)
+            self.refresh_lists()
+
+    def add_mutations(self) -> None:
+        for instance in self.selectable_mutations_list.selected_instances():
+            self.selected_mutations.append(instance)
         self.refresh_lists()
 
     def remove_mutation(self) -> None:
-        item = self.selected_mutations_list.currentItem()
-        if item:
-            self.selected_mutations.remove(self.get_data(item))
+        for instance in self.selected_mutations_list.selected_instances():
+            self.selected_mutations.remove(instance)
         self.refresh_lists()
 
     def refresh_lists(self) -> None:
-        selection = []
-        if item := self.selectable_mutations_list.currentItem():
-            selection.append(self.get_data(item))
-        if item := self.selected_mutations_list.currentItem():
-            selection.append(self.get_data(item))
-
-        self.selected_mutations_list.clear()
-        self.selectable_mutations_list.clear()
-
-        for mut in self.selected_mutations:
-            item = self.create_item(mut)
-            self.selected_mutations_list.addItem(item)
-            if mut in selection:
-                self.selected_mutations_list.setCurrentItem(item)
-
+        self.selected_mutations_list.set_instances(self.selected_mutations)
         mutations = sorted(loader.get(Mutation))
-        for mut in mutations:
-            if mut not in self.selected_mutations:
-                item = self.create_item(mut)
-                self.selectable_mutations_list.addItem(item)
-                if mut in selection:
-                    self.selected_mutations_list.setCurrentItem(item)
+        selectable = [m for m in mutations if m not in self.selected_mutations]
+        self.selectable_mutations_list.set_instances(selectable)
 
     def on_generate_name_requested(self) -> None:
         self.name_field.setText(self.generate_name())

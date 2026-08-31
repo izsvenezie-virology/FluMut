@@ -1,54 +1,56 @@
-from PySide6.QtWidgets import QTableWidgetItem
+from PySide6.QtWidgets import QAbstractItemView
 
-from flumut_db_editor.gui.dialogs import SuccessNotification
+from flumut.flumutdb import loader
+from flumut.flumutdb.models import Evidence
+from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.evidence_form import EvidenceForm
 from flumut_db_editor.gui.tabs.base import BaseTableTab
-from flumut_db_editor.models import Evidence
 
 
-class EvidencesTab(BaseTableTab):
-    def __init__(self):
+class EvidencesTab(BaseTableTab[Evidence]):
+    """Lists every evidence. Rows are selected in bulk and edited together in a single form."""
+
+    def __init__(self) -> None:
         super().__init__()
-        self.new_button.clicked.connect(self.handle_new)
-        self.load_data()
+        self.__init_ui()
 
-    def load_data(self):
-        header = ['Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Notes']
-        self.table.setColumnCount(len(header))
-        self.table.setHorizontalHeaderLabels(header)
-        evidences: list[Evidence] = Evidence.select()
-        self.table.setRowCount(len(evidences))
-        for row, evidence in enumerate(evidences):
-            self.table.setItem(row, 0, QTableWidgetItem(evidence.marker.name or ''))
-            self.table.setItem(row, 1, QTableWidgetItem(evidence.paper.short_name))
-            self.table.setItem(row, 2, QTableWidgetItem(evidence.effect.name))
-            self.table.setItem(row, 3, QTableWidgetItem(evidence.subtype.name))
-            self.table.setItem(row, 4, QTableWidgetItem(evidence.host.name if evidence.host else ''))
-            self.table.setItem(row, 5, QTableWidgetItem(evidence.notes or ''))
+    def __init_ui(self) -> None:
+        headers = ['Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Notes']
+        self.table.setColumnCount(len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+        self.new_btn.setText('New evidences')
+        self.edit_btn.setText('Edit selected')
+
+        self.refresh()
+
+    def refresh(self, selected: Evidence | None = None) -> None:
+        rows = {evidence: self.row_texts(evidence) for evidence in sorted(loader.get(Evidence), key=self.sort_key)}
+        self.populate_table(rows, selected)
         self.table.resizeColumnsToContents()
 
-    def handle_new(self):
-        form = EvidenceForm(self, None)
-        if form.exec():
-            SuccessNotification.show_success(self, 'Evidence created successfully.')
-            self.load_data()
+    def row_texts(self, evidence: Evidence) -> list[str]:
+        return [*self.sort_key(evidence), evidence.notes or '']
 
-    def handle_edit(self):
-        row = self.get_selected_item()
-        if row is None:
-            return
-        evidences = list(Evidence.select())
-        evidence = evidences[row]
-        form = EvidenceForm(self, evidence)
-        if form.exec():
-            SuccessNotification.show_success(self, 'Evidence updated successfully.')
-            self.load_data()
+    def sort_key(self, evidence: Evidence) -> tuple[str, ...]:
+        values = (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host)
+        return tuple(str(value) if value else '' for value in values)
 
-    def handle_delete(self):
-        row = self.get_selected_item()
-        if row is None:
-            return
-        evidences = list(Evidence.select())
-        evidence = evidences[row]
-        if delete_with_confirmation(self, 'Evidence', evidence.id, DatabaseOperations.delete_evidence):
-            self.load_data()
+    def on_new_requested(self) -> None:
+        self.edit(EvidenceForm(self))
+
+    def on_edit_requested(self) -> None:
+        if instances := self.get_selected_items():
+            self.edit(EvidenceForm(self, instances))
+
+    def on_delete_requested(self) -> None:
+        instance = self.get_selected_item()
+        if instance and DeleteForm.confirm_and_delete(instance, self):
+            self.refresh()
+
+    def edit(self, form: EvidenceForm) -> None:
+        """Run `form` and, when it saves, show the table again around its first row."""
+        if form.exec():
+            self.refresh(next(iter(form.instances), None))
