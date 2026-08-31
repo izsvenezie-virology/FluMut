@@ -195,6 +195,9 @@ class BaseTreeTab(BaseTab, Generic[ModelT]):
             return self.get_data(item)
         return None
 
+    def get_selected_instances(self) -> list[ModelT]:
+        return [instance for item in self.tree.selectedItems() if (instance := self.get_data(item))]
+
     def create_item(self, instance: ModelT, texts: Sequence[str], parent: QTreeWidgetItem | None = None) -> QTreeWidgetItem:
         item = QTreeWidgetItem(parent or self.tree)
         for i, text in enumerate(texts):
