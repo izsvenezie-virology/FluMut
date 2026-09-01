@@ -1,0 +1,71 @@
+Sample	Marker	Mutations in your sample	Effect	Subtype	Literature
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	M1:30D	M1:30D	Increased virulence in mice	H5N1	Fan S. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	M1:215A	M1:215A	Increased virulence in mice	H5N1	Fan S. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	M1:43M	M1:43M	Increased virulence in chickens	H5N1	Nao N. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	M1:43M	M1:43M	Increased virulence in ducks	H5N1	Nao N. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	M1:43M	M1:43M	Increased virulence in mice	H5N1	Nao N. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:42S	NS1:42S	Decreased antiviral response in mice	H5N1	Jiao P. et al., 2008; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:42S	NS1:42S	Increased virulence in mice	H5N1	Jiao P. et al., 2008; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:106M	NS1:106M	Increased viral replication in mammalian cells	H1N1 with all internal genes from H7N9	Ayllon J. et al., 2014; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:106M	NS1:106M	Increased virulence in mice	H1N1 with all internal genes from H7N9	Ayllon J. et al., 2014; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:138F	NS1:138F	Decreased interferon response	H5N1	Li J. et al., 2018; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:138F	NS1:138F	Increased viral replication in mammalian cells	H5N1	Li J. et al., 2018; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:149A	NS1:149A	Decreased interferon response in chickens	H5N1	Li Z. et al., 2006; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:149A	NS1:149A	Increased virulence in chickens	H5N1	Li Z. et al., 2006; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:103F; NS1:106M	NS1:103F; NS1:106M	Increased virulence in mice	H5N1	Kuo R. et al., 2009; Spesock A. et al., 2011; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:205S; NS2:48A	NS1:205S; NS2:48A	Decreased antiviral response in ferrets	H5N1	Imai H. et al., 2010; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:138F; NS1:55E; NS1:66E	NS1:138F; NS1:55E; NS1:66E	Decreased interferon response	H5N1	Li J. et al., 2018; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:138F; NS1:55E; NS1:66E	NS1:138F; NS1:55E; NS1:66E	Enhanced replication in mammalian cells	H5N1	Li J. et al., 2018; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NP:105V	NP:105V	Increased virulence in chickens	H5N1	Suttie A. et al., 2019; Tada T. et al., 2011; Tada T. et al., 2011b
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NP:184K	NP:184K	Enhanced interferon response	H5N1	Suttie A. et al., 2019; Wasilenko J. et al., 2009
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NP:184K	NP:184K	Increased replication in avian cells	H5N1	Suttie A. et al., 2019; Wasilenko J. et al., 2009
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NP:184K	NP:184K	Increased virulence in chickens	H5N1	Suttie A. et al., 2019; Wasilenko J. et al., 2009
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:389R	PB2:389R	Increased polymerase activity in mammalian cells	H7N9	Hu M. et al., 2017b; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:389R	PB2:389R	Increased replication in mammalian cells	H7N9	Hu M. et al., 2017b; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:598T	PB2:598T	Increased polymerase activity in mammalian cells	H7N9	Hu M. et al., 2017b; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:598T	PB2:598T	Increased replication in mammalian cells	H7N9	Hu M. et al., 2017b; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:598T	PB2:598T	Increased virulence in mice	H7N9	Hu M. et al., 2017b; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:715N	PB2:715N	Decreased virulence in mice	H5N1	Sun H. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:89V; PB2:309D	PB2:89V; PB2:309D	Increased polymerase activity in mammalian cells	H5N1	Li J. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:89V; PB2:309D	PB2:89V; PB2:309D	Increased virulence in mice	H5N1	Li J. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:89V; PB2:309D; PB2:339K; PB2:477G; PB2:495V; PB2:627E; PB2:676T	PB2:89V; PB2:309D; PB2:339K; PB2:477G; PB2:495V; PB2:627E; PB2:676T	Increased polymerase activity in mammalian cells	H5N1	Li J. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:89V; PB2:309D; PB2:339K; PB2:477G; PB2:495V; PB2:627E; PB2:676T	PB2:89V; PB2:309D; PB2:339K; PB2:477G; PB2:495V; PB2:627E; PB2:676T	Increased virulence in mice	H5N1	Li J. et al., 2009; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:3V	PB1:3V	Increased polymerase activity in avian cells	H5N1	Elgendy E. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:3V	PB1:3V	Increased polymerase activity in mammalian cells	H5N1	Elgendy E. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:3V	PB1:3V	Increased replication in avian cells	H5N1	Elgendy E. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:3V	PB1:3V	Increased replication in mammalian cells	H5N1	Elgendy E. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:622G	PB1:622G	Increased polymerase activity in mammalian cells	H5N1	Feng X. et al., 2016; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:622G	PB1:622G	Increased polymerase activity in mice	H5N1	Feng X. et al., 2016; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1:622G	PB1:622G	Increased virulence in mice	H5N1	Feng X. et al., 2016; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1-F2:66S	PB1-F2:66S	Enhanced antiviral response in mice	H5N1	Conenello G. et al., 2007; Schmolke M. et al., 2011; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1-F2:66S	PB1-F2:66S	Enhanced replication in mice	H5N1	Conenello G. et al., 2007; Schmolke M. et al., 2011; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB1-F2:66S	PB1-F2:66S	Enhanced virulence in mice	H5N1	Conenello G. et al., 2007; Schmolke M. et al., 2011; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:37A	PA:37A	Increased polymerase activity in mammalian cells	H7N9	Suttie A. et al., 2019; Yamayoshi S. et al., 2014
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:190S	PA:190S	Decreased virulence in mice	H7N3	DesRochers B. et al., 2016; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:383D	PA:383D	Increased polymerase activity in avian cells	H5N1	Song J. et al., 2011; Song J. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:383D	PA:383D	Increased polymerase activity in mammalian cells	H5N1	Song J. et al., 2011; Song J. et al., 2015; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:409S	PA:409S	Increased polymerase activity in mammalian cells	H7N9	Suttie A. et al., 2019; Yamayoshi S. et al., 2014
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PA:409S	PA:409S	Increased replication in mammalian cells	H7N9	Suttie A. et al., 2019; Yamayoshi S. et al., 2014
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:133A	HA1:133A	Increased pseudovirus binding to α2-6	H5N1	Suttie A. et al., 2019; Yang Z. et al., 2007
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:154N	HA1:154N	Increased virus binding to α2-6	H5N1	Suttie A. et al., 2019; Wang W. et al., 2010
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:156A	HA1:156A	Increased transmission in guinea pigs	H5N1	Gao Y. et al., 2009; Suttie A. et al., 2019; Wang W. et al., 2010
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:156A	HA1:156A	Increased virus binding to α2-6	H5N1	Gao Y. et al., 2009; Suttie A. et al., 2019; Wang W. et al., 2010
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:182N	HA1:182N	Decreased virus binding to α2-3	H13N6	Lu X. et al., 2013; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:182N	HA1:182N	Increased virus binding to α2-6	H13N6	Lu X. et al., 2013; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA2:64E	HA2:64E	Decreased HA stability	H7N9	Sun X. et al., 2019; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA2:64E	HA2:64E	Decreased virulence in mice	H7N9	Sun X. et al., 2019; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA2:64E	HA2:64E	Increased pH of fusion	H7N9	Sun X. et al., 2019; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:107R; HA1:108I	HA1:107R; HA1:108I	Increased pH of fusion	H5N1	Suttie A. et al., 2019; Wessels U. et al., 2018
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:107R; HA1:108I	HA1:107R; HA1:108I	Increased virulence in chickens	H5N1	Suttie A. et al., 2019; Wessels U. et al., 2018
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:107R; HA1:108I	HA1:107R; HA1:108I	Increased virulence in mice	H5N1	Suttie A. et al., 2019; Wessels U. et al., 2018
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:218Q; HA1:223R	HA1:218Q; HA1:223R	Increased virus binding to α2-3	H5N1	Guo H. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:218Q; HA1:223R	HA1:218Q; HA1:223R	Increased virus binding to α2-6	H5N1	Guo H. et al., 2017; Suttie A. et al., 2019
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NP:52N	NP:52N	Evade human BTN3A3 (inhibitor of avian influenza A viruses replication)	H7N9	Pinto R. et al., 2023
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NA:369I	NA:369I	Distruption of the second sialic acid binding site (2SBS)	Unknown	Du W. et al., 2018
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NA:369I	NA:369I	Distruption of the second sialic acid binding site (2SBS)	H5N1	de Vries E. et al., 2023
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:134A	HA1:134A	Increased viral replication in mice lungs	H9N2	Zhang J. et al., 2023
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	HA1:134A	HA1:134A	Increased virus thermostability	H9N2	Zhang J. et al., 2023
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:699R	PB2:699R	Enhanced virulence in mice	H1N1	Zhang T. et al., 2017
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	PB2:699R	PB2:699R	Increased viral replication in mammalian cells	H1N1	Zhang T. et al., 2017
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:104M	NS1:104M	Decreased interferon response in mammalian cells	H10N7	Kuryshko M. et al., 2026
+A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03	NS1:104M	NS1:104M	Enhanced polymerase activity	H10N7	Kuryshko M. et al., 2026

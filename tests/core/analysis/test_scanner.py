@@ -9,6 +9,10 @@ from flumut.core.globals import GAP_SYMBOL
 from flumut.core.nucleotides.models import Alignment
 from flumut.flumutdb.models import MutationType
 
+# ---------------------------------------------------------------------------
+# scan_positions
+# ---------------------------------------------------------------------------
+
 
 def _make_mapping(position: int, alteration: str) -> MagicMock:
     mapping = MagicMock()
@@ -18,78 +22,40 @@ def _make_mapping(position: int, alteration: str) -> MagicMock:
     return mapping
 
 
-def _make_protein_alignment(
-    reference_chars: list[str],
-    query_chars: list[str],
-    mappings: list | None = None,
-) -> ProteinAlignment:
-    reference = MagicMock()
+def _make_protein_alignment(reference: str, query: str, mappings: list) -> ProteinAlignment:
+    reference_model = MagicMock()
     protein = MagicMock()
-    # scan_positions reads the mappings pre-grouped per (reference, protein)
-    reference.mappings_by_protein = {protein: mappings or []}
+    # scan_positions reads the mappings pre-grouped per (reference, protein).
+    reference_model.mappings_by_protein = {protein: mappings}
     return ProteinAlignment(
         protein=protein,
-        reference=reference,
-        alignment=Alignment(reference=reference_chars, query=query_chars),
+        reference=reference_model,
+        alignment=Alignment(reference=list(reference), query=list(query)),
     )
+
+
+@pytest.mark.parametrize(
+    'reference, query, positions, expected',
+    [
+        ('ACT', 'KMR', (), ''),
+        ('ACT', 'KMR', ((2, 'M'),), 'M'),
+        ('ACT', 'KMR', ((1, 'K'), (3, 'R')), 'KR'),
+        # A gap column is not numbered, so reference position 2 lands on index 2.
+        (f'{GAP_SYMBOL}AC', 'XKR', ((2, 'R'),), 'R'),
+    ],
+    ids=['no_mappings', 'single_mapping', 'two_mappings', 'gap_does_not_shift_positions'],
+)
+def test_scan_positions(reference: str, query: str, positions: tuple, expected: str) -> None:
+    """Each mapping is resolved to the residue at its 1-based reference position."""
+    mappings = [_make_mapping(position, alteration) for position, alteration in positions]
+    result = scan_positions(_make_protein_alignment(reference, query, mappings))
+
+    assert [scan.mapping for scan in result] == mappings
+    assert ''.join(scan.ammino_acid for scan in result) == expected
 
 
 # ---------------------------------------------------------------------------
-# scan_positions tests
-# ---------------------------------------------------------------------------
-
-
-def test_scan_positions_no_mappings_returns_empty() -> None:
-    pa = _make_protein_alignment(['A', 'C', 'T'], ['K', 'M', 'R'])
-    assert scan_positions(pa) == []
-
-
-def test_scan_positions_returns_position_scan_for_protein_mappings() -> None:
-    # positions: [1, 2, 3] → position 2 is at index 1 → aa 'M'
-    mapping = _make_mapping(position=2, alteration='M')
-    pa = _make_protein_alignment(
-        reference_chars=['A', 'C', 'T'],
-        query_chars=['K', 'M', 'R'],
-        mappings=[mapping],
-    )
-    result = scan_positions(pa)
-    assert len(result) == 1
-    assert result[0].mapping is mapping
-    assert result[0].ammino_acid == 'M'
-
-
-def test_scan_positions_multiple_mappings() -> None:
-    mapping1 = _make_mapping(position=1, alteration='K')
-    mapping2 = _make_mapping(position=3, alteration='R')
-    pa = _make_protein_alignment(
-        reference_chars=['A', 'C', 'T'],
-        query_chars=['K', 'M', 'R'],
-        mappings=[mapping1, mapping2],
-    )
-    result = scan_positions(pa)
-    assert len(result) == 2
-    assert result[0].mapping is mapping1
-    assert result[0].ammino_acid == 'K'
-    assert result[1].mapping is mapping2
-    assert result[1].ammino_acid == 'R'
-
-
-def test_scan_positions_gap_in_alignment_does_not_shift_positions() -> None:
-    # reference: ['-', 'A', 'C'] → get_positions() = [None, 1, 2]
-    # position 2 → index 2 → aa 'R' (not the character at index 1)
-    mapping = _make_mapping(position=2, alteration='R')
-    pa = _make_protein_alignment(
-        reference_chars=[GAP_SYMBOL, 'A', 'C'],
-        query_chars=['X', 'K', 'R'],
-        mappings=[mapping],
-    )
-    result = scan_positions(pa)
-    assert len(result) == 1
-    assert result[0].ammino_acid == 'R'
-
-
-# ---------------------------------------------------------------------------
-# analyse fixture and tests
+# analyse
 # ---------------------------------------------------------------------------
 
 
@@ -99,106 +65,72 @@ def mock_scanner():
         patch('flumut.core.analysis.scanner.scan_positions') as mock_scan_positions,
         patch('flumut.core.analysis.scanner.scan_markers') as mock_scan_markers,
     ):
-        yield SimpleNamespace(
-            scan_positions=mock_scan_positions,
-            scan_markers=mock_scan_markers,
-        )
+        mock_scan_positions.side_effect = lambda alignment: [MagicMock(is_detected=False)]
+        mock_scan_markers.return_value = []
+        yield SimpleNamespace(scan_positions=mock_scan_positions, scan_markers=mock_scan_markers)
 
 
-def test_analyse_clears_existing_state(mock_scanner) -> None:
-    analysis = Analysis(
-        mutations={MagicMock()},
-        markers={MagicMock()},
-        literature={MagicMock()},
-    )
-    mock_scanner.scan_positions.return_value = []
-    mock_scanner.scan_markers.return_value = []
+def _make_analysis(num_samples: int, alignments_per_sample: int) -> Analysis:
+    samples = {
+        f's{i}': Sample(id=f's{i}', alignments=[MagicMock() for _ in range(alignments_per_sample)])
+        for i in range(num_samples)
+    }
+    return Analysis(samples=samples)
+
+
+def test_analyse_clears_results_from_a_previous_run(mock_scanner) -> None:
+    analysis = Analysis(mutations={MagicMock()}, markers={MagicMock()}, literature={MagicMock()})
     analyse(analysis)
-    assert analysis.mutations == set()
-    assert analysis.markers == set()
-    assert analysis.literature == set()
+    assert (analysis.mutations, analysis.markers, analysis.literature) == (set(), set(), set())
 
 
-def test_analyse_no_samples_does_not_call_scan_functions(mock_scanner) -> None:
-    analyse(Analysis())
-    mock_scanner.scan_positions.assert_not_called()
-    mock_scanner.scan_markers.assert_not_called()
+@pytest.mark.parametrize(
+    'num_samples, alignments_per_sample',
+    [(0, 0), (1, 2), (2, 1), (2, 3)],
+    ids=['no_samples', 'one_sample_two_alignments', 'two_samples', 'two_samples_three_alignments'],
+)
+def test_analyse_scans_every_alignment_of_every_sample(mock_scanner, num_samples: int, alignments_per_sample: int) -> None:
+    analysis = _make_analysis(num_samples, alignments_per_sample)
 
-
-def test_analyse_positions_accumulated_from_all_alignments(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock(), MagicMock()])
-    analysis = Analysis(samples={'s1': sample})
-    pos1, pos2 = MagicMock(is_detected=False), MagicMock(is_detected=False)
-    mock_scanner.scan_positions.side_effect = [[pos1], [pos2]]
-    mock_scanner.scan_markers.return_value = []
     analyse(analysis)
-    assert sample.positions == [pos1, pos2]
-    assert mock_scanner.scan_positions.call_count == 2
+
+    assert mock_scanner.scan_positions.call_count == num_samples * alignments_per_sample
+    assert mock_scanner.scan_markers.call_count == num_samples
+    for sample in analysis.samples.values():
+        assert len(sample.positions) == alignments_per_sample
 
 
-def test_analyse_scan_markers_called_with_positions_and_relaxed(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock()])
-    analysis = Analysis(samples={'s1': sample})
-    pos = MagicMock(is_detected=False)
-    mock_scanner.scan_positions.return_value = [pos]
-    mock_scanner.scan_markers.return_value = []
-    analyse(analysis, relaxed=False)
-    mock_scanner.scan_markers.assert_called_once_with([pos], False)
-
-
-def test_analyse_relaxed_defaults_to_true(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock()])
-    analysis = Analysis(samples={'s1': sample})
-    mock_scanner.scan_positions.return_value = []
-    mock_scanner.scan_markers.return_value = []
-    analyse(analysis)
-    mock_scanner.scan_markers.assert_called_once_with([], True)
-
-
-def test_analyse_only_detected_positions_added_to_mutations(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock()])
+def test_analyse_collects_mutations_markers_and_literature(mock_scanner) -> None:
+    """Only detected positions become mutations; every reported marker contributes its papers."""
     mutation = MagicMock()
     detected = MagicMock(is_detected=True, mutation=mutation)
     undetected = MagicMock(is_detected=False)
-    mock_scanner.scan_positions.return_value = [detected, undetected]
-    mock_scanner.scan_markers.return_value = []
-    analysis = Analysis(samples={'s1': sample})
-    analyse(analysis)
-    assert analysis.mutations == {mutation}
-
-
-def test_analyse_marker_scans_set_on_sample_and_markers_collected(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock()])
-    marker = MagicMock(evidences=[])
-    ms = MagicMock(marker=marker)
-    mock_scanner.scan_positions.return_value = []
-    mock_scanner.scan_markers.return_value = [ms]
-    analysis = Analysis(samples={'s1': sample})
-    analyse(analysis)
-    assert sample.marker_scans == [ms]
-    assert marker in analysis.markers
-
-
-def test_analyse_evidence_papers_collected_into_literature(mock_scanner) -> None:
-    sample = Sample(id='s1', alignments=[MagicMock()])
     paper = MagicMock()
     marker = MagicMock(evidences=[MagicMock(paper=paper)])
-    mock_scanner.scan_positions.return_value = []
-    mock_scanner.scan_markers.return_value = [MagicMock(marker=marker)]
+    marker_scan = MagicMock(marker=marker)
+
+    mock_scanner.scan_positions.side_effect = None
+    mock_scanner.scan_positions.return_value = [detected, undetected]
+    mock_scanner.scan_markers.return_value = [marker_scan]
+
+    sample = Sample(id='s1', alignments=[MagicMock()])
     analysis = Analysis(samples={'s1': sample})
     analyse(analysis)
-    assert paper in analysis.literature
+
+    assert analysis.mutations == {mutation}
+    assert analysis.markers == {marker}
+    assert analysis.literature == {paper}
+    assert sample.marker_scans == [marker_scan]
 
 
-def test_analyse_multiple_samples_all_processed(mock_scanner) -> None:
-    s1 = Sample(id='s1', alignments=[MagicMock()])
-    s2 = Sample(id='s2', alignments=[MagicMock()])
-    m1, m2 = MagicMock(), MagicMock()
-    mock_scanner.scan_positions.side_effect = [
-        [MagicMock(is_detected=True, mutation=m1)],
-        [MagicMock(is_detected=True, mutation=m2)],
-    ]
-    mock_scanner.scan_markers.return_value = []
-    analyse(Analysis(samples={'s1': s1, 's2': s2}))
-    assert mock_scanner.scan_positions.call_count == 2
-    assert mock_scanner.scan_markers.call_count == 2
+@pytest.mark.parametrize(
+    'kwargs, expected',
+    [({}, True), ({'relaxed': True}, True), ({'relaxed': False}, False)],
+    ids=['default', 'explicit_true', 'explicit_false'],
+)
+def test_analyse_passes_relaxed_through_to_scan_markers(mock_scanner, kwargs: dict, expected: bool) -> None:
+    analysis = Analysis(samples={'s1': Sample(id='s1', alignments=[MagicMock()])})
+
+    analyse(analysis, **kwargs)
+
+    assert mock_scanner.scan_markers.call_args.args[1] is expected

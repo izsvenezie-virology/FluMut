@@ -6,87 +6,37 @@ from flumut.core.globals import GAP_SYMBOL
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
 from flumut.core.nucleotides.models import Nucleotide
 
+#: (reference name, segment name) for the references every selection test sees.
+REFERENCES = [('PB2_ref_A', 'PB2'), ('PB2_ref_B', 'PB2'), ('PB1_ref', 'PB1')]
+ALL_NAMES = [name for name, _ in REFERENCES]
 
-def _make_reference(name: str, segment_name: str) -> MagicMock:
+
+def _make_reference(name: str, segment_name: str = 'PB2', sequence: str = 'ACGT') -> MagicMock:
     ref = MagicMock()
     ref.name = name
     ref.segment.name = segment_name
+    ref.sequence = sequence
     return ref
+
+
+def _make_query(sequence: str) -> MagicMock:
+    query = MagicMock()
+    query.sequence = sequence
+    return query
+
+
+def _make_aln_result(score: float, reference: list[str], query: list[str]) -> MagicMock:
+    aln = MagicMock()
+    aln.score = score
+    aln.__getitem__ = MagicMock(side_effect=lambda i: reference if i == 0 else query)
+    return aln
 
 
 @pytest.fixture
 def mock_get_references():
     with patch('flumut.core.nucleotides.aligner.loader.get') as mock_get:
+        mock_get.return_value = [_make_reference(name, segment) for name, segment in REFERENCES]
         yield mock_get
-
-
-# ---------------------------------------------------------------------------
-# select_candidate_references tests
-# ---------------------------------------------------------------------------
-
-
-def test_none_hint_returns_all_references(mock_get_references) -> None:
-    refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_get_references.return_value = refs
-    assert select_candidate_references(None) is refs
-
-
-def test_empty_string_hint_returns_all_references(mock_get_references) -> None:
-    refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_get_references.return_value = refs
-    assert select_candidate_references('') is refs
-
-
-def test_hint_matches_nothing_returns_all_references(mock_get_references) -> None:
-    refs = [_make_reference('PB2_ref', 'PB2'), _make_reference('PB1_ref', 'PB1')]
-    mock_get_references.return_value = refs
-    assert select_candidate_references('UNKNOWN') is refs
-
-
-def test_hint_matches_reference_name(mock_get_references) -> None:
-    pb2 = _make_reference('PB2_ref', 'PB2')
-    pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_get_references.return_value = [pb2, pb1]
-    assert select_candidate_references('PB2_ref') == [pb2]
-
-
-def test_hint_matches_segment_name(mock_get_references) -> None:
-    pb2 = _make_reference('PB2_ref', 'PB2')
-    pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_get_references.return_value = [pb2, pb1]
-    assert select_candidate_references('PB2') == [pb2]
-
-
-def test_hint_matches_multiple_references_in_same_segment(mock_get_references) -> None:
-    pb2_a = _make_reference('PB2_ref_A', 'PB2')
-    pb2_b = _make_reference('PB2_ref_B', 'PB2')
-    pb1 = _make_reference('PB1_ref', 'PB1')
-    mock_get_references.return_value = [pb2_a, pb2_b, pb1]
-    assert select_candidate_references('PB2') == [pb2_a, pb2_b]
-
-
-# ---------------------------------------------------------------------------
-# get_best_alignment helpers and fixture
-# ---------------------------------------------------------------------------
-
-
-def _make_query(sequence: str) -> MagicMock:
-    q = MagicMock()
-    q.sequence = sequence
-    return q
-
-
-def _make_seq_reference(sequence: str) -> MagicMock:
-    ref = MagicMock()
-    ref.sequence = sequence
-    return ref
-
-
-def _make_aln_result(score: float, ref_chars: list[str], query_chars: list[str]) -> MagicMock:
-    aln = MagicMock()
-    aln.score = score
-    aln.__getitem__ = MagicMock(side_effect=lambda i: ref_chars if i == 0 else query_chars)
-    return aln
 
 
 @pytest.fixture
@@ -96,51 +46,67 @@ def mock_aligner():
 
 
 # ---------------------------------------------------------------------------
-# get_best_alignment tests
+# select_candidate_references
 # ---------------------------------------------------------------------------
 
 
-def test_empty_candidates_raises_value_error(mock_aligner) -> None:
+@pytest.mark.parametrize(
+    'hint, expected',
+    [
+        (None, ALL_NAMES),
+        ('', ALL_NAMES),
+        ('UNKNOWN', ALL_NAMES),
+        ('PB2_ref_A', ['PB2_ref_A']),
+        ('PB2', ['PB2_ref_A', 'PB2_ref_B']),
+        ('PB1', ['PB1_ref']),
+    ],
+    ids=['no_hint', 'empty_hint', 'unmatched_hint', 'reference_name', 'segment_with_two', 'segment_with_one'],
+)
+def test_select_candidate_references(mock_get_references, hint: str | None, expected: list[str]) -> None:
+    """A hint narrows to a reference or a segment; anything unusable falls back to all references."""
+    assert [ref.name for ref in select_candidate_references(hint)] == expected
+
+
+# ---------------------------------------------------------------------------
+# get_best_alignment
+# ---------------------------------------------------------------------------
+
+
+def test_get_best_alignment_no_candidates_raises(mock_aligner) -> None:
     with pytest.raises(ValueError, match='No reference found'):
         get_best_alignment(_make_query('ACGT'), candidates=[])
 
 
-def test_single_candidate_returns_nucleotide(mock_aligner) -> None:
+def test_get_best_alignment_returns_query_reference_and_alignment(mock_aligner) -> None:
     query = _make_query('ACGT')
-    reference = _make_seq_reference('ACGT')
-    aln = _make_aln_result(score=10.0, ref_chars=['A', 'C'], query_chars=['A', 'C'])
-    mock_aligner.align.return_value = [aln]
+    reference = _make_reference('PB2_ref_A')
+    aligned_reference = ['A', 'C', GAP_SYMBOL, 'T']
+    aligned_query = ['A', 'C', 'G', 'T']
+    mock_aligner.align.return_value = [_make_aln_result(10.0, aligned_reference, aligned_query)]
+
     result = get_best_alignment(query, [reference])
+
     assert isinstance(result, Nucleotide)
     assert result.query is query
     assert result.reference is reference
+    assert result.alignment.reference == aligned_reference
+    assert result.alignment.query == aligned_query
 
 
-def test_highest_scoring_reference_is_selected(mock_aligner) -> None:
-    query = _make_query('ACGT')
-    ref_low = _make_seq_reference('AAAA')
-    ref_high = _make_seq_reference('ACGT')
-    aln_low = _make_aln_result(score=1.0, ref_chars=['A'], query_chars=['A'])
-    aln_high = _make_aln_result(score=100.0, ref_chars=['A', 'C'], query_chars=['A', 'C'])
-    mock_aligner.align.side_effect = [[aln_low], [aln_high]]
-    result = get_best_alignment(query, [ref_low, ref_high])
-    assert result.reference is ref_high
+def test_get_best_alignment_picks_the_highest_scoring_reference(mock_aligner) -> None:
+    low = _make_reference('low', sequence='AAAA')
+    high = _make_reference('high', sequence='ACGT')
+    mock_aligner.align.side_effect = [
+        [_make_aln_result(1.0, ['A'], ['A'])],
+        [_make_aln_result(100.0, ['A', 'C'], ['A', 'C'])],
+    ]
+
+    assert get_best_alignment(_make_query('ACGT'), [low, high]).reference is high
 
 
-def test_gap_symbols_stripped_from_query_before_alignment(mock_aligner) -> None:
-    query = _make_query('AC' + GAP_SYMBOL + 'GT')
-    reference = _make_seq_reference('ACGT')
-    aln = _make_aln_result(score=10.0, ref_chars=['A'], query_chars=['A'])
-    mock_aligner.align.return_value = [aln]
-    get_best_alignment(query, [reference])
+def test_get_best_alignment_strips_gaps_from_the_query(mock_aligner) -> None:
+    mock_aligner.align.return_value = [_make_aln_result(10.0, ['A'], ['A'])]
+
+    get_best_alignment(_make_query(f'AC{GAP_SYMBOL}GT'), [_make_reference('PB2_ref_A')])
+
     mock_aligner.align.assert_called_once_with('ACGT', 'ACGT')
-
-
-def test_alignment_characters_stored_in_result(mock_aligner) -> None:
-    ref_chars = ['A', 'C', GAP_SYMBOL, 'T']
-    query_chars = ['A', 'C', 'G', 'T']
-    aln = _make_aln_result(score=10.0, ref_chars=ref_chars, query_chars=query_chars)
-    mock_aligner.align.return_value = [aln]
-    result = get_best_alignment(_make_query('ACGT'), [_make_seq_reference('ACGT')])
-    assert result.alignment.reference == ref_chars
-    assert result.alignment.query == query_chars

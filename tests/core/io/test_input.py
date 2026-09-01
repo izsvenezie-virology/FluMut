@@ -3,23 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flumut.core.io.input import FastaSequence, read_fasta, sanitize_header, sanitize_sequence
-
-# ---------------------------------------------------------------------------
-# FastaSequence tests
-# ---------------------------------------------------------------------------
-
-
-def test_fasta_sequence_stores_all_fields() -> None:
-    fs = FastaSequence(header='seq1', sequence='ACGT', file='test.fasta')
-    assert fs.header == 'seq1'
-    assert fs.sequence == 'ACGT'
-    assert fs.file == 'test.fasta'
-
-
-# ---------------------------------------------------------------------------
-# read_fasta tests
-# ---------------------------------------------------------------------------
+from flumut.core.io.input import read_fasta, sanitize_header, sanitize_sequence
 
 
 @pytest.fixture
@@ -28,77 +12,60 @@ def mock_seqio():
         yield mock
 
 
-def _make_seq_record(name: str, seq: str) -> MagicMock:
+def _make_seq_record(description: str, sequence: str) -> MagicMock:
     record = MagicMock()
-    record.description = name
-    record.seq = seq
+    record.description = description
+    record.seq = sequence
     return record
 
 
-def test_read_fasta_empty_file_returns_empty_list(mock_seqio) -> None:
-    fasta = MagicMock(name='empty.fasta')
-    mock_seqio.parse.return_value = []
-    assert read_fasta(fasta) == []
-
-
-def test_read_fasta_single_sequence_returns_one_fasta_sequence(mock_seqio) -> None:
+@pytest.mark.parametrize(
+    'records',
+    [
+        [],
+        [('seq1', 'ACGT')],
+        [('seq1', 'ACGT'), ('seq2', 'TGCA')],
+    ],
+    ids=['empty', 'single', 'multiple'],
+)
+def test_read_fasta(mock_seqio, records: list[tuple[str, str]]) -> None:
+    """Every record becomes a FastaSequence carrying the source file name."""
     fasta = MagicMock()
     fasta.name = 'seqs.fasta'
-    mock_seqio.parse.return_value = [_make_seq_record('seq1', 'ACGT')]
+    mock_seqio.parse.return_value = [_make_seq_record(name, seq) for name, seq in records]
+
     result = read_fasta(fasta)
-    assert len(result) == 1
-    assert result[0].header == 'seq1'
-    assert result[0].sequence == 'ACGT'
-    assert result[0].file == 'seqs.fasta'
+
+    mock_seqio.parse.assert_called_once_with(fasta, 'fasta')
+    assert [(r.header, r.sequence, r.file) for r in result] == [(name, seq, 'seqs.fasta') for name, seq in records]
 
 
-def test_read_fasta_multiple_sequences_all_returned(mock_seqio) -> None:
-    fasta = MagicMock()
-    fasta.name = 'seqs.fasta'
-    mock_seqio.parse.return_value = [
-        _make_seq_record('seq1', 'ACGT'),
-        _make_seq_record('seq2', 'TGCA'),
-    ]
-    result = read_fasta(fasta)
-    assert len(result) == 2
-    assert result[0].header == 'seq1'
-    assert result[1].header == 'seq2'
-
-
-def test_read_fasta_space_in_header_keeps_whole_header() -> None:
+def test_read_fasta_keeps_the_whole_description_as_header() -> None:
+    """Parsed against the real SeqIO: the header is not truncated at the first space."""
     fasta = StringIO('>ABC DEF\nATCG')
     fasta.name = 'seqs.fasta'
-    result = read_fasta(fasta)  # type: ignore
-    assert result[0].header == 'ABC DEF'
+    assert read_fasta(fasta)[0].header == 'ABC DEF'  # type: ignore[arg-type]
 
 
-def test_sanitize_header_preserve_case() -> None:
-    header = 'ABC def'
-    result = sanitize_header(header)
-    assert result == 'ABC def'
+@pytest.mark.parametrize(
+    'header, expected',
+    [
+        ('ABC def', 'ABC def'),
+        ('ABC\tDEF', 'ABC DEF'),
+    ],
+    ids=['case_preserved', 'tab_becomes_space'],
+)
+def test_sanitize_header(header: str, expected: str) -> None:
+    assert sanitize_header(header) == expected
 
 
-def test_sanitize_header_tab_to_space() -> None:
-    header = 'ABC\tDEF'
-    result = sanitize_header(header)
-    assert result == 'ABC DEF'
-
-
-def test_sanitize_sequence_remove_spaces() -> None:
-    sequence = 'ATG CTG'
-    result = sanitize_sequence(sequence)
-    assert result == 'ATGCTG'
-
-
-def test_sanitize_sequence_lowercase() -> None:
-    sequence = 'atgctg'
-    result = sanitize_sequence(sequence)
-    assert result == 'ATGCTG'
-
-
-def test_read_fasta_passes_file_to_seqio(mock_seqio) -> None:
-    fasta = MagicMock()
-    fasta.name = 'seqs.fasta'
-    mock_seqio.parse.return_value = []
-    read_fasta(fasta)
-    mock_seqio.parse.assert_called_once_with(fasta, 'fasta')
+@pytest.mark.parametrize(
+    'sequence, expected',
+    [
+        ('ATG CTG', 'ATGCTG'),
+        ('atgctg', 'ATGCTG'),
+    ],
+    ids=['spaces_removed', 'uppercased'],
+)
+def test_sanitize_sequence(sequence: str, expected: str) -> None:
+    assert sanitize_sequence(sequence) == expected

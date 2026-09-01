@@ -8,52 +8,27 @@ from flumut.core.nucleotides.models import CDS, Alignment
 from flumut.core.nucleotides.translator import get_cds, translate, translate_codon
 
 # ---------------------------------------------------------------------------
-# translate helpers and tests
+# Helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_cds(reference_chars: list[str], query_chars: list[str]) -> CDS:
+def _make_cds(reference: str, query: str) -> CDS:
     return CDS(
         nucleotides=MagicMock(),
         protein=MagicMock(),
-        alignment=Alignment(reference=reference_chars, query=query_chars),
+        alignment=Alignment(reference=list(reference), query=list(query)),
     )
 
 
-def test_translate_produces_correct_amino_acid_sequences() -> None:
-    # ATG → M, AAA → K  (reference)
-    # GTG → V, CAT → H  (query)
-    cds = _make_cds(
-        reference_chars=['A', 'T', 'G', 'A', 'A', 'A'],
-        query_chars=['G', 'T', 'G', 'C', 'A', 'T'],
-    )
-    result = translate(cds)
-    assert result.alignment.reference == ['M', 'K']
-    assert result.alignment.query == ['V', 'H']
-
-
-def test_translate_each_codon_is_one_list_element() -> None:
-    # append() stores each translated codon as one element, even multi-char ones
-    cds = _make_cds(
-        reference_chars=['A', 'T', 'G'],  # R=A|G → ATG=M or GTG=V → 'MV'
-        query_chars=['R', 'T', 'G'],
-    )
-    result = translate(cds)
-    assert result.alignment.reference == ['M']
-    assert result.alignment.query == ['MV']
-
-
-def test_translate_result_stores_fields_from_cds() -> None:
-    cds = _make_cds(['A', 'T', 'G'], ['G', 'T', 'G'])
-    result = translate(cds)
-    assert result.protein is cds.protein
-    assert result.reference is cds.nucleotides.reference
-    assert result.cds is cds
-
-
-# ---------------------------------------------------------------------------
-# get_cds fixture, helpers, and tests
-# ---------------------------------------------------------------------------
+def _make_nucleotides(reference: str, query: str, annotations: tuple = ()) -> tuple[MagicMock, MagicMock]:
+    nucleotides = MagicMock()
+    nucleotides.alignment = Alignment(reference=list(reference), query=list(query))
+    protein = MagicMock()
+    # get_cds reads the annotations pre-grouped per (reference, protein).
+    nucleotides.reference.annotations_by_protein = {
+        protein: [MagicMock(start=start, end=end) for start, end in annotations]
+    }
+    return nucleotides, protein
 
 
 @pytest.fixture
@@ -62,93 +37,89 @@ def mock_adjust_frame():
         yield mock
 
 
-def _make_nucleotides(
-    reference_chars: list[str],
-    query_chars: list[str],
-    annotations: list | None = None,
-) -> tuple[MagicMock, MagicMock]:
-    n = MagicMock()
-    n.alignment = Alignment(reference=reference_chars, query=query_chars)
-    protein = MagicMock()
-    # get_cds reads the annotations pre-grouped per (reference, protein)
-    n.reference.annotations_by_protein = {protein: annotations or []}
-    return n, protein
+# ---------------------------------------------------------------------------
+# translate
+# ---------------------------------------------------------------------------
 
 
-def _make_annotation(start: int, end: int) -> MagicMock:
-    ann = MagicMock()
-    ann.start = start
-    ann.end = end
-    return ann
+@pytest.mark.parametrize(
+    'reference, query, expected_reference, expected_query',
+    [
+        # ATG->M AAA->K ; GTG->V CAT->H
+        ('ATGAAA', 'GTGCAT', ['M', 'K'], ['V', 'H']),
+        # R = A|G, so RTG translates to both M and V, stored as one element.
+        ('ATG', 'RTG', ['M'], ['MV']),
+    ],
+    ids=['plain_codons', 'degenerate_codon_stays_one_element'],
+)
+def test_translate(reference: str, query: str, expected_reference: list[str], expected_query: list[str]) -> None:
+    """Each codon becomes exactly one element, even when it resolves to several amino acids."""
+    result = translate(_make_cds(reference, query))
+    assert result.alignment.reference == expected_reference
+    assert result.alignment.query == expected_query
 
 
-def test_get_cds_no_annotations_returns_empty_alignment(mock_adjust_frame) -> None:
-    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    cds = get_cds(n, protein)
-    assert cds.alignment.reference == []
-    assert cds.alignment.query == []
+def test_translate_result_carries_over_the_cds_fields() -> None:
+    cds = _make_cds('ATG', 'GTG')
+    result = translate(cds)
+    assert result.protein is cds.protein
+    assert result.reference is cds.nucleotides.reference
+    assert result.cds is cds
 
 
-def test_get_cds_matching_annotation_extracts_correct_slice(mock_adjust_frame) -> None:
-    # positions: [1, 2, 3, 4] — annotation covers positions 2–3 → indices 1:3
-    ann = _make_annotation(start=2, end=3)
-    n, protein = _make_nucleotides(['A', 'C', 'T', 'G'], ['K', 'M', 'R', 'V'], annotations=[ann])
-    cds = get_cds(n, protein)
-    assert cds.alignment.reference == ['C', 'T']
-    assert cds.alignment.query == ['M', 'R']
+# ---------------------------------------------------------------------------
+# get_cds
+# ---------------------------------------------------------------------------
 
 
-def test_get_cds_multiple_annotations_concatenated(mock_adjust_frame) -> None:
-    # positions: [1, 2, 3, 4, 5]
-    ann1 = _make_annotation(start=1, end=1)  # idx 0:1 → ['A']/['K']
-    ann2 = _make_annotation(start=4, end=5)  # idx 3:5 → ['G','A']/['V','H']
-    n, protein = _make_nucleotides(['A', 'C', 'T', 'G', 'A'], ['K', 'M', 'R', 'V', 'H'], annotations=[ann1, ann2])
-    cds = get_cds(n, protein)
-    assert cds.alignment.reference == ['A', 'G', 'A']
-    assert cds.alignment.query == ['K', 'V', 'H']
+@pytest.mark.parametrize(
+    'reference, query, annotations, expected_reference, expected_query',
+    [
+        ('ACT', 'KMR', (), '', ''),
+        ('ACTG', 'KMRV', ((2, 3),), 'CT', 'MR'),
+        ('ACTGA', 'KMRVH', ((1, 1), (4, 5)), 'AGA', 'KVH'),
+        # A leading gap shifts the columns but not the reference positions.
+        (f'{GAP_SYMBOL}ACT', 'XKMR', ((2, 3),), 'CT', 'MR'),
+    ],
+    ids=['no_annotations', 'single_annotation', 'annotations_concatenated', 'gap_before_cds'],
+)
+def test_get_cds_slices_by_reference_position(
+    mock_adjust_frame, reference: str, query: str, annotations: tuple, expected_reference: str, expected_query: str
+) -> None:
+    """Annotations select alignment columns by 1-based reference position, gaps excluded."""
+    nucleotides, protein = _make_nucleotides(reference, query, annotations)
+    cds = get_cds(nucleotides, protein)
+    assert cds.alignment.reference == list(expected_reference)
+    assert cds.alignment.query == list(expected_query)
 
 
-def test_get_cds_result_wraps_nucleotides_and_protein(mock_adjust_frame) -> None:
-    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    cds = get_cds(n, protein)
-    assert cds.nucleotides is n
+def test_get_cds_wraps_its_inputs_and_adjusts_the_frame(mock_adjust_frame) -> None:
+    nucleotides, protein = _make_nucleotides('ACT', 'KMR')
+    cds = get_cds(nucleotides, protein)
+    assert cds.nucleotides is nucleotides
     assert cds.protein is protein
-
-
-def test_get_cds_gap_in_alignment_maps_positions_correctly(mock_adjust_frame) -> None:
-    # positions: [None, 1, 2, 3] — annotation covers positions 2–3 → indices 2:4
-    ann = _make_annotation(start=2, end=3)
-    n, protein = _make_nucleotides([GAP_SYMBOL, 'A', 'C', 'T'], ['X', 'K', 'M', 'R'], annotations=[ann])
-    cds = get_cds(n, protein)
-    assert cds.alignment.reference == ['C', 'T']
-    assert cds.alignment.query == ['M', 'R']
-
-
-def test_get_cds_calls_adjust_frame_with_cds(mock_adjust_frame) -> None:
-    n, protein = _make_nucleotides(['A', 'C', 'T'], ['K', 'M', 'R'])
-    cds = get_cds(n, protein)
     mock_adjust_frame.assert_called_once_with(cds)
 
 
 # ---------------------------------------------------------------------------
-# translate_codon tests
+# translate_codon
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
     'codon, expected',
     [
-        (['N', 'T', 'G'], UNKNOWN_AA_SYMBOL),  # wildcard at start
-        (['A', 'N', 'G'], UNKNOWN_AA_SYMBOL),  # wildcard in middle
-        ([], UNKNOWN_AA_SYMBOL),  # empty codon
-        (['A', 'T'], UNKNOWN_AA_SYMBOL),  # one base short
-        (['A', 'T', 'G'], 'M'),  # ATG = Met
-        (['T', 'T', 'T'], 'F'),  # TTT = Phe
-        (['T', 'A', 'A'], STOP_CODON_SYMBOL),  # stop codon
-        (['-', '-', '-'], '-'),  # gap codon (--- → -)
-        (['R', 'T', 'G'], 'MV'),  # R=A|G → ATG=M, GTG=V → sorted 'MV'
-        (['T', 'C', 'Y'], 'S'),  # Y=C|T → TCC=TCS=S, dedup → 'S'
-        (['A', 'T', '-'], UNKNOWN_AA_SYMBOL),  # mixed gap → 'AT-' not in dict
+        (['N', 'T', 'G'], UNKNOWN_AA_SYMBOL),
+        (['A', 'N', 'G'], UNKNOWN_AA_SYMBOL),
+        ([], UNKNOWN_AA_SYMBOL),
+        (['A', 'T'], UNKNOWN_AA_SYMBOL),
+        (['A', 'T', 'G'], 'M'),
+        (['T', 'T', 'T'], 'F'),
+        (['T', 'A', 'A'], STOP_CODON_SYMBOL),
+        ([GAP_SYMBOL, GAP_SYMBOL, GAP_SYMBOL], GAP_SYMBOL),
+        (['R', 'T', 'G'], 'MV'),
+        (['T', 'C', 'Y'], 'S'),
+        (['A', 'T', GAP_SYMBOL], UNKNOWN_AA_SYMBOL),
     ],
     ids=[
         'wildcard_at_start',

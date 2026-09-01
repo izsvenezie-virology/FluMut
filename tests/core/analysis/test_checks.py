@@ -12,6 +12,8 @@ from flumut.core.analysis.checks import (
 from flumut.core.analysis.models import Check, DuplicationCheck, EnlongationCheck, FrameshiftCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 
+STOP, UNKNOWN, GAP = STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -43,212 +45,142 @@ def _make_sample(sample_id: str, alignments: list) -> MagicMock:
     return s
 
 
-def _make_analysis(*samples) -> MagicMock:
-    analysis = MagicMock()
-    analysis.samples = {s.id: s for s in samples}
-    return analysis
-
-
 # ---------------------------------------------------------------------------
-# Check base class and subclass message tests
-# ---------------------------------------------------------------------------
-
-
-def test_check_stores_message() -> None:
-    c = Check('test message')
-    assert c.message == 'test message'
-
-
-def test_truncation_check_message() -> None:
-    c = TruncationCheck('sampleA', 'PB2', 42)
-    assert 'sampleA' in c.message
-    assert 'PB2' in c.message
-    assert '42' in c.message
-
-
-def test_enlongation_check_message() -> None:
-    c = EnlongationCheck('sampleA', 'PB2')
-    assert 'sampleA' in c.message
-    assert 'PB2' in c.message
-
-
-def test_duplication_check_message() -> None:
-    c = DuplicationCheck('sampleA', 'PB2')
-    assert 'sampleA' in c.message
-    assert 'PB2' in c.message
-
-
-def test_frameshift_check_message_with_end_position() -> None:
-    c = FrameshiftCheck('sampleA', 'PB2', 10, 20)
-    assert 'sampleA' in c.message
-    assert 'PB2' in c.message
-    assert '10' in c.message
-    assert '20' in c.message
-
-
-def test_frameshift_check_message_with_no_end_uses_end_literal() -> None:
-    c = FrameshiftCheck('sampleA', 'PB2', 10, None)
-    assert '10' in c.message
-    assert 'end' in c.message
-
-
-# ---------------------------------------------------------------------------
-# check_truncation tests
-# ---------------------------------------------------------------------------
-
-
-def test_check_truncation_no_stop_codon_appends_no_check() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', 'V'])])
-    check_truncation(sample)
-    assert sample.checks == []
-
-
-def test_check_truncation_stop_codon_in_middle_appends_check() -> None:
-    # query[1] = '*', reference[1] != '*' → truncation at 1-based position 2
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'], reference=['A', 'K', 'V'])])
-    check_truncation(sample)
-    assert len(sample.checks) == 1
-    assert isinstance(sample.checks[0], TruncationCheck)
-
-
-def test_check_truncation_position_is_one_based() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL, 'V'], reference=['A', 'K', 'V'])])
-    check_truncation(sample)
-    assert '2' in sample.checks[0].message
-
-
-def test_check_truncation_no_check_when_reference_has_stop_at_same_position() -> None:
-    # reference also has stop at that position = correct termination, not truncation
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', STOP_CODON_SYMBOL], reference=['A', 'K', STOP_CODON_SYMBOL])])
-    check_truncation(sample)
-    assert sample.checks == []
-
-
-def test_check_truncation_multiple_stop_codons_multiple_checks() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', [STOP_CODON_SYMBOL, STOP_CODON_SYMBOL, 'V'], reference=['K', 'K', 'V'])])
-    check_truncation(sample)
-    assert len(sample.checks) == 2
-
-
-# ---------------------------------------------------------------------------
-# check_enlongation tests
+# Check messages
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    'last_aa',
-    [STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL],
-    ids=['stop_codon', 'unknown_aa', 'gap'],
+    'check_class, args, fragments',
+    [
+        (Check, ('test message',), ['test message']),
+        (TruncationCheck, ('sampleA', 'PB2', 42), ['sampleA', 'PB2', '42']),
+        (EnlongationCheck, ('sampleA', 'PB2'), ['sampleA', 'PB2']),
+        (DuplicationCheck, ('sampleA', 'PB2'), ['sampleA', 'PB2']),
+        (FrameshiftCheck, ('sampleA', 'PB2', 10, 20), ['sampleA', 'PB2', '10', '20']),
+        (FrameshiftCheck, ('sampleA', 'PB2', 10, None), ['sampleA', 'PB2', '10', 'end']),
+    ],
+    ids=['base', 'truncation', 'enlongation', 'duplication', 'frameshift', 'frameshift_open_ended'],
 )
-def test_check_enlongation_no_check_when_last_aa_is_terminal(last_aa: str) -> None:
-    # reference ends with stop codon — the query guard is in play
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', last_aa], reference=['A', STOP_CODON_SYMBOL])])
-    check_enlongation(sample)
-    assert sample.checks == []
-
-
-def test_check_enlongation_regular_last_aa_appends_check() -> None:
-    # reference ends with stop codon — query is elongated
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K', 'V'], reference=['A', STOP_CODON_SYMBOL])])
-    check_enlongation(sample)
-    assert len(sample.checks) == 1
-    assert isinstance(sample.checks[0], EnlongationCheck)
-
-
-def test_check_enlongation_no_check_when_reference_does_not_end_with_stop_query_stop() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', STOP_CODON_SYMBOL], reference=['A', 'K'])])
-    check_enlongation(sample)
-    assert sample.checks == []
-
-
-def test_check_enlongation_no_check_when_reference_does_not_end_with_stop_query_regular() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'V'], reference=['A', 'K'])])
-    check_enlongation(sample)
-    assert sample.checks == []
+def test_check_message_identifies_the_problem(check_class, args: tuple, fragments: list[str]) -> None:
+    """Every check message names the sample, the protein and the affected positions."""
+    message = check_class(*args).message
+    for fragment in fragments:
+        assert fragment in message
 
 
 # ---------------------------------------------------------------------------
-# check_frameshifts tests
+# check_truncation
 # ---------------------------------------------------------------------------
 
 
-def test_check_frameshifts_no_cds_no_check() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K'])])
-    check_frameshifts(sample)
-    assert sample.checks == []
+@pytest.mark.parametrize(
+    'query, reference, expected_positions',
+    [
+        (['M', 'K', 'V'], ['A', 'K', 'V'], []),
+        (['M', STOP, 'V'], ['A', 'K', 'V'], [2]),
+        (['M', 'K', STOP], ['A', 'K', STOP], []),
+        ([STOP, STOP, 'V'], ['K', 'K', 'V'], [1, 2]),
+    ],
+    ids=['no_stop', 'premature_stop', 'stop_matches_reference', 'two_premature_stops'],
+)
+def test_check_truncation(query: list[str], reference: list[str], expected_positions: list[int]) -> None:
+    """A stop codon is a truncation only where the reference has none. Positions are 1-based."""
+    # A protein name without digits, so the position assertion cannot pass on the name alone.
+    sample = _make_sample('s1', [_make_alignment('NP', query, reference=reference)])
+    check_truncation(sample)
 
-
-def test_check_frameshifts_cds_no_frameshifts_no_check() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K'], frameshifts=[])])
-    check_frameshifts(sample)
-    assert sample.checks == []
-
-
-def test_check_frameshifts_single_frameshift_appends_check() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K'], frameshifts=[(5, 10)])])
-    check_frameshifts(sample)
-    assert len(sample.checks) == 1
-    assert isinstance(sample.checks[0], FrameshiftCheck)
-
-
-def test_check_frameshifts_multiple_frameshifts_multiple_checks() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M'], frameshifts=[(1, 3), (7, 9)])])
-    check_frameshifts(sample)
-    assert len(sample.checks) == 2
-
-
-def test_check_frameshifts_frameshift_with_none_end() -> None:
-    sample = _make_sample('s1', [_make_alignment('PB2', ['M'], frameshifts=[(5, None)])])
-    check_frameshifts(sample)
-    assert len(sample.checks) == 1
-    assert 'end' in sample.checks[0].message
+    assert len(sample.checks) == len(expected_positions)
+    for check, position in zip(sample.checks, expected_positions):
+        assert isinstance(check, TruncationCheck)
+        assert check.message.endswith(f'at {position}')
 
 
 # ---------------------------------------------------------------------------
-# check_duplications tests
+# check_enlongation
 # ---------------------------------------------------------------------------
 
 
-def test_check_duplications_unique_proteins_no_check() -> None:
-    sample = _make_sample(
-        's1',
-        [
-            _make_alignment('PB2', ['M']),
-            _make_alignment('PB1', ['M']),
-        ],
-    )
+@pytest.mark.parametrize(
+    'query, reference, expected',
+    [
+        (['M', 'K', STOP], ['A', STOP], 0),
+        (['M', 'K', UNKNOWN], ['A', STOP], 0),
+        (['M', 'K', GAP], ['A', STOP], 0),
+        (['M', 'K', 'V'], ['A', STOP], 1),
+        (['M', STOP], ['A', 'K'], 0),
+        (['M', 'V'], ['A', 'K'], 0),
+    ],
+    ids=[
+        'terminates_with_stop',
+        'terminates_with_unknown',
+        'terminates_with_gap',
+        'reads_through',
+        'reference_has_no_stop_query_stops',
+        'reference_has_no_stop_query_continues',
+    ],
+)
+def test_check_enlongation(query: list[str], reference: list[str], expected: int) -> None:
+    """Elongation is reported only when the reference terminates and the query does not."""
+    sample = _make_sample('s1', [_make_alignment('PB2', query, reference=reference)])
+    check_enlongation(sample)
+
+    assert len(sample.checks) == expected
+    assert all(isinstance(check, EnlongationCheck) for check in sample.checks)
+
+
+# ---------------------------------------------------------------------------
+# check_frameshifts
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    'frameshifts, expected, fragment',
+    [
+        (None, 0, None),
+        ([], 0, None),
+        ([(5, 10)], 1, '10'),
+        ([(1, 3), (7, 9)], 2, None),
+        ([(5, None)], 1, 'end'),
+    ],
+    ids=['no_cds', 'cds_without_frameshifts', 'single', 'multiple', 'open_ended'],
+)
+def test_check_frameshifts(frameshifts: list | None, expected: int, fragment: str | None) -> None:
+    """One check per frameshift range recorded on the CDS; none when there is no CDS."""
+    sample = _make_sample('s1', [_make_alignment('PB2', ['M', 'K'], frameshifts=frameshifts)])
+    check_frameshifts(sample)
+
+    assert len(sample.checks) == expected
+    assert all(isinstance(check, FrameshiftCheck) for check in sample.checks)
+    if fragment:
+        assert fragment in sample.checks[0].message
+
+
+# ---------------------------------------------------------------------------
+# check_duplications
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    'protein_names, expected',
+    [
+        (['PB2', 'PB1'], 0),
+        (['PB2', 'PB2'], 1),
+        (['PB2', 'PB2', 'PB2'], 2),
+    ],
+    ids=['unique', 'one_repeat', 'two_repeats'],
+)
+def test_check_duplications(protein_names: list[str], expected: int) -> None:
+    """Every occurrence of a protein after the first is reported."""
+    sample = _make_sample('s1', [_make_alignment(name, ['M']) for name in protein_names])
     check_duplications(sample)
-    assert sample.checks == []
 
-
-def test_check_duplications_repeated_protein_appends_check() -> None:
-    sample = _make_sample(
-        's1',
-        [
-            _make_alignment('PB2', ['M']),
-            _make_alignment('PB2', ['M']),
-        ],
-    )
-    check_duplications(sample)
-    assert len(sample.checks) == 1
-    assert isinstance(sample.checks[0], DuplicationCheck)
-
-
-def test_check_duplications_three_occurrences_two_checks() -> None:
-    sample = _make_sample(
-        's1',
-        [
-            _make_alignment('PB2', ['M']),
-            _make_alignment('PB2', ['M']),
-            _make_alignment('PB2', ['M']),
-        ],
-    )
-    check_duplications(sample)
-    assert len(sample.checks) == 2
+    assert len(sample.checks) == expected
+    assert all(isinstance(check, DuplicationCheck) for check in sample.checks)
 
 
 # ---------------------------------------------------------------------------
-# perform_checks tests
+# perform_checks
 # ---------------------------------------------------------------------------
 
 
@@ -256,10 +188,15 @@ def test_check_duplications_three_occurrences_two_checks() -> None:
 @patch('flumut.core.analysis.checks.check_frameshifts')
 @patch('flumut.core.analysis.checks.check_enlongation')
 @patch('flumut.core.analysis.checks.check_truncation')
-def test_perform_checks_calls_all_four_per_sample(mock_truncation, mock_enlongation, mock_frameshifts, mock_duplications) -> None:
+def test_perform_checks_runs_every_check_on_every_sample(
+    mock_truncation, mock_enlongation, mock_frameshifts, mock_duplications
+) -> None:
     sample = MagicMock()
-    analysis = _make_analysis(sample)
+    analysis = MagicMock()
+    analysis.samples = {sample.id: sample}
+
     perform_checks(analysis)
+
     mock_truncation.assert_called_once_with(sample)
     mock_enlongation.assert_called_once_with(sample)
     mock_frameshifts.assert_called_once_with(sample)

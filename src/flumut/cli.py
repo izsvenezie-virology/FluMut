@@ -89,7 +89,7 @@ def cli(
 ) -> None:
     try:
         whole_workflow(fasta_files, relaxed, name_regex, markers_output, mutations_output, literature_output, excel_output)
-    except Exception as e:
+    except (FileNotFoundError, ValueError, RuntimeError) as e:
         print_errors(e)
 
 

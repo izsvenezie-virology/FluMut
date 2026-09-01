@@ -88,7 +88,7 @@ def get_literature_data(analysis: Analysis) -> TSV_data:
     """
     values = []
 
-    for paper in analysis.literature:
+    for paper in sorted(analysis.literature, key=lambda paper: paper.short_name):
         paper_dict = {
             'Short name': paper.short_name,
             'Title': paper.title,

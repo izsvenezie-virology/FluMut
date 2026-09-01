@@ -1,198 +1,173 @@
 from io import StringIO
 from unittest.mock import MagicMock
 
-from flumut.core.io.output import (
-    get_literature_data,
-    get_markers_data,
-    get_mutations_data,
-    write_tsv,
-)
+import pytest
+
+from flumut.core.io.output import get_literature_data, get_markers_data, get_mutations_data, write_tsv
 
 # ---------------------------------------------------------------------------
-# write_tsv tests
+# Helpers
 # ---------------------------------------------------------------------------
 
 
-def test_write_tsv_single_row() -> None:
-    output = StringIO()
-    write_tsv(output, [{'Name': 'A', 'Value': '1'}])  # type: ignore[arg-type]
-    assert output.getvalue() == 'Name\tValue\nA\t1\n'
-
-
-def test_write_tsv_multiple_rows_written_in_order() -> None:
-    output = StringIO()
-    write_tsv(output, [{'X': 'a'}, {'X': 'b'}, {'X': 'c'}])  # type: ignore[arg-type]
-    lines = output.getvalue().splitlines()
-    assert lines == ['X', 'a', 'b', 'c']
-
-
-# ---------------------------------------------------------------------------
-# get_literature_data tests
-# ---------------------------------------------------------------------------
-
-
-def test_get_literature_data_empty_literature_returns_empty_list() -> None:
+def _make_analysis(samples: dict | None = None, literature: tuple = (), mutations: tuple = ()) -> MagicMock:
     analysis = MagicMock()
-    analysis.literature = set()
-    assert get_literature_data(analysis) == []
+    analysis.samples = samples or {}
+    analysis.literature = set(literature)
+    analysis.mutations = set(mutations)
+    return analysis
 
 
-def test_get_literature_data_single_paper_all_fields_present() -> None:
+def _make_sample(sample_id: str, marker_scans: tuple = (), positions: tuple = ()) -> MagicMock:
+    sample = MagicMock()
+    sample.id = sample_id
+    sample.marker_scans = list(marker_scans)
+    sample.positions = list(positions)
+    return sample
+
+
+def _make_paper(short_name: str, **fields) -> MagicMock:
     paper = MagicMock()
-    paper.short_name = 'Doe2020'
-    paper.title = 'Some Title'
-    paper.authors = 'Doe et al.'
-    paper.year = 2020
-    paper.journal = 'Nature'
-    paper.url = 'https://example.com'
-    paper.doi = '10.1234/example'
-    analysis = MagicMock()
-    analysis.literature = {paper}
-    result = get_literature_data(analysis)
-    assert len(result) == 1
-    assert result[0] == {
-        'Short name': 'Doe2020',
-        'Title': 'Some Title',
-        'Authors': 'Doe et al.',
-        'Year': 2020,
-        'Journal': 'Nature',
-        'Link': 'https://example.com',
-        'DOI': '10.1234/example',
-    }
-
-
-# ---------------------------------------------------------------------------
-# get_markers_data tests
-# ---------------------------------------------------------------------------
+    paper.short_name = short_name
+    for field, value in fields.items():
+        setattr(paper, field, value)
+    return paper
 
 
 def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = None) -> MagicMock:
-    ev = MagicMock()
-    ev.effect.name = effect
-    ev.subtype.name = subtype
-    ev.paper.short_name = paper
-    if host:
-        ev.host = MagicMock()
-        ev.host.name = host
-    else:
-        ev.host = None
-    return ev
+    evidence = MagicMock()
+    evidence.effect.name = effect
+    evidence.subtype.name = subtype
+    evidence.paper.short_name = paper
+    evidence.host = None
+    if host is not None:
+        evidence.host = MagicMock()
+        evidence.host.name = host
+    return evidence
 
 
-def _make_scan(marker_name: str, mutation_names: list[str], evidences: list) -> MagicMock:
+def _make_scan(marker_name: str, mutation_names: tuple, evidences: list) -> MagicMock:
     scan = MagicMock()
     scan.marker.name = marker_name
     scan.marker.evidences = evidences
-    detected = []
-    for n in mutation_names:
-        dm = MagicMock()
-        dm.mutation.name = n
-        detected.append(dm)
-    scan.detected_mutations = detected
+    scan.detected_mutations = [MagicMock(**{'mutation.name': name}) for name in mutation_names]
     return scan
 
 
-def test_get_markers_data_no_samples_returns_empty_list() -> None:
-    analysis = MagicMock()
-    analysis.samples = {}
-    assert get_markers_data(analysis) == []
-
-
-def test_get_markers_data_basic_row() -> None:
-    evidence = _make_evidence('Increased replication', 'H5N1', 'Doe2020')
-    scan = _make_scan(marker_name='I97T', mutation_names=['I97T'], evidences=[evidence])
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.marker_scans = [scan]
-    analysis = MagicMock()
-    analysis.samples = {'sample1': sample}
-    result = get_markers_data(analysis)
-    assert len(result) == 1
-    assert result[0]['Sample'] == 'sample1'
-    assert result[0]['Marker'] == 'I97T'
-    assert result[0]['Effect'] == 'Increased replication'
-    assert result[0]['Subtype'] == 'H5N1'
-    assert result[0]['Literature'] == 'Doe2020'
-    assert result[0]['Mutations in your sample'] == 'I97T'
-
-
-def test_get_markers_data_evidence_with_host_appends_host_to_effect() -> None:
-    evidence = _make_evidence('Increased replication', 'H5N1', 'Doe2020', host='Chicken')
-    scan = _make_scan(marker_name='I97T', mutation_names=['I97T'], evidences=[evidence])
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.marker_scans = [scan]
-    analysis = MagicMock()
-    analysis.samples = {'sample1': sample}
-    result = get_markers_data(analysis)
-    assert result[0]['Effect'] == 'Increased replication in Chicken'
-
-
-def test_get_markers_data_multiple_papers_same_effect_joined_with_semicolon() -> None:
-    ev1 = _make_evidence('Increased replication', 'H5N1', 'Doe2020')
-    ev2 = _make_evidence('Increased replication', 'H5N1', 'Smith2021')
-    scan = _make_scan(marker_name='I97T', mutation_names=['I97T'], evidences=[ev1, ev2])
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.marker_scans = [scan]
-    analysis = MagicMock()
-    analysis.samples = {'sample1': sample}
-    result = get_markers_data(analysis)
-    assert len(result) == 1
-    assert result[0]['Literature'] == 'Doe2020; Smith2021'
-
-
 # ---------------------------------------------------------------------------
-# get_mutations_data tests
+# write_tsv
 # ---------------------------------------------------------------------------
 
 
-def test_get_mutations_data_no_samples_returns_empty_list() -> None:
-    analysis = MagicMock()
-    analysis.mutations = set()
-    analysis.samples = {}
-    assert get_mutations_data(analysis) == []
+@pytest.mark.parametrize(
+    'rows, expected',
+    [
+        ([{'Name': 'A', 'Value': '1'}], ['Name\tValue', 'A\t1']),
+        ([{'X': 'a'}, {'X': 'b'}, {'X': 'c'}], ['X', 'a', 'b', 'c']),
+    ],
+    ids=['header_from_first_row', 'rows_written_in_order'],
+)
+def test_write_tsv(rows: list[dict], expected: list[str]) -> None:
+    output = StringIO()
+    write_tsv(output, rows)  # type: ignore[arg-type]
+    assert output.getvalue().splitlines() == expected
 
 
-def test_get_mutations_data_detected_mutation_stored_in_row() -> None:
+# ---------------------------------------------------------------------------
+# Extractors
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    'extractor',
+    [get_literature_data, get_markers_data, get_mutations_data],
+    ids=['literature', 'markers', 'mutations'],
+)
+def test_extractors_return_nothing_for_an_empty_analysis(extractor) -> None:
+    assert extractor(_make_analysis()) == []
+
+
+def test_get_literature_data_returns_every_column() -> None:
+    paper = _make_paper(
+        'Doe2020',
+        title='Some Title',
+        authors='Doe et al.',
+        year=2020,
+        journal='Nature',
+        url='https://example.com',
+        doi='10.1234/example',
+    )
+    assert get_literature_data(_make_analysis(literature=(paper,))) == [
+        {
+            'Short name': 'Doe2020',
+            'Title': 'Some Title',
+            'Authors': 'Doe et al.',
+            'Year': 2020,
+            'Journal': 'Nature',
+            'Link': 'https://example.com',
+            'DOI': '10.1234/example',
+        }
+    ]
+
+
+def test_get_literature_data_is_sorted_by_short_name() -> None:
+    """``analysis.literature`` is a set, so the output must impose its own order to stay reproducible."""
+    papers = (_make_paper('Zhang2023'), _make_paper('Doe2020'), _make_paper('Smith2021'))
+    rows = get_literature_data(_make_analysis(literature=papers))
+    assert [row['Short name'] for row in rows] == ['Doe2020', 'Smith2021', 'Zhang2023']
+
+
+@pytest.mark.parametrize(
+    'evidences, expected_effect, expected_literature',
+    [
+        ((('Increased replication', 'H5N1', 'Doe2020', None),), 'Increased replication', 'Doe2020'),
+        ((('Increased replication', 'H5N1', 'Doe2020', 'Chicken'),), 'Increased replication in Chicken', 'Doe2020'),
+        (
+            (('Increased replication', 'H5N1', 'Doe2020', None), ('Increased replication', 'H5N1', 'Smith2021', None)),
+            'Increased replication',
+            'Doe2020; Smith2021',
+        ),
+    ],
+    ids=['single_evidence', 'host_appended_to_effect', 'papers_of_one_effect_joined'],
+)
+def test_get_markers_data(evidences: tuple, expected_effect: str, expected_literature: str) -> None:
+    """One row per sample x marker x (effect, subtype), with that group's papers joined."""
+    scan = _make_scan('I97T', ('I97T',), [_make_evidence(*evidence) for evidence in evidences])
+    analysis = _make_analysis(samples={'sample1': _make_sample('sample1', marker_scans=(scan,))})
+
+    assert get_markers_data(analysis) == [
+        {
+            'Sample': 'sample1',
+            'Marker': 'I97T',
+            'Mutations in your sample': 'I97T',
+            'Effect': expected_effect,
+            'Subtype': 'H5N1',
+            'Literature': expected_literature,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    'scanned, expected_row',
+    [
+        (True, {'Sample': 'sample1', 'I97T': 'T'}),
+        (False, {'Sample': 'sample1'}),
+    ],
+    ids=['scanned_in_sample', 'not_scanned_in_sample'],
+)
+def test_get_mutations_data(scanned: bool, expected_row: dict) -> None:
+    """A mutation only gets a column for a sample where it was actually scanned."""
     mutation = MagicMock()
     mutation.name = 'I97T'
-    mutation.default_position = 97
-    pos = MagicMock()
-    pos.mutation = mutation
-    pos.ammino_acid = 'T'
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.positions = [pos]
-    analysis = MagicMock()
-    analysis.mutations = {mutation}
-    analysis.samples = {'sample1': sample}
-    result = get_mutations_data(analysis)
-    assert len(result) == 1
-    assert result[0]['Sample'] == 'sample1'
-    assert result[0]['I97T'] == 'T'
+    positions = (MagicMock(mutation=mutation, ammino_acid='T'),) if scanned else ()
+    analysis = _make_analysis(
+        samples={'sample1': _make_sample('sample1', positions=positions)},
+        mutations=(mutation,),
+    )
+    assert get_mutations_data(analysis) == [expected_row]
 
 
-def test_get_mutations_data_undetected_mutation_absent_from_row() -> None:
-    mutation = MagicMock()
-    mutation.name = 'D701N'
-    mutation.default_position = 701
-    sample = MagicMock()
-    sample.id = 'sample1'
-    sample.positions = []  # no positions detected
-    analysis = MagicMock()
-    analysis.mutations = {mutation}
-    analysis.samples = {'sample1': sample}
-    result = get_mutations_data(analysis)
-    assert 'D701N' not in result[0]
-
-
-def test_get_mutations_data_each_sample_gets_a_row() -> None:
-    analysis = MagicMock()
-    analysis.mutations = set()
-    s1, s2 = MagicMock(positions=[]), MagicMock(positions=[])
-    s1.id, s2.id = 'sample1', 'sample2'
-    analysis.samples = {'sample1': s1, 'sample2': s2}
-    result = get_mutations_data(analysis)
-    assert len(result) == 2
-    assert {r['Sample'] for r in result} == {'sample1', 'sample2'}
+def test_get_mutations_data_writes_one_row_per_sample() -> None:
+    samples = {name: _make_sample(name) for name in ('sample1', 'sample2')}
+    rows = get_mutations_data(_make_analysis(samples=samples))
+    assert [row['Sample'] for row in rows] == ['sample1', 'sample2']
