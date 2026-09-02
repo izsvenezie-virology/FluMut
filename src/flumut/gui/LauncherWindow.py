@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from flumut import __version__
+from flumut.core.options import DEFAULT_NAME_REGEX, AnalysisOptions, FluMutOptions, InputOptions, OutputOptions
 from flumut.gui.globals import ICON_PATH
 from flumut.gui.ProgressWindow import ProgressWindow
 
@@ -231,22 +232,20 @@ class LauncherWindow(QWidget):
 
     def launch_flumut(self):
         try:
-            args_dict = {
-                'name_regex': self.options_wdg.name_regex_txt.get_text(),
-                'fasta_file': self.fasta_row.get_opened_file(),
-                'markers_output': self.markers_row.get_opened_file(),
-                'mutations_output': self.mutations_row.get_opened_file(),
-                'literature_output': self.literature_row.get_opened_file(),
-                'excel_output': self.excel_row.get_opened_file(),
-                'relaxed': self.options_wdg.relaxed_chk.isChecked(),
-            }
+            fasta_file = self.fasta_row.get_opened_file()
+            outputs = OutputOptions(
+                markers_output=self.markers_row.get_opened_file(),
+                mutations_output=self.mutations_row.get_opened_file(),
+                literature_output=self.literature_row.get_opened_file(),
+                excel_output=self.excel_row.get_opened_file(),
+            )
         except FileNotFoundError as e:
             return QMessageBox.warning(self, 'File not found', f'Unable to open file {e.filename}.')
 
         def launch_error(msg):
             QMessageBox.warning(self, 'Missing parameter', msg)
 
-        if not args_dict['fasta_file']:
+        if not fasta_file:
             return launch_error('No input FASTA file selected')
         if (
             not self.excel_row.is_enabled_row()
@@ -256,28 +255,36 @@ class LauncherWindow(QWidget):
         ):
             self.excel_row._chk_enable.setFocus()
             return launch_error('At least one output type must be selected')
-        if self.excel_row.is_enabled_row() and not args_dict['excel_output']:
+        if self.excel_row.is_enabled_row() and not outputs.excel_output:
             self.excel_row.txt_path.setFocus()
             return launch_error('No output Excel file selected')
-        if self.markers_row.is_enabled_row() and not args_dict['markers_output']:
+        if self.markers_row.is_enabled_row() and not outputs.markers_output:
             self.markers_row.txt_path.setFocus()
             return launch_error('No output Markers file selected')
-        if self.mutations_row.is_enabled_row() and not args_dict['mutations_output']:
+        if self.mutations_row.is_enabled_row() and not outputs.mutations_output:
             self.mutations_row.txt_path.setFocus()
             return launch_error('No output Mutations file selected')
-        if self.literature_row.is_enabled_row() and not args_dict['literature_output']:
+        if self.literature_row.is_enabled_row() and not outputs.literature_output:
             self.literature_row.txt_path.setFocus()
             return launch_error('No output Literature file selected')
 
-        ProgressWindow(args_dict).exec()
+        options = FluMutOptions(
+            input=InputOptions(
+                fasta_files=(fasta_file,),
+                name_regex=self.options_wdg.name_regex_txt.get_text() or DEFAULT_NAME_REGEX,
+            ),
+            output=outputs,
+            analysis=AnalysisOptions(relaxed=self.options_wdg.relaxed_chk.isChecked()),
+        )
+        ProgressWindow(options).exec()
 
-        args_dict['fasta_file'].close()
-        if args_dict['markers_output']:
-            args_dict['markers_output'].close()
-        if args_dict['mutations_output']:
-            args_dict['mutations_output'].close()
-        if args_dict['literature_output']:
-            args_dict['literature_output'].close()
+        fasta_file.close()
+        if outputs.markers_output:
+            outputs.markers_output.close()
+        if outputs.mutations_output:
+            outputs.mutations_output.close()
+        if outputs.literature_output:
+            outputs.literature_output.close()
 
     def is_pyinstaller(self):
         return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')

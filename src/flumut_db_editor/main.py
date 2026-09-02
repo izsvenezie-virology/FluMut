@@ -4,8 +4,8 @@ import qdarktheme
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
-from flumut.flumutdb import loader
-from flumut.flumutdb.initializer import initialize
+from flumut.core.options import DatabaseOptions
+from flumut.flumutdb import open_database
 from flumut_db_editor.gui.main_window import MainWindow
 
 FONT_FAMILIES = ['Inter', 'Segoe UI', 'SF Pro Text', 'Noto Sans', 'Cantarell', 'DejaVu Sans']
@@ -24,8 +24,7 @@ def main():
     db = None
     if len(sys.argv) > 1:
         db = sys.argv[1]
-    initialize(read_only=False, path=db)
-    loader.load()
+    open_database(DatabaseOptions(path=db, read_only=False))
 
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()

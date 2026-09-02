@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from typing import Generic, TypeVar
 
 from peewee import DatabaseError
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
 from flumut.core.globals import DATABASE_PROXY
@@ -31,6 +32,7 @@ class BaseForm(QDialog):
         self.resize(400, 300)
 
         self.form_layout = QVBoxLayout()
+        self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint | Qt.WindowType.WindowMaximizeButtonHint, True)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
         main_layout = QVBoxLayout(self)

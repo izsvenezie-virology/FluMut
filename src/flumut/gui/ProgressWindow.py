@@ -1,30 +1,15 @@
 import collections
 import logging
 import re
-from io import TextIOWrapper
 
 from PySide6 import QtGui
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import QDialog, QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout
 
 from flumut.core.logger import LOGGER
+from flumut.core.options import FluMutOptions
 from flumut.core.workflows import whole_workflow
 from flumut.gui.globals import ICON_PATH
-
-
-def run_flumut(args_dict):
-    fasta_files: TextIOWrapper = args_dict['fasta_file']
-    name_regex: str = args_dict['name_regex']
-    relaxed: bool = args_dict['relaxed']
-    mark_out: TextIOWrapper | None = args_dict['markers_output']
-    mut_out: TextIOWrapper | None = args_dict['mutations_output']
-    lit_out: TextIOWrapper | None = args_dict['literature_output']
-    xls_out: TextIOWrapper | None = args_dict['excel_output']
-
-    pattern = name_regex or r'(?P<sample>.+)_(?P<segment>.+)'
-    LOGGER.setLevel(logging.DEBUG)
-
-    whole_workflow((fasta_files,), relaxed, pattern, mark_out, mut_out, lit_out, xls_out)
 
 
 class StdIO:
@@ -52,9 +37,9 @@ class FluMutWorker(QThread):
     error = Signal(Exception)
     ended = Signal(int)
 
-    def __init__(self, args_dict, stderr_stream):
+    def __init__(self, options: FluMutOptions, stderr_stream):
         QThread.__init__(self)
-        self.args_dict = args_dict
+        self.options = options
         self.stderr_stream = stderr_stream
 
     def __del__(self):
@@ -65,8 +50,10 @@ class FluMutWorker(QThread):
         return super().terminate()
 
     def run(self):
-        total_sequences = len(re.findall(r'^>.+', self.args_dict['fasta_file'].read(), re.M))
-        self.args_dict['fasta_file'].seek(0)
+        total_sequences = 0
+        for fasta in self.options.input.fasta_files:
+            total_sequences += len(re.findall(r'^>.+', fasta.read(), re.MULTILINE))
+            fasta.seek(0)
 
         self.started.emit(total_sequences)
 
@@ -74,9 +61,10 @@ class FluMutWorker(QThread):
         handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
         LOGGER.addHandler(handler)
         LOGGER.propagate = False
+        LOGGER.setLevel(logging.DEBUG)
 
         try:
-            run_flumut(self.args_dict)
+            whole_workflow(self.options)
             self.ended.emit(0)
         except Exception as e:
             self.ended.emit(1)
@@ -87,9 +75,7 @@ class FluMutWorker(QThread):
 
 
 class FluMutOutputReader(QThread):
-    started = Signal(int)
     stderr = Signal(str)
-    ended = Signal()
 
     def __init__(self, stderr_stream):
         QThread.__init__(self)
@@ -108,11 +94,18 @@ class FluMutOutputReader(QThread):
                 self.msleep(100)
 
     def stop(self):
+        """End the loop, and block until it has ended.
+
+        The thread must not outlive the window it reports to: closing that
+        window frees the C++ object this thread is still running on. Setting
+        the flag alone leaves it up to one `msleep` still running.
+        """
         self._stop = True
+        self.wait()
 
 
 class ProgressWindow(QDialog):
-    def __init__(self, args_dict) -> None:
+    def __init__(self, options: FluMutOptions) -> None:
         super().__init__()
         self.init_ui()
         self.setModal(True)
@@ -120,7 +113,7 @@ class ProgressWindow(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint)
         self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint)
 
-        self.flumut_arguments = args_dict
+        self.flumut_options = options
         self.start_flumut()
 
     def init_ui(self):
@@ -153,7 +146,7 @@ class ProgressWindow(QDialog):
 
         def handle_end(exit_code):
             self.logger_thread.stop()
-            for line in self.stderr_stream.buffer:
+            while (line := self.stderr_stream.readline()) is not None:
                 log_stderr(line)
 
             if exit_code == 0:
@@ -177,11 +170,11 @@ class ProgressWindow(QDialog):
         def handle_error(error):
             self.set_progress_bar_color(238, 1, 1)
             self.log_txt.setTextColor(Qt.GlobalColor.red)
-            self.log_txt.append(f'{error.__class__.__name__}: {str(error)}')
+            self.log_txt.append(f'{error.__class__.__name__}: {error!s}')
             QMessageBox.warning(self, error.__class__.__name__, str(error))
 
-        def log_stderr(line):
-            if line.startswith('[WARNING]') or line.startswith('[ERROR]') or line.startswith('[CRITICAL]'):
+        def log_stderr(line: str):
+            if line.startswith(('[WARNING]', '[ERROR]', '[CRITICAL]')):
                 self.log_txt.setTextColor(Qt.GlobalColor.red)
             else:
                 self.log_txt.setTextColor(self.log_txt.palette().color(QtGui.QPalette.ColorRole.Text))
@@ -191,7 +184,7 @@ class ProgressWindow(QDialog):
 
         self.stderr_stream = StdIO()
 
-        self.flumut_thread = FluMutWorker(self.flumut_arguments, self.stderr_stream)
+        self.flumut_thread = FluMutWorker(self.flumut_options, self.stderr_stream)
         self.flumut_thread.started.connect(handle_start)
         self.flumut_thread.ended.connect(handle_end)
         self.flumut_thread.error.connect(handle_error)

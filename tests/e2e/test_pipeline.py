@@ -76,6 +76,11 @@ def test_run_produces_wellformed_outputs(default_run) -> None:
         assert row['Subtype'], f'missing subtype for marker {row["Marker"]}'
 
 
+def test_run_without_any_output_fails(flumut) -> None:
+    """Analysing with no output requested writes nothing, so it must not report success."""
+    assert flumut(outputs=()).exit_code != 0
+
+
 def test_outputs_are_mutually_consistent(default_run) -> None:
     """Nothing referenced in one output is missing from the others."""
     samples = {row['Sample'] for row in default_run.rows('mutations')}

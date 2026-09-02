@@ -10,19 +10,14 @@ import flumut
 from flumut.core.analysis.models import Analysis
 from flumut.core.globals import EXCEL_TEMPLATE
 from flumut.core.logger import LOGGER
+from flumut.core.options import OutputOptions
 from flumut.flumutdb import DbVersion
 
 TSV_data = list[dict[str, str]]
 
 
-def write_outputs(
-    analysis: Analysis,
-    markers_output: TextIOWrapper | None,
-    mutations_output: TextIOWrapper | None,
-    literature_output: TextIOWrapper | None,
-    excel_output: TextIOWrapper | None,
-):
-    """Write all analysis results to the specified output files.
+def write_outputs(analysis: Analysis, outputs: OutputOptions):
+    """Write all analysis results to the requested output files.
 
     Extracts data from the completed Analysis object, writes tab-separated values
     to the provided file handles, and populates an Excel workbook with the same
@@ -30,11 +25,14 @@ def write_outputs(
 
     Args:
         analysis: The completed Analysis object.
-        markers_output: Open file handle for the Markers TSV output.
-        mutations_output: Open file handle for the Mutations TSV output.
-        literature_output: Open file handle for the Literature TSV output.
-        excel_output: Open file handle whose name determines the Excel output path and format (``.xlsx`` or ``.xlsm``).
+        outputs: The requested reports, each an open file handle or None. The
+            Excel handle's name determines its path and format (``.xlsx`` or ``.xlsm``).
     """
+    markers_output = outputs.markers_output
+    mutations_output = outputs.mutations_output
+    literature_output = outputs.literature_output
+    excel_output = outputs.excel_output
+
     if markers_output or excel_output:
         markers = get_markers_data(analysis)
         if markers_output:
