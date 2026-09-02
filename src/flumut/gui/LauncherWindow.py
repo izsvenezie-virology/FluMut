@@ -125,12 +125,9 @@ class VersionRow(QWidget):
         self._lbl_versions.setAlignment(Qt.AlignmentFlag.AlignRight)
         self._lbl_versions.setStyleSheet('QLabel {color : grey}')
         self._lbl_versions.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._lbl_versions.setText(f'FluMut v.{__version__}')
 
-        self.update_text()
         layout.addWidget(self._lbl_versions)
-
-    def update_text(self):
-        self._lbl_versions.setText(f'FluMut {__version__}')
 
 
 class AdvancedOptions(QWidget):

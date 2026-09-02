@@ -89,10 +89,11 @@ def test_any_single_output_counts_as_requested(output: str) -> None:
 def test_every_cli_parameter_belongs_to_an_option_group() -> None:
     """Adding a CLI option means adding the matching field, or nothing carries its value.
 
-    ``all_versions`` is the one exception: the command takes it as a named
-    argument and answers it before the workflow starts, so it never reaches a group.
+    ``all_versions`` and ``check_update`` are the exceptions: the command takes
+    them as named arguments and answers them before the workflow starts, so they
+    never reach a group.
     """
-    exposed = {param.name for param in cli.params if param.expose_value} - {'all_versions'}
+    exposed = {param.name for param in cli.params if param.expose_value} - {'all_versions', 'check_update'}
     declared = {field.name for group in OPTION_GROUPS for field in fields(group)}
 
     assert exposed <= declared, f'no option group declares: {sorted(exposed - declared)}'

@@ -9,6 +9,7 @@ from flumut import __author__, __contact__, __version__
 from flumut.core import logger
 from flumut.core.logger import LEVELS, LOGGER
 from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
+from flumut.core.updates import check_for_update
 from flumut.core.workflows import whole_workflow
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
@@ -33,12 +34,22 @@ def print_all_versions(database: DatabaseOptions) -> None:
     click.echo(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get_or_none()}')
 
 
-def option_group(*options: Callable) -> Callable:
-    """Bundle Click options into one reusable decorator.
+def print_update_status() -> None:
+    """Print whether a newer FluMut has been released on GitHub.
 
-    Options are listed in the order they should appear in ``--help``, matching
-    the order they would have as stacked decorators.
+    Raises:
+        UpdateCheckError: If the latest release cannot be retrieved. The user
+            asked for this check, so a failed one is reported, not swallowed.
     """
+    new_release = check_for_update()
+    if new_release is None:
+        click.echo(f'FluMut v.{__version__} is up to date.')
+        return
+    click.echo(f'A newer version of FluMut ({new_release.version}) is available: {new_release.url}')
+
+
+def option_group(*options: Callable) -> Callable:
+    """Bundle Click options into one reusable decorator."""
 
     def decorator(func: Callable) -> Callable:
         for option in reversed(options):
@@ -52,6 +63,7 @@ general_options = option_group(
     click.help_option('-h', '--help'),
     click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})'),
     click.option('--all-versions', is_flag=True, help='Print the FluMut and FluMutDB versions and exit.'),
+    click.option('--check-update', is_flag=True, help='Check on GitHub whether a newer FluMut is available and exit.'),
     click.option(
         '--loglevel',
         type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
@@ -98,10 +110,12 @@ input_options = option_group(
 @analysis_options
 @output_options
 @input_options
-def cli(all_versions: bool, **options) -> None:
-    # Every option above must be named after a field of one option group, or from_flat rejects it.
+def cli(all_versions: bool, check_update: bool, **options) -> None:
     run_options = FluMutOptions.from_flat(options)
     try:
+        if check_update:
+            print_update_status()
+            return
         if all_versions:
             print_all_versions(run_options.database)
             return
