@@ -4,6 +4,7 @@ import qdarktheme
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
+from flumut.flumutdb import loader
 from flumut.flumutdb.initializer import initialize
 from flumut_db_editor.gui.main_window import MainWindow
 
@@ -24,6 +25,7 @@ def main():
     if len(sys.argv) > 1:
         db = sys.argv[1]
     initialize(read_only=False, path=db)
+    loader.load()
 
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()

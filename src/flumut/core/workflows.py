@@ -7,6 +7,12 @@ from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
 from flumut.core.io.output import write_outputs
 from flumut.core.logger import LOGGER
+from flumut.flumutdb import loader
+from flumut.flumutdb.initializer import initialize
+
+
+class MissingFastaFilesError(Exception):
+    """Raised when no FASTA files are provided to the workflow."""
 
 
 def whole_workflow(
@@ -19,9 +25,12 @@ def whole_workflow(
     excel_output: TextIOWrapper | None,
 ) -> None:
     if not fasta_files:
-        raise Exception("Missing argument 'FASTA_FILES'")
+        raise MissingFastaFilesError("Missing argument 'FASTA_FILES'")
+    LOGGER.info('Initializing analysis...')
     analysis = Analysis()
     pattern = re.compile(name_regex)
+    initialize()
+    loader.load()
 
     LOGGER.info(f'Reading {len(fasta_files)} FASTA file(s)...')
     for fasta in fasta_files:

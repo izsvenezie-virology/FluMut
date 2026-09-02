@@ -8,27 +8,6 @@ from flumut import __author__, __contact__, __version__
 from flumut.core import logger
 from flumut.core.logger import LEVELS, LOGGER
 from flumut.core.workflows import whole_workflow
-from flumut.flumutdb import initialize
-from flumut.flumutdb.models import DbVersion
-
-
-def update_db(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    raise NotImplementedError()
-
-
-def print_all_versions(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    print(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get_or_none()}')
-    ctx.exit()
-
-
-def set_dbfile(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    initialize(value, read_only=True)
 
 
 def set_verbosity(ctx, param, value):
@@ -44,14 +23,19 @@ def print_errors(error: Exception) -> None:
 
 
 @click.command()
-# Help and versions
+# Eager options
 @click.help_option('-h', '--help')
 @click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})')
-# Database selection, must be eager since it must be parsed before update and all-versions
-@click.option('-D', '--db-file', type=str, callback=set_dbfile, expose_value=False, is_eager=True, help='Set source database.')
-# Options that exits from the workflow
-@click.option('--all-versions', is_flag=True, callback=print_all_versions, expose_value=False, help='Prints all versions and exit.')
-@click.option('--update', is_flag=True, callback=update_db, expose_value=False, help='Update the database to the latest version and exit.')
+@click.option(
+    '--loglevel',
+    type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
+    callback=set_verbosity,
+    expose_value=False,
+    default='wrn',
+    show_default=True,
+    is_eager=True,
+    help='Verbosity of the logging messages',
+)
 # Advanced options
 @click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
 @click.option(
@@ -61,15 +45,6 @@ def print_errors(error: Exception) -> None:
     default=r'(?P<sample>.+)_(?P<segment>.+)',
     show_default=True,
     help='Set regular expression to parse sequence name.',
-)
-@click.option(
-    '--loglevel',
-    type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
-    callback=set_verbosity,
-    expose_value=False,
-    default='wrn',
-    show_default=True,
-    help='Verbosity of the logging messages',
 )
 # Output files
 @click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')

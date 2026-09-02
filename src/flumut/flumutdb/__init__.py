@@ -16,5 +16,3 @@ from flumut.flumutdb.models import (
     Segment,
     Subtype,
 )
-
-initialize()
