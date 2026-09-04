@@ -92,6 +92,13 @@ TARGET_NAMES = {
     'rimantadine': 'Rimantadine',
     'zanamivir': 'Zanamivir',
 }
+SUBTYPE_NOTES = {
+    '(human isolate)': 'human isolate',
+    '(human isolate) backbone with H9N2 HA': 'human isolate backbone with H9N2 HA',
+    'with all internal genes from H7N9': 'all internal genes from H7N9',
+    '(avian)': '',
+}
+
 HOST_RE = re.compile(r'^(.+?)\s+in\s+(.+)$')
 TARGET_RE = re.compile(
     r'^(.+?)\s+to\s+(' + '|'.join(map(re.escape, TARGET_NAMES)) + r')$',
@@ -134,6 +141,10 @@ def sanitize_host_name(name: str) -> str:
 
 def sanitize_target_name(name: str) -> str:
     return TARGET_NAMES.get(name.casefold(), '').strip()
+
+
+def sanitize_subtype_note(note: str) -> str:
+    return SUBTYPE_NOTES.get(note, note.strip())
 
 
 def sanitize_mutation_name(name: str) -> str:
@@ -369,15 +380,25 @@ def parse_effect(name: str) -> tuple[str, str, str]:
     return name, '', ''
 
 
-def migrate_subtypes() -> dict[str, Subtype]:
+def migrate_subtypes() -> dict[str, tuple[Subtype, str]]:
     Subtype.create_table()
     result = {}
 
     CURSOR.execute('SELECT DISTINCT subtype FROM markers_effects')
     for (name,) in CURSOR.fetchall():
-        subtype = Subtype.create(name=name.strip())
-        result[name] = subtype
+        new_name, notes = parse_subtype(name)
+        subtype, _ = Subtype.get_or_create(name=new_name.strip())
+        result[name] = (subtype, sanitize_subtype_note(notes))
     return result
+
+
+def parse_subtype(name: str) -> tuple[str, str]:
+    if name.startswith('A('):
+        name = name[2 : name.find(')')]
+    if ' ' in name:
+        subtype, notes = name.split(' ', 1)
+        return subtype, notes
+    return name, ''
 
 
 def migrate_papers() -> dict[str, Paper]:
@@ -435,17 +456,20 @@ def migrate_evidences(
     markers: dict[str, Marker],
     papers: dict[str, Paper],
     effects: dict[str, tuple[Effect, Host | None, Target | None]],
-    subtypes: dict[str, Subtype],
+    subtypes: dict[str, tuple[Subtype, str]],
 ) -> None:
     Evidence.create_table()
     CURSOR.execute('SELECT marker_id, paper_id, effect_name, subtype FROM markers_effects')
     for marker_id, paper_id, effect_name, subtype_name in CURSOR.fetchall():
         effect, host, target = effects[effect_name]
-        values = {'marker': markers[marker_id], 'paper': papers[paper_id], 'effect': effect, 'subtype': subtypes[subtype_name]}
+        subtype, notes = subtypes[subtype_name]
+        values = {'marker': markers[marker_id], 'paper': papers[paper_id], 'effect': effect, 'subtype': subtype}
         if host:
             values['host'] = host
         if target:
             values['target'] = target
+        if notes:
+            values['notes'] = f'Subtype: {notes}'
         Evidence.create(**values)
 
 
