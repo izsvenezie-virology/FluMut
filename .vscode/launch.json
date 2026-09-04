@@ -171,6 +171,14 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": ["src/flumut_db_editor/dummy_db/flumut_db_v7.sqlite"]
+    },
+    {
+      "name": "Update_v7",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "migrations/update_v7/migration_v7.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
     }
   ]
 }

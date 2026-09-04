@@ -4,7 +4,6 @@ import os
 from peewee import SqliteDatabase
 
 from flumut.core.globals import DATABASE_PROXY, DB_FILE
-from flumut.flumutdb.models import DbVersion
 
 
 def initialize(path: str | None = None, read_only: bool = True) -> None:
@@ -19,5 +18,3 @@ def initialize(path: str | None = None, read_only: bool = True) -> None:
         new_db = SqliteDatabase(path, pragmas={'foreign_keys': 1})
 
     DATABASE_PROXY.initialize(new_db)
-
-    DbVersion.is_compatible()

@@ -28,6 +28,7 @@ def open_database(options: DatabaseOptions) -> None:
         options: Which database to open, and whether it may be written to.
     """
     initialize(options.path, options.read_only)
+    DbVersion.is_compatible()
     loader.load()
 
 
