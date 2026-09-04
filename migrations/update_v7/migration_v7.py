@@ -407,19 +407,17 @@ def migrate_papers() -> dict[str, Paper]:
 
     CURSOR.execute('SELECT id, title, authors, year, journal, web_address, doi FROM papers')
     for short_name, title, authors, year, journal, url, doi in CURSOR.fetchall():
-        if paper := Paper.get_or_none(Paper.doi == doi):
-            print(f'Duplicated doi paper {doi}')
-            result[short_name] = paper
-            continue
-        paper = Paper.create(
-            short_name=short_name.strip(),
-            title=title.strip(),
-            authors=authors.strip(),
-            year=int(year),
-            journal=journal.strip() or None,
-            url=url.strip() or None,
-            doi=doi.strip() or None,
-        )
+        values = {
+            'short_name': short_name.strip(),
+            'title': title.strip(),
+            'authors': authors.strip(),
+            'year': int(year),
+            'journal': journal.strip() or None,
+            'url': url.strip() or None,
+        }
+        paper, created = Paper.get_or_create(doi=doi, defaults=values)
+        if not created:
+            print(f'Duplicated doi paper {doi}: using {paper.short_name} (id {paper.get_id()}) instead')
         result[short_name] = paper
     return result
 
