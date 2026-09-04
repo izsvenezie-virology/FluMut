@@ -19,6 +19,7 @@ from flumut.flumutdb.models import (
     Reference,
     Segment,
     Subtype,
+    Target,
 )
 
 BASE = Path(__file__).parent
@@ -376,6 +377,7 @@ mutations = migrate_mutations(proteins, references)
 effects = migrate_effects()
 subtypes = migrate_subtypes()
 Host.create_table()
+Target.create_table()
 papers = migrate_papers()
 markers = migrate_markers(mutations)
 migrate_evidences(markers, papers, effects, subtypes)

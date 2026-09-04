@@ -123,6 +123,8 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
                 effect_name = evidence.effect.name
                 if evidence.host:
                     effect_name += f' in {evidence.host.name}'
+                if evidence.target:
+                    effect_name += f' to {evidence.target.name}'
                 papers_collect[
                     (
                         effect_name,

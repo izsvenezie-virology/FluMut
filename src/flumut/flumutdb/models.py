@@ -153,11 +153,20 @@ class Host(BaseModel):
         return str(self.name)
 
 
+class Target(BaseModel):
+    name: str = TextField(unique=True)  # type: ignore[assignment]
+
+    evidences: list['Evidence']
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 class Paper(BaseModel):
     short_name: str = TextField(unique=True)  # type: ignore[assignment]
     title: str = TextField()  # type: ignore[assignment]
     authors: str = TextField()  # type: ignore[assignment]
-    year: int | None = IntegerField(null=True)  # type: ignore[assignment]
+    year: int = IntegerField()  # type: ignore[assignment]
     journal: str | None = TextField(null=True)  # type: ignore[assignment]
     url: str | None = TextField(null=True)  # type: ignore[assignment]
     doi: str | None = TextField(null=True, unique=True)  # type: ignore[assignment]
@@ -204,6 +213,7 @@ class Evidence(BaseModel):
     effect: Effect = ForeignKeyField(Effect, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
     subtype: Subtype = ForeignKeyField(Subtype, backref='evidences', on_delete='RESTRICT')  # type: ignore[assignment]
     host: Host | None = ForeignKeyField(Host, backref='evidences', null=True, on_delete='RESTRICT')  # type: ignore[assignment]
+    target: Target | None = ForeignKeyField(Target, backref='evidences', null=True, on_delete='RESTRICT')  # type: ignore[assignment]
 
     def __str__(self) -> str:
         return f'{self.marker}: {self.effect} in {self.subtype} ({self.paper})'
