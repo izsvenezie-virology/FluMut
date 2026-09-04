@@ -1,4 +1,5 @@
 import json
+import re
 import sqlite3
 from collections import defaultdict
 from pathlib import Path
@@ -55,6 +56,47 @@ REFERENCE_SOURCES = {
     'MP': 'EPI2414996',
     'NS allele A': 'EPI2414995',
 }
+EFFECT_NAMES = {
+    'Enhanced binding affinity to mammalian cells': ('Enhanced binding affinity in mammalian cells', None),
+    'Reduced inhibition to Zanamiriv': ('Reduced inhibition to Zanamivir', None),
+    'Evade human BTN3A3 (inhibitor of avian influenza A viruses replication)': (
+        'Evade human BTN3A3',
+        'Inhibitor of avian influenza A viruses replication',
+    ),
+    'Evade human stimulator of interferon genes (STING) (inhibitor of avian influenza A viruses replication)': (
+        'Evade human stimulator of interferon genes (STING)',
+        'Inhibitor of avian influenza A viruses replication',
+    ),
+    'Conferred Amantidine resistance': ('Conferred resistance to Amantidine', None),
+    'Dual α2–3 and α2–6 binding': ('Dual α2-3 and α2-6 binding', None),
+    'Increased pseudovirus binding to α2-6': ('Increased binding to α2-6', None),
+    'Loss of binding to α2–3': ('Loss of binding to α2-3', None),
+    'No binding to α2–6': ('No binding to α2-6', None),
+    'Transmitted via aerosol among ferrets': ('Transmitted via aerosol in ferrets', None),
+    'Transmitted via aerosol among guinea pigs': ('Transmitted via aerosol in guinea pigs', None),
+    'Normal susceptibility to baloxavir (≤3-fold increase)': ('Normal susceptibility to baloxavir', '≤3-fold increase'),
+    'Reduced susceptibility to baloxavir (>3-fold increase) ': ('Reduced susceptibility to baloxavir', '>3-fold increase)'),
+}
+HOST_NAMES = {
+    'host': '',
+    'chickens (but not ducks)': 'chickens',
+    'ferret': 'ferrets',
+}
+TARGET_NAMES = {
+    'amantadine': 'Amantadine',
+    'baloxavir': 'Baloxavir',
+    'favipiravir': 'Favipiravir',
+    'laninamivir': 'Laninamivir',
+    'oseltamivir': 'Oseltamivir',
+    'peramivir': 'Peramivir',
+    'rimantadine': 'Rimantadine',
+    'zanamivir': 'Zanamivir',
+}
+HOST_RE = re.compile(r'^(.+?)\s+in\s+(.+)$')
+TARGET_RE = re.compile(
+    r'^(.+?)\s+to\s+(' + '|'.join(map(re.escape, TARGET_NAMES)) + r')$',
+    re.IGNORECASE,
+)
 
 
 def load_numbering(path: Path) -> dict[int, dict[str, int]]:
@@ -75,17 +117,29 @@ NA_NUMBERING = load_numbering(BASE / 'data' / 'na_numbering.tsv')
 
 
 def sanitize_protein_name(name: str) -> str:
-    return PROTEIN_NAMES.get(name, name)
+    return PROTEIN_NAMES.get(name, name).strip()
 
 
 def sanitize_reference_name(name: str) -> str:
-    return REFERENCE_NAMES.get(name, name)
+    return REFERENCE_NAMES.get(name, name).strip()
+
+
+def sanitize_effect_name(name: str) -> tuple[str, str | None]:
+    return EFFECT_NAMES.get(name, (name.strip(), None))
+
+
+def sanitize_host_name(name: str) -> str:
+    return HOST_NAMES.get(name, name).lower().strip()
+
+
+def sanitize_target_name(name: str) -> str:
+    return TARGET_NAMES.get(name.casefold(), '').strip()
 
 
 def sanitize_mutation_name(name: str) -> str:
     protein, mutation = name.split(':')
     protein = sanitize_protein_name(protein)
-    return f'{protein}:{mutation[1:]}'
+    return f'{protein}:{mutation[1:].strip()}'
 
 
 def sanitize_proteins(proteins: dict[str, Protein]) -> dict[str, Protein]:
@@ -141,7 +195,7 @@ def migrate_references(segments: dict[str, Segment]) -> dict[str, Reference]:
             indexes[segment_name] += 1
             index = indexes[segment_name]
         reference = Reference.create(
-            name=name, segment=segments[segment_name], sequence=sequence, order=index, source=REFERENCE_SOURCES.get(name)
+            name=name, segment=segments[segment_name], sequence=sequence.strip(), order=index, source=REFERENCE_SOURCES.get(name)
         )
         result[old_name] = reference
     return result
@@ -282,16 +336,37 @@ def create_ns_mutations(
     return mutation
 
 
-def migrate_effects() -> dict[str, Effect]:
+def migrate_effects() -> dict[str, tuple[Effect, Host | None, Target | None]]:
     Effect.create_table()
+    Host.create_table()
+    Target.create_table()
     result = {}
 
     CURSOR.execute('SELECT name FROM effects')
 
     for (name,) in CURSOR.fetchall():
-        effect = Effect.create(name=name)
-        result[name] = effect
+        sanitized_name, notes = sanitize_effect_name(name)
+        effect_name, host_name, target_name = parse_effect(sanitized_name)
+        effect, created = Effect.get_or_create(name=effect_name, defaults={'notes': notes})
+        if created:
+            print(f'Effect "{name}" is merged into effect {effect.get_id()}: {effect.name}')
+        host, target = None, None
+        if host_name := sanitize_host_name(host_name):
+            host, _ = Host.get_or_create(name=host_name)
+            print(f'Extracted host "{host_name}" from "{name}"')
+        if target_name := sanitize_target_name(target_name):
+            target, _ = Target.get_or_create(name=target_name)
+            print(f'Extracted target "{target_name}" from "{name}"')
+        result[name] = (effect, host, target)
     return result
+
+
+def parse_effect(name: str) -> tuple[str, str, str]:
+    if m := HOST_RE.match(name):
+        return m.group(1), m.group(2), ''
+    if m := TARGET_RE.match(name):
+        return m.group(1), '', m.group(2)
+    return name, '', ''
 
 
 def migrate_subtypes() -> dict[str, Subtype]:
@@ -300,7 +375,7 @@ def migrate_subtypes() -> dict[str, Subtype]:
 
     CURSOR.execute('SELECT DISTINCT subtype FROM markers_effects')
     for (name,) in CURSOR.fetchall():
-        subtype = Subtype.create(name=name)
+        subtype = Subtype.create(name=name.strip())
         result[name] = subtype
     return result
 
@@ -316,7 +391,13 @@ def migrate_papers() -> dict[str, Paper]:
             result[short_name] = paper
             continue
         paper = Paper.create(
-            short_name=short_name, title=title, authors=authors, year=int(year), journal=journal or None, url=url or None, doi=doi or None
+            short_name=short_name.strip(),
+            title=title.strip(),
+            authors=authors.strip(),
+            year=int(year),
+            journal=journal.strip() or None,
+            url=url.strip() or None,
+            doi=doi.strip() or None,
         )
         result[short_name] = paper
     return result
@@ -351,12 +432,21 @@ def migrate_markers(mutations: dict[str, Mutation]) -> dict[str, Marker]:
 
 
 def migrate_evidences(
-    markers: dict[str, Marker], papers: dict[str, Paper], effects: dict[str, Effect], subtypes: dict[str, Subtype]
+    markers: dict[str, Marker],
+    papers: dict[str, Paper],
+    effects: dict[str, tuple[Effect, Host | None, Target | None]],
+    subtypes: dict[str, Subtype],
 ) -> None:
     Evidence.create_table()
     CURSOR.execute('SELECT marker_id, paper_id, effect_name, subtype FROM markers_effects')
     for marker_id, paper_id, effect_name, subtype_name in CURSOR.fetchall():
-        Evidence.create(marker=markers[marker_id], paper=papers[paper_id], effect=effects[effect_name], subtype=subtypes[subtype_name])
+        effect, host, target = effects[effect_name]
+        values = {'marker': markers[marker_id], 'paper': papers[paper_id], 'effect': effect, 'subtype': subtypes[subtype_name]}
+        if host:
+            values['host'] = host
+        if target:
+            values['target'] = target
+        Evidence.create(**values)
 
 
 # Create v7 database
@@ -376,8 +466,6 @@ references = sanitize_references(references)
 mutations = migrate_mutations(proteins, references)
 effects = migrate_effects()
 subtypes = migrate_subtypes()
-Host.create_table()
-Target.create_table()
 papers = migrate_papers()
 markers = migrate_markers(mutations)
 migrate_evidences(markers, papers, effects, subtypes)
