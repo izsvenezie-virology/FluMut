@@ -7,6 +7,7 @@ from pathlib import Path
 from flumut.flumutdb.initializer import initialize
 from flumut.flumutdb.models import (
     Annotation,
+    DbVersion,
     Effect,
     Evidence,
     Host,
@@ -477,6 +478,8 @@ if OUTPUT_DB.exists():
 
 initialize(str(OUTPUT_DB), read_only=False)
 
+DbVersion.create_table()
+DbVersion.create(major=7, minor=0, patch=0)
 segments = migrate_segments()
 proteins = migrate_proteins(segments)
 proteins = sanitize_proteins(proteins)
