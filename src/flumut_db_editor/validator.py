@@ -17,6 +17,7 @@ from flumut.flumutdb.models import (
     Reference,
     Segment,
     Subtype,
+    Target,
 )
 
 
@@ -36,16 +37,13 @@ DELETION_POLICIES: dict[type[BaseModel], DeletePolicy] = {
     Effect: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
     Subtype: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
     Host: DeletePolicy(blocked_by={'Evidences': 'evidences'}),
-    Annotation: DeletePolicy(),
-    Mapping: DeletePolicy(),
-    Evidence: DeletePolicy(),
 }
 
 
 class DeleteValidator:
     def __init__(self, instance: BaseModel) -> None:
         self.instance = instance
-        self.policy: DeletePolicy = DELETION_POLICIES[type(instance)]
+        self.policy: DeletePolicy = DELETION_POLICIES.get(type(instance), DeletePolicy())
         self.blocking_items: dict[str, list[BaseModel]] = self._count_dependants(self.policy.blocked_by)
         self.cascade_items: dict[str, list[BaseModel]] = self._count_dependants(self.policy.cascade)
 
@@ -169,6 +167,9 @@ VALIDATION_POLICIES: dict[type[BaseModel], ValidatePolicy] = {
         not_null_unique={'Name': 'name'},
     ),
     Host: ValidatePolicy(
+        not_null_unique={'Name': 'name'},
+    ),
+    Target: ValidatePolicy(
         not_null_unique={'Name': 'name'},
     ),
     Paper: ValidatePolicy(
