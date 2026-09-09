@@ -144,6 +144,22 @@ class SuccessNotification:
         msg_box.exec()
 
 
+class ConfirmationDialog:
+    """Question the user has to confirm before the caller goes ahead."""
+
+    @staticmethod
+    def ask(parent, title: str, message: str, details: str = '') -> bool:
+        msg_box = QMessageBox(parent)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        if details:
+            msg_box.setInformativeText(details)
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+        msg_box.setDefaultButton(QMessageBox.StandardButton.Ok)
+        return msg_box.exec() == QMessageBox.StandardButton.Ok
+
+
 class ValidationErrorDialog:
     """Dialog for form validation errors."""
 

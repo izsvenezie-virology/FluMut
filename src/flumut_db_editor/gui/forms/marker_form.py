@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Iterable, Iterator
 
 from PySide6.QtCore import Qt
@@ -5,6 +6,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QListWidgetItem, Q
 
 from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel, Marker, MarkerMutation, Mutation
+from flumut_db_editor.gui.dialogs import ConfirmationDialog
 from flumut_db_editor.gui.forms.base import TransactionalForm
 from flumut_db_editor.gui.forms.mutation_form import MutationForm
 from flumut_db_editor.gui.widgets import FilterableList
@@ -94,6 +96,35 @@ class MarkerForm(TransactionalForm[Marker]):
 
     def get_data(self, item: QListWidgetItem) -> Mutation:
         return item.data(Qt.ItemDataRole.UserRole)
+
+    def save_to_db(self) -> bool:
+        """Reuse the marker that already links these mutations, rather than saving a second one for them."""
+        duplicate = self.duplicate_marker()
+        if duplicate is None:
+            return super().save_to_db()
+        confirmed = ConfirmationDialog.ask(
+            self,
+            'Marker already exists',
+            f'"{duplicate}" already links exactly these mutations.',
+            'It will be used instead, and what you entered here will be discarded.',
+        )
+        if not confirmed:
+            return False
+        self.instance = duplicate
+        return True
+
+    def duplicate_marker(self) -> Marker | None:
+        """The saved marker linking exactly the selected mutations, if there is one other than this form's."""
+        selected = {mutation.get_id() for mutation in self.selected_mutations}
+        if not selected:
+            return None
+        mutations_by_marker: dict[int, set[int]] = defaultdict(set)
+        for link in MarkerMutation.select(MarkerMutation.marker, MarkerMutation.mutation):
+            mutations_by_marker[link.marker_id].add(link.mutation_id)  # pyright: ignore[reportAttributeAccessIssue]
+        for marker_id, mutations in mutations_by_marker.items():
+            if mutations == selected and marker_id != self.instance.get_id():
+                return Marker.get_by_id(marker_id)
+        return None
 
     def load_links(self) -> Iterable[MarkerMutation]:
         if self.instance.get_id() is None:
