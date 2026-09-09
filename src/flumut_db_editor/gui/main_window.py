@@ -10,6 +10,7 @@ from flumut_db_editor.gui.tabs.papers_tab import PapersTab
 from flumut_db_editor.gui.tabs.proteins_tab import ProteinsTab
 from flumut_db_editor.gui.tabs.references_tab import ReferencesTab
 from flumut_db_editor.gui.tabs.subtypes_tab import SubtypesTab
+from flumut_db_editor.gui.tabs.targets_tab import TargetsTab
 
 
 class MainWindow(QMainWindow):
@@ -31,6 +32,7 @@ class MainWindow(QMainWindow):
         evidence_terms_tab.addTab(EffectsTab(), 'Effects')
         evidence_terms_tab.addTab(SubtypesTab(), 'Subtypes')
         evidence_terms_tab.addTab(HostsTab(), 'Hosts')
+        evidence_terms_tab.addTab(TargetsTab(), 'Target')
 
         self.tabs.addTab(ProteinsTab(), 'Proteins')
         self.tabs.addTab(ReferencesTab(), 'References')

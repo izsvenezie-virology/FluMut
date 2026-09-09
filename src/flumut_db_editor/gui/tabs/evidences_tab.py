@@ -9,7 +9,7 @@ from flumut_db_editor.gui.forms.delete_form import DeleteForm
 from flumut_db_editor.gui.forms.evidence_form import EvidenceForm
 from flumut_db_editor.gui.tabs.base import BaseTreeTab
 
-COLUMNS = ('Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Notes')
+COLUMNS = ('Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Target', 'Notes')
 
 GROUPS: dict[str, Callable[[Evidence], BaseModel | None]] = {
     'Marker': lambda evidence: evidence.marker,
@@ -75,7 +75,7 @@ class EvidencesTab(BaseTreeTab[Evidence | BaseModel]):
         return [*self.sort_key(evidence), evidence.notes or '']
 
     def sort_key(self, evidence: Evidence) -> tuple[str, ...]:
-        values = (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host)
+        values = (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host, evidence.target)
         return tuple(str(value) if value else '' for value in values)
 
     def get_selected_evidences(self) -> list[Evidence]:

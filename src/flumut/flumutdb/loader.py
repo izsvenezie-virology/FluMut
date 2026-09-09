@@ -26,6 +26,7 @@ from flumut.flumutdb.models import (
     Reference,
     Segment,
     Subtype,
+    Target,
 )
 
 ModelT = TypeVar('ModelT', bound=Model)
@@ -44,6 +45,7 @@ _MODELS: tuple[type[Model], ...] = (
     Effect,
     Subtype,
     Host,
+    Target,
 )
 
 _instances: dict[type[Model], list[Any]] = {}

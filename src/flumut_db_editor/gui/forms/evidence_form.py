@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 from flumut.flumutdb import loader
-from flumut.flumutdb.models import BaseModel, Effect, Evidence, Host, Marker, Paper, Subtype
+from flumut.flumutdb.models import BaseModel, Effect, Evidence, Host, Marker, Paper, Subtype, Target
 from flumut_db_editor.gui.forms.base import MultiInstanceForm, TransactionalForm
 from flumut_db_editor.gui.forms.effect_form import EffectForm
 from flumut_db_editor.gui.forms.host_form import HostForm
@@ -15,7 +15,7 @@ from flumut_db_editor.gui.forms.paper_form import PaperForm
 from flumut_db_editor.gui.forms.subtype_form import SubtypeForm
 from flumut_db_editor.gui.widgets import FilterableList
 
-COLUMNS = ('Marker', 'Paper', 'Effect', 'Subtype', 'Host')
+COLUMNS = ('Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Target', 'Notes')
 
 
 class EvidenceForm(MultiInstanceForm[Evidence]):
@@ -45,6 +45,7 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         self.effect_list = FilterableList[Effect]('Effect', self)
         self.subtype_list = FilterableList[Subtype]('Subtype', self)
         self.host_list = FilterableList[Host]('Host (optional)', self)
+        self.target_list = FilterableList[Target]('Target (optional)', self)
 
         # Every list draws from a model and creates new items of it through its own form.
         self.sources: tuple[tuple[FilterableList, type[BaseModel], type[TransactionalForm]], ...] = (
@@ -53,6 +54,7 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
             (self.effect_list, Effect, EffectForm),
             (self.subtype_list, Subtype, SubtypeForm),
             (self.host_list, Host, HostForm),
+            (self.target_list, Target, HostForm),
         )
 
         lists_row = QHBoxLayout()
@@ -110,7 +112,7 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         return [str(value) if value else '' for value in self.combination(evidence)]
 
     def combination(self, evidence: Evidence) -> tuple:
-        return (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host)
+        return (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host, evidence.target)
 
     def on_add_requested(self) -> None:
         combinations = product(
@@ -119,12 +121,13 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
             self.effect_list.selected_instances(),
             self.subtype_list.selected_instances(),
             self.host_list.selected_instances() or [None],
+            self.target_list.selected_instances() or [None],
         )
         present = [self.combination(evidence) for evidence in self.instances]
-        for marker, paper, effect, subtype, host in combinations:
-            if (marker, paper, effect, subtype, host) in present:
+        for marker, paper, effect, subtype, host, target in combinations:
+            if (marker, paper, effect, subtype, host, target) in present:
                 continue
-            self.instances.append(Evidence(marker=marker, paper=paper, effect=effect, subtype=subtype, host=host))
+            self.instances.append(Evidence(marker=marker, paper=paper, effect=effect, subtype=subtype, host=host, target=target))
         self.refresh_table()
 
     def on_remove_requested(self) -> None:
