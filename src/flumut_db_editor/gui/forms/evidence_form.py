@@ -3,7 +3,15 @@ from functools import partial
 from itertools import product
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QPushButton, QTableWidget, QTableWidgetItem, QWidget
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QHeaderView,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
 
 from flumut.flumutdb import loader
 from flumut.flumutdb.models import BaseModel, Effect, Evidence, Host, Marker, Paper, Subtype, Target
@@ -16,6 +24,7 @@ from flumut_db_editor.gui.forms.subtype_form import SubtypeForm
 from flumut_db_editor.gui.widgets import FilterableList
 
 COLUMNS = ('Marker', 'Paper', 'Effect', 'Subtype', 'Host', 'Target', 'Notes')
+NOTES_COLUMN = COLUMNS.index('Notes')
 
 
 class EvidenceForm(MultiInstanceForm[Evidence]):
@@ -33,7 +42,10 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         self.table.setHorizontalHeaderLabels(COLUMNS)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
+        )
+        self.table.horizontalHeader().setSectionResizeMode(NOTES_COLUMN, QHeaderView.ResizeMode.Stretch)
 
         self.remove_btn = QPushButton('Remove selected')
         remove_row = QHBoxLayout()
@@ -103,18 +115,23 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         for row, evidence in enumerate(self.instances):
             for col, text in enumerate(self.row_texts(evidence)):
                 item = QTableWidgetItem(text)
+                if col == NOTES_COLUMN:
+                    item.setToolTip('Double-click to edit the notes of this evidence.')
+                else:
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 if col == 0:
                     item.setData(Qt.ItemDataRole.UserRole, evidence)
                 self.table.setItem(row, col, item)
         self.table.resizeColumnsToContents()
 
     def row_texts(self, evidence: Evidence) -> list[str]:
-        return [str(value) if value else '' for value in self.combination(evidence)]
+        return [str(value) if value else '' for value in self.combination(evidence)] + [evidence.notes or '']
 
     def combination(self, evidence: Evidence) -> tuple:
         return (evidence.marker, evidence.paper, evidence.effect, evidence.subtype, evidence.host, evidence.target)
 
     def on_add_requested(self) -> None:
+        self.populate_instances()  # rebuilding the table redraws notes from the instances, so sync what was typed
         combinations = product(
             self.marker_list.selected_instances(),
             self.paper_list.selected_instances(),
@@ -131,6 +148,7 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         self.refresh_table()
 
     def on_remove_requested(self) -> None:
+        self.populate_instances()  # rebuilding the table redraws notes from the instances, so sync what was typed
         for evidence in self.selected_evidences():
             self.instances.remove(evidence)
             if evidence.get_id() is not None:
@@ -142,7 +160,17 @@ class EvidenceForm(MultiInstanceForm[Evidence]):
         return [self.table.item(index.row(), 0).data(Qt.ItemDataRole.UserRole) for index in rows]  # pyright: ignore[reportOptionalMemberAccess]
 
     def populate_instances(self) -> None:
-        pass
+        """Copy the notes column back onto its evidence; every other column is read-only."""
+        self.commit_open_editor()
+        for row in range(self.table.rowCount()):
+            evidence: Evidence = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)  # pyright: ignore[reportOptionalMemberAccess]
+            notes = self.table.item(row, NOTES_COLUMN).text().strip()  # pyright: ignore[reportOptionalMemberAccess]
+            evidence.notes = notes or None
+
+    def commit_open_editor(self) -> None:
+        """Close the cell editor, if one is open, so a note being typed is not lost."""
+        if self.table.state() == QAbstractItemView.State.EditingState:
+            self.table.setFocus()
 
     def instances_to_delete(self) -> Iterable[BaseModel]:
         return self.removed

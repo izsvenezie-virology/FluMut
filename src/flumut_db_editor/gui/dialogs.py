@@ -1,14 +1,49 @@
 from PySide6.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QLabel,
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from flumut_db_editor.validator import DataValidator, DeleteValidator
+
+
+class NotesDialog(QDialog):
+    """Free-text editor for the `notes` field every model carries."""
+
+    def __init__(self, parent: QWidget | None, title: str, notes: str = '') -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.resize(480, 320)
+
+        self.notes_field = QTextEdit()
+        self.notes_field.setPlainText(notes)
+        self.notes_field.setPlaceholderText('Notes...')
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.notes_field)
+        layout.addWidget(buttons)
+
+        self.notes_field.setFocus()
+
+    @property
+    def notes(self) -> str:
+        return self.notes_field.toPlainText().strip()
+
+    @staticmethod
+    def edit_notes(parent: QWidget | None, title: str, notes: str = '') -> str | None:
+        """Show the dialog and return the new notes, or None if the user cancelled."""
+        dialog = NotesDialog(parent, title, notes)
+        return dialog.notes if dialog.exec() else None
 
 
 class DataErrorDialog(QDialog):
