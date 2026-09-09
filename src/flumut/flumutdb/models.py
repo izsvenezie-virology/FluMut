@@ -19,6 +19,10 @@ class MutationType(Enum):
     SNP = 'SNP'
 
 
+class MarkerPriority(Enum):
+    pass
+
+
 class BaseModel(Model):
     notes: str | None = TextField(null=True)  # type: ignore[assignment]
 
@@ -183,6 +187,7 @@ MarkerMutationThrough = DeferredThroughModel()
 class Marker(BaseModel):
     name: str = TextField(unique=True)  # type: ignore[assignment]
     mutations: list[Mutation] = ManyToManyField(Mutation, backref='markers', through_model=MarkerMutationThrough)  # type: ignore[assignment]
+    priority: str | None = TextField(null=True, choices=[(t.value, t.name) for t in MarkerPriority])  # type: ignore[assignment]
 
     evidences: list['Evidence']
 
