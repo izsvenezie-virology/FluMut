@@ -1,9 +1,8 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
+# Builds the Jekyll documentation site and publishes it to GitHub Pages.
+#
+# The markers table is generated from the database bundled in this repository.
+# It used to be downloaded from the FluMutDB releases, which no longer exist:
+# the database now ships inside the FluMut package.
 name: Deploy FluMut site
 
 on:
@@ -12,24 +11,27 @@ on:
       - "main"
     paths:
       - "docs/**"
-  repository_dispatch:
-    types: [trigger-update-markers]
-
-  # Allows you to run this workflow manually from the Actions tab
+      - "src/flumut/data/flumut_db.sqlite"
+      - "scripts/create_markers_markdown.py"
+      - ".github/workflows/deploy-pages.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "src/flumut/data/flumut_db.sqlite"
+      - "scripts/create_markers_markdown.py"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pages-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     defaults:
@@ -41,34 +43,38 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.2"
+          ruby-version: "4.0"
           bundler-cache: true
           cache-version: 0
           working-directory: "${{ github.workspace }}/docs"
       - name: Setup Pages
         id: pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
       - name: Create markers table
+        working-directory: ${{ github.workspace }}
         run: |
-          wget -q https://github.com/izsvenezie-virology/FluMutDB/releases/latest/download/flumut_db.sqlite
-          python .github/scripts/create_markers_markdown.py
-          rm flumut_db.sqlite
+          python -m pip install --upgrade pip
+          pip install .
+          python scripts/create_markers_markdown.py
       - name: Build with Jekyll
-        # Outputs to the './_site' directory by default
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
       - name: Upload artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: "docs/_site/"
 
-  # Deployment job
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -1,8 +1,9 @@
 version: 2
 updates:
+  # Gems of the documentation site (docs/Gemfile).
   - package-ecosystem: bundler
-    directory: /
+    directory: /docs
     schedule:
-      interval: daily
+      interval: monthly
     allow:
       - dependency-type: direct

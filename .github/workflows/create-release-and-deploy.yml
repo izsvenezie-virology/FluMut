@@ -1,5 +1,5 @@
 name: Create release and deploy FluMut
-run-name: Release ${{ github.ref_name }}
+run-name: Release ${{ github.ref_name }}${{ inputs.dry_run && ' (dry run)' || '' }}
 
 on:
   push:
@@ -7,32 +7,54 @@ on:
       - "v.*"
 
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Rehearse only: draft release, upload to TestPyPI."
+        type: boolean
+        default: true
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
+permissions:
+  contents: read
 
 jobs:
-  test:
-    name: Run tests
+  config:
+    name: Decide release mode
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    outputs:
+      dry_run: ${{ steps.decide.outputs.dry_run }}
+
+    steps:
+      - name: Decide whether this is a real release
+        id: decide
+        env:
+          REQUESTED: ${{ inputs.dry_run }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          DRY="$REQUESTED"
+          if [ -z "$DRY" ]; then
+            # No explicit choice: only a tag push publishes for real.
+            if [ "$EVENT" = "push" ]; then DRY=false; else DRY=true; fi
+          fi
+          if [ "$DRY" = "false" ] && [[ "$REF" != refs/tags/* ]]; then
+            echo "::error::A real release must be run from a tag, but ref is '$REF'."
+            exit 1
+          fi
+          echo "dry_run=$DRY" >> "$GITHUB_OUTPUT"
+          echo "Dry run: $DRY"
+
+  verify:
+    name: Verify version
+    runs-on: ubuntu-latest
+    needs: config
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
-      - name: Install FluMut with test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install . pytest
       - name: Verify tag matches package version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -44,16 +66,16 @@ jobs:
             echo "::error::Git tag '$GITHUB_REF_NAME' does not match package version '$VERSION' (expected tag 'v.$VERSION')"
             exit 1
           fi
-      - name: Run tests
-        run: pytest
 
+  test:
+    name: Checks
+    needs: config
+    uses: ./.github/workflows/ci.yml
 
   build:
     name: Build FluMut
     runs-on: ubuntu-latest
-    needs: test
-    permissions:
-      contents: read
+    needs: [verify, test]
 
     steps:
       - name: Checkout
@@ -61,15 +83,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
-          cache: 'pip'
+          python-version: "3.x"
+          cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build twine
       - name: Build FluMut
         run: python -m build
+      - name: Check the distributions
+        run: twine check --strict dist/*
       - name: Upload dist
         uses: actions/upload-artifact@v7
         with:
@@ -77,12 +101,9 @@ jobs:
           path: dist
           if-no-files-found: error
 
-
   executables:
     name: Create executables
-    needs: test
-    permissions:
-      contents: read
+    needs: [verify, test]
 
     strategy:
       matrix:
@@ -103,7 +124,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-          cache: 'pip'
+          cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: |
@@ -132,13 +153,10 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-
   examples:
     name: Create FluMut examples files
     runs-on: ubuntu-latest
-    needs: test
-    permissions:
-      contents: read
+    needs: [verify, test]
 
     steps:
       - name: Checkout
@@ -146,15 +164,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
-          cache: 'pip'
+          python-version: "3.x"
+          cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Install FluMut
         run: |
           python -m pip install --upgrade pip
           pip install .
       - name: Run FluMut
-        run: | 
+        run: |
           mv examples/multiple_samples.fa examples/fasta_input_example.fa
           flumut -x examples/excel_output_example.xlsm examples/fasta_input_example.fa
       - name: Upload examples
@@ -166,16 +184,40 @@ jobs:
             examples/fasta_input_example.fa
           if-no-files-found: error
 
+  pypi:
+    name: Publish to ${{ needs.config.outputs.dry_run == 'true' && 'TestPyPI' || 'PyPI' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    environment: ${{ needs.config.outputs.dry_run == 'true' && 'testpypi-release' || 'pypi-release' }}
+    needs: [config, build, executables, examples]
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build
+          path: dist
+      - name: Publish to TestPyPI
+        if: needs.config.outputs.dry_run == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+      - name: Publish to PyPI
+        if: needs.config.outputs.dry_run != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
 
   release:
     name: Create release on GitHub
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
-    needs: [build, executables, examples]
+    needs: [config, pypi]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
       - name: Download build
         uses: actions/download-artifact@v8
         with:
@@ -192,31 +234,48 @@ jobs:
         with:
           name: examples
           path: examples
+      - name: Describe the database
+        id: database
+        run: |
+          VERSION=$(python -c "
+          import sqlite3
+          row = sqlite3.connect('src/flumut/data/flumut_db.sqlite').execute(
+              'SELECT major, minor, patch FROM dbversion'
+          ).fetchone()
+          print('.'.join(map(str, row)))
+          ")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "FluMutDB version: $VERSION"
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          draft: ${{ needs.config.outputs.dry_run == 'true' }}
+          name: ${{ needs.config.outputs.dry_run == 'true' && format('DRY RUN {0}', github.ref_name) || '' }}
+          tag_name: ${{ needs.config.outputs.dry_run == 'true' && format('dry-run-{0}', github.ref_name) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          append_body: true
+          body: |
+            Bundled **FluMutDB v.${{ steps.database.outputs.version }}**.
           files: |
             examples/excel_output_example.xlsm
             examples/fasta_input_example.fa
+            db/flumut_db.sql
             dist/*
 
-
-  pypi:
-    name: Publish to PyPI
+  pages:
+    name: Update FluMut site
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: needs.config.outputs.dry_run == 'false'
     permissions:
-      contents: read
-      id-token: write
-    environment: pypi-release
-    needs: release
+      actions: write
+    needs: [config, release]
 
     steps:
-    - name: Download dist artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: build
-        path: dist
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Dispatch the site deployment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: gh workflow run deploy-pages.yml --ref "$BRANCH"
