@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from flumut.core.io.output import get_literature_data, get_markers_data, get_mutations_data, write_tsv
+from flumut.flumutdb import Evidence
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -47,6 +48,8 @@ def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = Non
     if target is not None:
         evidence.target = MagicMock()
         evidence.target.name = target
+    # Use the real formatting so the host/target cases exercise the model's logic, not a mock
+    evidence.get_effect_name = lambda: Evidence.get_effect_name(evidence)
     return evidence
 
 

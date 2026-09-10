@@ -20,6 +20,30 @@ from flumut.flumutdb.models import (
     Subtype,
 )
 
+#: The models and helpers the rest of FluMut, and the database editor, import
+#: from here rather than reaching into ``flumut.flumutdb.models``.
+__all__ = [
+    'Annotation',
+    'BaseModel',
+    'DbVersion',
+    'Effect',
+    'Evidence',
+    'Host',
+    'Mapping',
+    'Marker',
+    'Mutation',
+    'MutationType',
+    'Paper',
+    'Protein',
+    'Reference',
+    'Segment',
+    'Subtype',
+    'close_database',
+    'initialize',
+    'loader',
+    'open_database',
+]
+
 
 def open_database(options: DatabaseOptions) -> None:
     """Connect to the database described by ``options`` and read it into memory.
