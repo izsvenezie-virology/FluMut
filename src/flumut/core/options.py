@@ -3,8 +3,6 @@ from dataclasses import dataclass, fields
 from io import TextIOWrapper
 from typing import Any, TypeVar
 
-from typing_extensions import Self
-
 # Default options
 DEFAULT_NAME_REGEX = r'(?P<sample>.+)_(?P<segment>.+)'
 DEFAULT_RELAXED = False
@@ -16,7 +14,7 @@ class OptionGroup:
     """Base of the option groups, giving each one a constructor from a flat mapping."""
 
     @classmethod
-    def from_flat(cls, values: Mapping[str, Any]) -> Self:
+    def from_flat(cls: type[OptionGroupT], values: Mapping[str, Any]) -> OptionGroupT:  # noqa: PYI019 (typing.Self needs 3.11)
         """Build the group from ``values``, taking only the keys it declares.
 
         Keys the group does not declare are left to the other groups, and keys

@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """Dump the FluMut database to a deterministic SQL file, so its changes are reviewable.
 
-The binary stays the source of truth — the editor writes it and the package
-loads it. This dump is a generated artifact kept beside it in git, and
-``--check`` fails when the two have drifted apart.
-
 Usage::
 
     python scripts/dump_db.py
