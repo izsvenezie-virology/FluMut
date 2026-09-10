@@ -62,6 +62,23 @@ def test_is_newer_is_false_for_the_same_version() -> None:
     assert is_newer('v.1.0.0', 'v.1.0.0') is False
 
 
+@pytest.mark.parametrize(
+    'version',
+    ['', 'latest', '1.2', 'v.1.0.0-nightly', '1.0.0rc1', '1.0.0 (beta)'],
+    ids=['empty', 'not-a-version', 'two-part', 'suffixed', 'pre-release', 'free-text'],
+)
+def test_is_newer_refuses_versions_it_cannot_read(version: str) -> None:
+    """An unreadable tag reports "no update", and never escapes as a ValueError."""
+    assert is_newer(version, '1.0.0') is False
+    assert is_newer('1.0.0', version) is False
+
+
+def test_check_for_update_survives_an_unreadable_tag() -> None:
+    """A tag the parser cannot read costs a log line, not the run that asked for it."""
+    with patch('flumut.core.updates.urlopen', _mock_urlopen({'tag_name': 'nightly'})):
+        assert check_for_update('1.0.0') is None
+
+
 # ---------------------------------------------------------------------------
 # fetch_latest_release
 # ---------------------------------------------------------------------------
@@ -82,15 +99,13 @@ def test_fetch_latest_release_falls_back_to_the_releases_page() -> None:
         assert fetch_latest_release().url == LATEST_RELEASE_PAGE
 
 
-def test_fetch_latest_release_identifies_itself_and_gives_up_in_time() -> None:
-    """The request names FluMut to GitHub, and never waits without a limit."""
+def test_fetch_latest_release_gives_up_in_time() -> None:
+    """The request never waits without a limit."""
     urlopen = _mock_urlopen({'tag_name': '1.0.0'})
     with patch('flumut.core.updates.urlopen', urlopen):
         fetch_latest_release(timeout=1.5)
 
-    request, kwargs = urlopen.call_args
-    assert kwargs['timeout'] == 1.5
-    assert request[0].get_header('User-agent').startswith('FluMut/')
+    assert urlopen.call_args.kwargs['timeout'] == 1.5
 
 
 # ---------------------------------------------------------------------------

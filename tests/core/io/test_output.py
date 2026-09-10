@@ -34,15 +34,19 @@ def _make_paper(short_name: str, **fields) -> MagicMock:
     return paper
 
 
-def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = None) -> MagicMock:
+def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = None, target: str | None = None) -> MagicMock:
     evidence = MagicMock()
     evidence.effect.name = effect
     evidence.subtype.name = subtype
     evidence.paper.short_name = paper
     evidence.host = None
+    evidence.target = None
     if host is not None:
         evidence.host = MagicMock()
         evidence.host.name = host
+    if target is not None:
+        evidence.target = MagicMock()
+        evidence.target.name = target
     return evidence
 
 
@@ -123,12 +127,28 @@ def test_get_literature_data_is_sorted_by_short_name() -> None:
         ((('Increased replication', 'H5N1', 'Doe2020', None),), 'Increased replication', 'Doe2020'),
         ((('Increased replication', 'H5N1', 'Doe2020', 'Chicken'),), 'Increased replication in Chicken', 'Doe2020'),
         (
+            (('Reduced susceptibility', 'H5N1', 'Doe2020', None, 'Oseltamivir'),),
+            'Reduced susceptibility to Oseltamivir',
+            'Doe2020',
+        ),
+        (
+            (('Reduced susceptibility', 'H5N1', 'Doe2020', 'Chicken', 'Oseltamivir'),),
+            'Reduced susceptibility in Chicken to Oseltamivir',
+            'Doe2020',
+        ),
+        (
             (('Increased replication', 'H5N1', 'Doe2020', None), ('Increased replication', 'H5N1', 'Smith2021', None)),
             'Increased replication',
             'Doe2020; Smith2021',
         ),
     ],
-    ids=['single_evidence', 'host_appended_to_effect', 'papers_of_one_effect_joined'],
+    ids=[
+        'single_evidence',
+        'host_appended_to_effect',
+        'target_appended_to_effect',
+        'host_and_target_appended_to_effect',
+        'papers_of_one_effect_joined',
+    ],
 )
 def test_get_markers_data(evidences: tuple, expected_effect: str, expected_literature: str) -> None:
     """One row per sample x marker x (effect, subtype), with that group's papers joined."""

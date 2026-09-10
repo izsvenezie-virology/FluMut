@@ -120,14 +120,9 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
         for scan in sample.marker_scans:
             papers_collect = defaultdict(list)
             for evidence in scan.marker.evidences:
-                effect_name = evidence.effect.name
-                if evidence.host:
-                    effect_name += f' in {evidence.host.name}'
-                if evidence.target:
-                    effect_name += f' to {evidence.target.name}'
                 papers_collect[
                     (
-                        effect_name,
+                        evidence.get_effect_name(),
                         evidence.subtype.name,
                     )
                 ].append(evidence.paper.short_name)

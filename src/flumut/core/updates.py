@@ -1,12 +1,13 @@
 """Check whether a newer FluMut release is published on GitHub.
 
-Releases are tagged ``v.MAJOR.MINOR.PATCH``, plus a suffix for a pre-release.
+Releases are tagged ``v.MAJOR.MINOR.PATCH``; there are no pre-release tags.
 The check is a convenience, never a requirement: :func:`check_for_update`
 reports any failure as "no update known", so it cannot cost more than a log
 message.
 """
 
 import json
+import re
 from dataclasses import dataclass
 from urllib.request import Request, urlopen
 
@@ -16,6 +17,8 @@ from flumut.core.logger import LOGGER
 LATEST_RELEASE_API = 'https://api.github.com/repos/izsvenezie-virology/FluMut/releases/latest'
 LATEST_RELEASE_PAGE = 'https://github.com/izsvenezie-virology/FluMut/releases/latest'
 DEFAULT_TIMEOUT = 5.0
+
+VERSION_PATTERN = re.compile(r'^v?\.?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$')
 
 
 class UpdateCheckError(RuntimeError):
@@ -59,11 +62,19 @@ def fetch_latest_release(timeout: float = DEFAULT_TIMEOUT) -> Release:
         raise UpdateCheckError(f'No tag_name in answer from {LATEST_RELEASE_API}: {e}') from e
 
 
-def is_newer(candidate: str, current: str) -> bool:
-    """Whether ``candidate`` is a later version than ``current``, False if either cannot be read.
+def parse_version(version: str) -> tuple[int, int, int] | None:
+    """Return the release numbers of ``version`` as a sortable key, or None if it cannot be read."""
+    match = VERSION_PATTERN.match((version or '').strip())
+    if match is None:
+        return None
+    return int(match['major']), int(match['minor']), int(match['patch'])
 
-    A suffix marks a pre-release, ranking below the version it leads to: 1.0.0rc1 before 1.0.0.
-    """
-    candidate_keys = list(map(int, candidate.replace('v.', '').split('.')))
-    current_keys = list(map(int, current.replace('v.', '').split('.')))
-    return candidate_keys > current_keys
+
+def is_newer(candidate: str, current: str) -> bool:
+    """Whether ``candidate`` is a later version than ``current``, False if either cannot be read."""
+    candidate_key = parse_version(candidate)
+    current_key = parse_version(current)
+    if candidate_key is None or current_key is None:
+        LOGGER.debug(f'Cannot compare version "{candidate}" with "{current}"')
+        return False
+    return candidate_key > current_key

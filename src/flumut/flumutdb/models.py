@@ -223,6 +223,14 @@ class Evidence(BaseModel):
     def __str__(self) -> str:
         return f'{self.marker}: {self.effect} in {self.subtype} ({self.paper})'
 
+    def get_effect_name(self) -> str:
+        effect_name = self.effect.name
+        if self.host:
+            effect_name += f' in {self.host.name}'
+        if self.target:
+            effect_name += f' to {self.target.name}'
+        return effect_name
+
 
 class DbVersion(BaseModel):
     major: int = IntegerField()  # type: ignore[assignment]

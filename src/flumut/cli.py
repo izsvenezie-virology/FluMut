@@ -9,7 +9,7 @@ from flumut import __author__, __contact__, __version__
 from flumut.core import logger
 from flumut.core.logger import LEVELS, LOGGER
 from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
-from flumut.core.updates import check_for_update
+from flumut.core.updates import fetch_latest_release, is_newer
 from flumut.core.workflows import whole_workflow
 from flumut.flumutdb import initialize
 from flumut.flumutdb.models import DbVersion
@@ -41,11 +41,11 @@ def print_update_status() -> None:
         UpdateCheckError: If the latest release cannot be retrieved. The user
             asked for this check, so a failed one is reported, not swallowed.
     """
-    new_release = check_for_update()
-    if new_release is None:
+    latest = fetch_latest_release()
+    if not is_newer(latest.version, __version__):
         click.echo(f'FluMut v.{__version__} is up to date.')
         return
-    click.echo(f'A newer version of FluMut ({new_release.version}) is available: {new_release.url}')
+    click.echo(f'A newer version of FluMut ({latest.version}) is available: {latest.url}')
 
 
 def option_group(*options: Callable) -> Callable:
