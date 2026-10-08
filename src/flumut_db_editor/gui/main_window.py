@@ -9,6 +9,7 @@ from flumut_db_editor.gui.tabs.mutations_tab import MutationsTab
 from flumut_db_editor.gui.tabs.papers_tab import PapersTab
 from flumut_db_editor.gui.tabs.proteins_tab import ProteinsTab
 from flumut_db_editor.gui.tabs.references_tab import ReferencesTab
+from flumut_db_editor.gui.tabs.release_tab import ReleaseTab
 from flumut_db_editor.gui.tabs.subtypes_tab import SubtypesTab
 from flumut_db_editor.gui.tabs.targets_tab import TargetsTab
 
@@ -41,12 +42,13 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(MarkersTab(), 'Markers')
         self.tabs.addTab(PapersTab(), 'Papers')
         self.tabs.addTab(EvidencesTab(), 'Evidences')
+        # self.tabs.addTab(ReleaseTab(), 'Release')
 
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
     def on_tab_changed(self):
         match widget := self.tabs.currentWidget():
-            case BaseTab():
+            case BaseTab() | ReleaseTab():
                 widget.refresh()
             case _:
                 return
