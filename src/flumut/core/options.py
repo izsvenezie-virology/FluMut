@@ -42,12 +42,12 @@ class AnalysisOptions(OptionGroup):
 
 @dataclass(frozen=True)
 class OutputOptions(OptionGroup):
-    """The reports to write, each an open file handle or None when not requested."""
+    """The reports to write: an open file handle for each TSV, a path for the Excel one, None when not requested."""
 
     markers_output: TextIOWrapper | None = None
     mutations_output: TextIOWrapper | None = None
     literature_output: TextIOWrapper | None = None
-    excel_output: TextIOWrapper | None = None
+    excel_output: str | None = None
 
     def any_requested(self) -> bool:
         """Whether at least one report was asked for."""

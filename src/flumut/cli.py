@@ -88,7 +88,7 @@ output_options = option_group(
     click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.'),
     click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.'),
     click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.'),
-    click.option('-x', '--excel-output', type=File('w', lazy=False), default=None, help='Excel complete report.'),
+    click.option('-x', '--excel-output', type=click.Path(dir_okay=False, writable=True), default=None, help='Excel complete report.'),
 )
 
 input_options = option_group(

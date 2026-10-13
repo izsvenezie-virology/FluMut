@@ -25,8 +25,9 @@ def write_outputs(analysis: Analysis, outputs: OutputOptions):
 
     Args:
         analysis: The completed Analysis object.
-        outputs: The requested reports, each an open file handle or None. The
-            Excel handle's name determines its path and format (``.xlsx`` or ``.xlsm``).
+        outputs: The requested reports. The TSV ones are open file handles and
+            the Excel one is a path, whose extension determines its format
+            (``.xlsx`` or ``.xlsm``). Each is None when not requested.
     """
     markers_output = outputs.markers_output
     mutations_output = outputs.mutations_output
@@ -50,7 +51,7 @@ def write_outputs(analysis: Analysis, outputs: OutputOptions):
             write_tsv(literature_output, literature)
     if excel_output:
         checks = get_checks_data(analysis)
-        LOGGER.debug(f'Writing Excel report to {excel_output.name}')
+        LOGGER.debug(f'Writing Excel report to {excel_output}')
         write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
 
 
@@ -185,7 +186,7 @@ def get_checks_data(analysis: Analysis) -> TSV_data:
     return values
 
 
-def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_data, literature: TSV_data, checks: TSV_data) -> None:
+def write_excel(output_file: str, markers: TSV_data, mutations: TSV_data, literature: TSV_data, checks: TSV_data) -> None:
     """Write all analysis results to an Excel workbook using the built-in template.
 
     Loads the FluMut Excel template, writes version information to the Checks
@@ -193,14 +194,14 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
     before saving to ``output_file``.
 
     Args:
-        output_file: Open file handle whose name determines the output path and
-            format (``.xlsx`` or ``.xlsm``).
+        output_file: Path of the workbook to write, whose extension determines
+            its format (``.xlsx`` or ``.xlsm``).
         markers: Rows to write to the Markers sheet.
         mutations: Rows to write to the Mutations sheet.
         literature: Rows to write to the Literature sheet.
         checks: Rows to write to the Checks sheet.
     """
-    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.name.endswith('.xlsm'))
+    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.endswith('.xlsm'))
 
     ws = wb['Checks']
     ws.cell(row=1, column=4, value=flumut.__version__)
@@ -212,7 +213,7 @@ def write_excel(output_file: TextIOWrapper, markers: TSV_data, mutations: TSV_da
     if checks:
         _write_excel_sheet(wb, 'Checks', checks)
 
-    wb.save(output_file.name)
+    wb.save(output_file)
 
 
 def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:

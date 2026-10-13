@@ -60,6 +60,10 @@ def _incompatible_major_version(tmp_path) -> dict:
     return {'extra_args': ('-D', str(database))}
 
 
+def _missing_excel_directory(tmp_path) -> dict:
+    return {'extra_args': ('-x', str(tmp_path / 'missing' / 'report.xlsm'))}
+
+
 @pytest.mark.parametrize(
     'make_arguments',
     [
@@ -69,6 +73,7 @@ def _incompatible_major_version(tmp_path) -> dict:
         _not_a_sqlite_file,
         _sqlite_without_version_table,
         _incompatible_major_version,
+        _missing_excel_directory,
     ],
     ids=lambda make_arguments: make_arguments.__name__.lstrip('_'),
 )
@@ -79,3 +84,11 @@ def test_user_error_is_reported_without_a_traceback(flumut, tmp_path, make_argum
     assert result.exit_code == 1
     assert isinstance(result.exception, SystemExit)
     assert isinstance(result.exception.__context__, (FluMutError, FluMutDBError))
+
+
+def test_failed_run_leaves_no_excel_report(flumut, tmp_path) -> None:
+    """The workbook is only created once there is something to save, so a failure must not leave an empty one."""
+    result = flumut(outputs=('excel',), **_invalid_character(tmp_path))
+
+    assert result.exit_code == 1
+    assert not result.paths['excel'].exists()

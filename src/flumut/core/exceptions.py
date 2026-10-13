@@ -10,6 +10,13 @@ class NoOutputRequestedError(FluMutError):
     """Raised when the workflow is asked to run without a single output file."""
 
 
+class UnwritableOutputError(FluMutError):
+    """Raised when an output file cannot be written where it was requested."""
+
+    def __init__(self, path: str, reason: str) -> None:
+        super().__init__(f'Cannot write output file {path}: {reason}')
+
+
 class InvalidNameRegexError(FluMutError):
     """Raised when the regular expression used to parse sequence names does not compile."""
 

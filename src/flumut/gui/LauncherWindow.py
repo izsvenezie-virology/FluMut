@@ -234,7 +234,7 @@ class LauncherWindow(QWidget):
                 markers_output=self.markers_row.get_opened_file(),
                 mutations_output=self.mutations_row.get_opened_file(),
                 literature_output=self.literature_row.get_opened_file(),
-                excel_output=self.excel_row.get_opened_file(),
+                excel_output=self.excel_row.get_text(),
             )
         except FileNotFoundError as e:
             return QMessageBox.warning(self, 'File not found', f'Unable to open file {e.filename}.')
