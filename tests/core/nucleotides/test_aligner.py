@@ -4,6 +4,7 @@ import pytest
 
 from flumut.core.globals import GAP_SYMBOL
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
+from flumut.core.nucleotides.exceptions import NoReferenceFoundError
 from flumut.core.nucleotides.models import Nucleotide
 
 #: (reference name, segment name) for the references every selection test sees.
@@ -73,7 +74,7 @@ def test_select_candidate_references(mock_get_references, hint: str | None, expe
 
 
 def test_get_best_alignment_no_candidates_raises(mock_aligner) -> None:
-    with pytest.raises(ValueError, match='No reference found'):
+    with pytest.raises(NoReferenceFoundError, match='No reference found'):
         get_best_alignment(_make_query('ACGT'), candidates=[])
 
 

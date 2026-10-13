@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from urllib.request import Request, urlopen
 
 from flumut import __version__
+from flumut.core.exceptions import UpdateCheckError
 from flumut.core.logger import LOGGER
 
 LATEST_RELEASE_API = 'https://api.github.com/repos/izsvenezie-virology/FluMut/releases/latest'
@@ -19,10 +20,6 @@ LATEST_RELEASE_PAGE = 'https://github.com/izsvenezie-virology/FluMut/releases/la
 DEFAULT_TIMEOUT = 5.0
 
 VERSION_PATTERN = re.compile(r'^v?\.?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$')
-
-
-class UpdateCheckError(RuntimeError):
-    """Raised when the latest release cannot be retrieved or understood."""
 
 
 @dataclass(frozen=True)

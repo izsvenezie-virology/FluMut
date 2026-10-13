@@ -171,4 +171,5 @@ def test_check_update_flag_reports_a_failed_check() -> None:
         result = CliRunner().invoke(cli, ['--check-update'])
 
     assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit), 'the failure must be reported, not escape as a traceback'
     assert 'up to date' not in result.output

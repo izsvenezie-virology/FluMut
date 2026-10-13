@@ -4,18 +4,11 @@ from flumut.core.analysis.checks import perform_checks
 from flumut.core.analysis.models import Analysis
 from flumut.core.analysis.preprocess import load_nucleotide_fasta
 from flumut.core.analysis.scanner import analyse
+from flumut.core.exceptions import InvalidNameRegexError, MissingFastaFilesError, NoOutputRequestedError
 from flumut.core.io.output import write_outputs
 from flumut.core.logger import LOGGER
 from flumut.core.options import FluMutOptions
 from flumut.flumutdb import close_database, open_database
-
-
-class MissingFastaFilesError(ValueError):
-    """Raised when no FASTA files are provided to the workflow."""
-
-
-class NoOutputRequestedError(ValueError):
-    """Raised when the workflow is asked to run without a single output file."""
 
 
 def whole_workflow(options: FluMutOptions) -> None:
@@ -28,6 +21,7 @@ def whole_workflow(options: FluMutOptions) -> None:
         MissingFastaFilesError: If no input FASTA file is given.
         NoOutputRequestedError: If no output file is requested, which would run
             the whole analysis and write nothing.
+        InvalidNameRegexError: If the name regex does not compile.
     """
     if not options.input.fasta_files:
         raise MissingFastaFilesError("Missing argument 'FASTA_FILES'")
@@ -36,7 +30,10 @@ def whole_workflow(options: FluMutOptions) -> None:
 
     LOGGER.info('Initializing analysis...')
     analysis = Analysis()
-    pattern = re.compile(options.input.name_regex)
+    try:
+        pattern = re.compile(options.input.name_regex)
+    except re.error as e:
+        raise InvalidNameRegexError(options.input.name_regex, e) from e
 
     try:
         open_database(options.database)

@@ -7,12 +7,13 @@ from click import File
 
 from flumut import __author__, __contact__, __version__
 from flumut.core import logger
+from flumut.core.exceptions import FluMutError
 from flumut.core.logger import LEVELS, LOGGER
 from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
 from flumut.core.updates import fetch_latest_release, is_newer
 from flumut.core.workflows import whole_workflow
-from flumut.flumutdb import initialize
-from flumut.flumutdb.models import DbVersion
+from flumut.flumutdb import read_version
+from flumut.flumutdb.exceptions import FluMutDBError
 
 
 def set_verbosity(ctx, param, value):
@@ -30,8 +31,7 @@ def print_errors(error: Exception) -> NoReturn:
 
 def print_all_versions(database: DatabaseOptions) -> None:
     """Print the version of FluMut and of the database it would analyse with."""
-    initialize(database.path, database.read_only)
-    click.echo(f'FluMut v.{__version__}; FluMutDB v.{DbVersion.get_or_none()}')
+    click.echo(f'FluMut v.{__version__}; FluMutDB v.{read_version(database)}')
 
 
 def print_update_status() -> None:
@@ -120,7 +120,7 @@ def cli(all_versions: bool, check_update: bool, **options) -> None:
             print_all_versions(run_options.database)
             return
         whole_workflow(run_options)
-    except (FileNotFoundError, ValueError, RuntimeError) as e:
+    except (FluMutError, FluMutDBError) as e:
         print_errors(e)
 
 

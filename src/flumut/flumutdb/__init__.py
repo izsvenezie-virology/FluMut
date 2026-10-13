@@ -1,6 +1,9 @@
-from flumut.core.globals import DATABASE_PROXY
+from peewee import DatabaseError
+
+from flumut.core.globals import DATABASE_PROXY, DB_FILE
 from flumut.core.options import DatabaseOptions
 from flumut.flumutdb import loader
+from flumut.flumutdb.exceptions import InvalidDatabaseError
 from flumut.flumutdb.initializer import initialize
 from flumut.flumutdb.models import (
     Annotation,
@@ -42,7 +45,28 @@ __all__ = [
     'initialize',
     'loader',
     'open_database',
+    'read_version',
 ]
+
+
+def read_version(options: DatabaseOptions) -> DbVersion | None:
+    """Connect to the database described by ``options`` and read its version.
+
+    Args:
+        options: Which database to open, and whether it may be written to.
+
+    Returns:
+        The version of the database, or None if it does not declare one.
+
+    Raises:
+        DatabaseNotFoundError: If a read-only database file does not exist.
+        InvalidDatabaseError: If the file is not a SQLite database, or has no version table.
+    """
+    initialize(options.path, options.read_only)
+    try:
+        return DbVersion.get_or_none()
+    except DatabaseError as e:
+        raise InvalidDatabaseError(options.path or DB_FILE, e) from e
 
 
 def open_database(options: DatabaseOptions) -> None:
@@ -51,7 +75,7 @@ def open_database(options: DatabaseOptions) -> None:
     Args:
         options: Which database to open, and whether it may be written to.
     """
-    initialize(options.path, options.read_only)
+    read_version(options)
     DbVersion.is_compatible()
     loader.load()
 
