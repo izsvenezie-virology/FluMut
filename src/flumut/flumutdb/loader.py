@@ -3,8 +3,7 @@
 Every table in :data:`_MODELS` is read once, then all relations are wired: the
 forward foreign key on each child and the matching backref on each parent.
 Callers ask for any of those models with :func:`load_all` and can then walk the
-whole model graph in any direction without touching the database again. The
-image is reused until :func:`clear` drops it.
+whole model graph in any direction without touching the database again.
 """
 
 from collections.abc import Iterable

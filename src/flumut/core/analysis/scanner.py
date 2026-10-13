@@ -8,7 +8,8 @@ def analyse(analysis: Analysis, relaxed: bool = True) -> None:
 
     Clears and recomputes ``analysis.mutations``, ``analysis.markers``, and
     ``analysis.literature`` from the current sample alignments. For each sample,
-    positions are scanned against the database and matching markers are collected.
+    positions are scanned against the database and matching markers are collected,
+    replacing the ones of a previous call.
 
     Args:
         analysis: The Analysis object to scan and update.
@@ -21,8 +22,7 @@ def analyse(analysis: Analysis, relaxed: bool = True) -> None:
 
     for sample in analysis.samples.values():
         LOGGER.debug(f'Scanning {sample.id}')
-        for alignment in sample.alignments:
-            sample.positions += scan_positions(alignment)
+        sample.positions = [position for alignment in sample.alignments for position in scan_positions(alignment)]
         sample.marker_scans = scan_markers(sample.positions, relaxed)
 
         for position in sample.positions:

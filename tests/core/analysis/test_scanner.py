@@ -84,6 +84,17 @@ def test_analyse_clears_results_from_a_previous_run(mock_scanner) -> None:
     assert (analysis.mutations, analysis.markers, analysis.literature) == (set(), set(), set())
 
 
+def test_analyse_twice_does_not_duplicate_positions(mock_scanner) -> None:
+    """Per-sample results are recomputed like the analysis-level ones, not appended to."""
+    analysis = _make_analysis(num_samples=2, alignments_per_sample=3)
+
+    analyse(analysis)
+    analyse(analysis)
+
+    for sample in analysis.samples.values():
+        assert len(sample.positions) == 3
+
+
 @pytest.mark.parametrize(
     'num_samples, alignments_per_sample',
     [(0, 0), (1, 2), (2, 1), (2, 3)],
