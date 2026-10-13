@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+from contextlib import ExitStack
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -228,60 +229,53 @@ class LauncherWindow(QWidget):
         self.setFixedHeight(self.sizeHint().height())
 
     def launch_flumut(self):
-        try:
-            fasta_file = self.fasta_row.get_opened_file()
-            outputs = OutputOptions(
-                markers_output=self.markers_row.get_opened_file(),
-                mutations_output=self.mutations_row.get_opened_file(),
-                literature_output=self.literature_row.get_opened_file(),
-                excel_output=self.excel_row.get_text(),
-            )
-        except FileNotFoundError as e:
-            return QMessageBox.warning(self, 'File not found', f'Unable to open file {e.filename}.')
-
         def launch_error(msg):
             QMessageBox.warning(self, 'Missing parameter', msg)
 
-        if not fasta_file:
+        output_rows = {
+            'Excel': self.excel_row,
+            'Markers': self.markers_row,
+            'Mutations': self.mutations_row,
+            'Literature': self.literature_row,
+        }
+
+        if not self.fasta_row.get_text():
             return launch_error('No input FASTA file selected')
-        if (
-            not self.excel_row.is_enabled_row()
-            and not self.markers_row.is_enabled_row()
-            and not self.mutations_row.is_enabled_row()
-            and not self.literature_row.is_enabled_row()
-        ):
+        if not any(row.is_enabled_row() for row in output_rows.values()):
             self.excel_row._chk_enable.setFocus()
             return launch_error('At least one output type must be selected')
-        if self.excel_row.is_enabled_row() and not outputs.excel_output:
-            self.excel_row.txt_path.setFocus()
-            return launch_error('No output Excel file selected')
-        if self.markers_row.is_enabled_row() and not outputs.markers_output:
-            self.markers_row.txt_path.setFocus()
-            return launch_error('No output Markers file selected')
-        if self.mutations_row.is_enabled_row() and not outputs.mutations_output:
-            self.mutations_row.txt_path.setFocus()
-            return launch_error('No output Mutations file selected')
-        if self.literature_row.is_enabled_row() and not outputs.literature_output:
-            self.literature_row.txt_path.setFocus()
-            return launch_error('No output Literature file selected')
+        for name, row in output_rows.items():
+            if row.is_enabled_row() and not row.get_text():
+                row.txt_path.setFocus()
+                return launch_error(f'No output {name} file selected')
 
-        options = FluMutOptions(
-            input=InputOptions(
-                fasta_files=(fasta_file,),
-                name_regex=self.options_wdg.name_regex_txt.get_text() or DEFAULT_NAME_REGEX,
-            ),
-            output=outputs,
-            analysis=AnalysisOptions(relaxed=self.options_wdg.relaxed_chk.isChecked()),
-        )
-        ProgressWindow(options).exec()
+        # Files are opened only once the form is valid, and closed however the launch ends
+        with ExitStack() as files:
 
-        fasta_file.close()
-        if outputs.markers_output:
-            outputs.markers_output.close()
-        if outputs.mutations_output:
-            outputs.mutations_output.close()
-        if outputs.literature_output:
-            outputs.literature_output.close()
+            def opened(row: SelectFileRow):
+                file = row.get_opened_file()
+                return files.enter_context(file) if file else None
+
+            try:
+                fasta_file = opened(self.fasta_row)
+                outputs = OutputOptions(
+                    markers_output=opened(self.markers_row),
+                    mutations_output=opened(self.mutations_row),
+                    literature_output=opened(self.literature_row),
+                    excel_output=self.excel_row.get_text(),
+                )
+            except OSError as e:
+                return QMessageBox.warning(self, 'Unable to open file', f'Unable to open file {e.filename}: {e.strerror}.')
+
+            options = FluMutOptions(
+                input=InputOptions(
+                    fasta_files=(fasta_file,),
+                    name_regex=self.options_wdg.name_regex_txt.get_text() or DEFAULT_NAME_REGEX,
+                ),
+                output=outputs,
+                analysis=AnalysisOptions(relaxed=self.options_wdg.relaxed_chk.isChecked()),
+            )
+            ProgressWindow(options).exec()
 
     def is_pyinstaller(self):
         return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
