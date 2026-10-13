@@ -22,10 +22,7 @@ If you prefer the [text outputs](../output#markers-output) (machine-readable for
 flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
 ```
 
-{: .note}
-You should always [update](#update-marker-database) the database before any analysis to be sure to use the latest version available.
-
-## Update marker database
+<!-- ## Update marker database
 
 FluMut uses a SQLite based database containing all information needed to perform the analysis.
 The database contains the reference sequences, their annotation, the amino acid mutations and all the related marker information.
@@ -35,7 +32,7 @@ You should always use the latest version of our database and you can do it just 
 
 ```
 flumut --update
-```
+``` -->
 
 ## Options
 

@@ -9,7 +9,7 @@ permalink: docs/contribute
 
 ## Suggest new markers
 
-To suggest us a new marker, open an issue on our [FluMutDB GitHub page](https://github.com/izsvenezie-virology/FluMutDB).
+To suggest us a new marker, open an issue on our [FluMut GitHub page](https://github.com/izsvenezie-virology/FluMut).
 In the issue you should report:
 
 - the paper where the marker is described
@@ -23,4 +23,3 @@ In the issue you should report:
 If you experience troubles in installation, errors while using the app or if you have any suggestions or requests for future versions of FluMut, please let us know by opening an issue on the [FluMut GitHub page](https://github.com/izsvenezie-virology/FluMut)
 
 [Open an issue on FluMut](https://github.com/izsvenezie-virology/FluMut/issues/new){: .btn .btn-blue}
-[Open an issue on FluMutGUI](https://github.com/izsvenezie-virology/FluMutGUI/issues/new){: .btn .btn-blue}
