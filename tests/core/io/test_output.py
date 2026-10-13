@@ -53,6 +53,15 @@ def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = Non
     return evidence
 
 
+def _make_mutation(name: str, order: int) -> MagicMock:
+    mutation = MagicMock()
+    mutation.name = name
+    mutation.order = order
+    # ``get_mutations_data`` sorts the mutations, which a bare mock does not support
+    mutation.__lt__ = lambda self, other: self.order < other.order
+    return mutation
+
+
 def _make_scan(marker_name: str, mutation_names: tuple, evidences: list) -> MagicMock:
     scan = MagicMock()
     scan.marker.name = marker_name
@@ -174,12 +183,12 @@ def test_get_markers_data(evidences: tuple, expected_effect: str, expected_liter
     'scanned, expected_row',
     [
         (True, {'Sample': 'sample1', 'I97T': 'T'}),
-        (False, {'Sample': 'sample1'}),
+        (False, {'Sample': 'sample1', 'I97T': ''}),
     ],
     ids=['scanned_in_sample', 'not_scanned_in_sample'],
 )
 def test_get_mutations_data(scanned: bool, expected_row: dict) -> None:
-    """A mutation only gets a column for a sample where it was actually scanned."""
+    """Every mutation gets a column, left empty for a sample where it was not scanned."""
     mutation = MagicMock()
     mutation.name = 'I97T'
     positions = (MagicMock(mutation=mutation, ammino_acid='T'),) if scanned else ()
@@ -194,3 +203,27 @@ def test_get_mutations_data_writes_one_row_per_sample() -> None:
     samples = {name: _make_sample(name) for name in ('sample1', 'sample2')}
     rows = get_mutations_data(_make_analysis(samples=samples))
     assert [row['Sample'] for row in rows] == ['sample1', 'sample2']
+
+
+@pytest.mark.parametrize(
+    'sample_order',
+    [('partial', 'full'), ('full', 'partial')],
+    ids=['partial_sample_first', 'full_sample_first'],
+)
+def test_get_mutations_data_keeps_every_column_whatever_the_sample_order(sample_order: tuple) -> None:
+    """The header comes from the first row, so a sample missing a segment must not drop the other samples' columns."""
+    pb2 = _make_mutation('PB2:E627K', 1)
+    ha = _make_mutation('HA1-5:Q222L', 2)
+    positions = {
+        'partial': (MagicMock(mutation=pb2, ammino_acid='K'),),
+        'full': (MagicMock(mutation=pb2, ammino_acid='E'), MagicMock(mutation=ha, ammino_acid='L')),
+    }
+    expected = {'partial': 'partial\tK\t', 'full': 'full\tE\tL'}
+    samples = {name: _make_sample(name, positions=positions[name]) for name in sample_order}
+
+    rows = get_mutations_data(_make_analysis(samples=samples, mutations=(ha, pb2)))
+    assert [list(row) for row in rows] == [['Sample', 'PB2:E627K', 'HA1-5:Q222L']] * 2
+
+    output = StringIO()
+    write_tsv(output, rows)  # type: ignore[arg-type]
+    assert output.getvalue().splitlines() == ['Sample\tPB2:E627K\tHA1-5:Q222L', *(expected[name] for name in sample_order)]

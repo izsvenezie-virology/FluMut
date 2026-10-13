@@ -161,8 +161,7 @@ def get_mutations_data(analysis: Analysis) -> TSV_data:
         mapping = {pos.mutation: pos for pos in sample.positions}
         for mutation in mutations:
             pos = mapping.get(mutation, None)
-            if pos:
-                value[mutation.name] = pos.ammino_acid
+            value[mutation.name] = pos.ammino_acid if pos else ''
         values.append(value)
     return values
 
