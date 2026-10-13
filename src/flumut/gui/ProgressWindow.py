@@ -32,6 +32,28 @@ class StdIO:
     readable = writable = lambda self: True
 
 
+class AnalysisCancelledError(Exception):
+    """Raised inside the worker thread to unwind an analysis the user cancelled."""
+
+
+class CancellableLogHandler(logging.StreamHandler):
+    """Log handler of one run, which also stops that run once it is cancelled.
+
+    The analysis logs as it goes, and each record is handled in the thread
+    running it. Raising from here unwinds that thread through its ``finally``
+    blocks, which terminating it would skip.
+    """
+
+    def __init__(self, stream, is_cancelled) -> None:
+        super().__init__(stream)
+        self._is_cancelled = is_cancelled
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if self._is_cancelled():
+            raise AnalysisCancelledError
+        super().emit(record)
+
+
 class FluMutWorker(QThread):
     started = Signal(int)
     error = Signal(Exception)
@@ -45,9 +67,13 @@ class FluMutWorker(QThread):
     def __del__(self):
         self.wait()
 
-    def terminate(self) -> None:
-        self.ended.emit(2)
-        return super().terminate()
+    def cancel(self) -> None:
+        """Ask the analysis to stop the next time it logs something.
+
+        The thread is not terminated: it has to leave ``run`` on its own, so
+        that the log handler is removed and the database connection is closed.
+        """
+        self.requestInterruption()
 
     def run(self):
         total_sequences = 0
@@ -57,7 +83,7 @@ class FluMutWorker(QThread):
 
         self.started.emit(total_sequences)
 
-        handler = logging.StreamHandler(self.stderr_stream)
+        handler = CancellableLogHandler(self.stderr_stream, self.isInterruptionRequested)
         handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
         LOGGER.addHandler(handler)
         LOGGER.propagate = False
@@ -66,6 +92,8 @@ class FluMutWorker(QThread):
         try:
             whole_workflow(self.options)
             self.ended.emit(0)
+        except AnalysisCancelledError:
+            self.ended.emit(2)
         except Exception as e:
             self.ended.emit(1)
             self.error.emit(e)
@@ -166,6 +194,7 @@ class ProgressWindow(QDialog):
                 self.log_txt.setTextColor(Qt.GlobalColor.red)
                 self.log_txt.append('FluMut terminated with unknown exit code.')
             self.cancel_btn.setText('Close')
+            self.cancel_btn.setEnabled(True)
 
         def handle_error(error):
             self.set_progress_bar_color(238, 1, 1)
@@ -201,8 +230,8 @@ class ProgressWindow(QDialog):
         else:
             self.log_txt.setTextColor(self.log_txt.palette().color(QtGui.QPalette.ColorRole.Text))
             self.log_txt.append('Stopping FluMut analysis...')
-            self.logger_thread.terminate()
-            self.flumut_thread.terminate()
+            self.cancel_btn.setEnabled(False)
+            self.flumut_thread.cancel()
 
     def set_progress_bar_color(self, r, g, b):
         custom_palette = QtGui.QPalette()
