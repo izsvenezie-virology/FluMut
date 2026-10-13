@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from flumut.core.analysis.models import DuplicationCheck, EnlongationCheck, FrameshiftCheck, TruncationCheck
+from flumut.core.analysis.models import DuplicationCheck, ElongationCheck, FrameshiftCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 from flumut.core.logger import LOGGER
 
@@ -19,7 +19,7 @@ def perform_checks(analysis: 'Analysis') -> None:
         check_duplications(sample)
         check_frameshifts(sample)
         check_truncation(sample)
-        check_enlongation(sample)
+        check_elongation(sample)
 
 
 def check_truncation(sample: 'Sample') -> None:
@@ -38,10 +38,10 @@ def check_truncation(sample: 'Sample') -> None:
                 sample.checks.append(TruncationCheck(sample.id, alignment.protein.name, pos + 1))
 
 
-def check_enlongation(sample: 'Sample') -> None:
+def check_elongation(sample: 'Sample') -> None:
     """Detect elongation beyond the expected stop codon.
 
-    An EnlongationCheck is appended when the reference alignment ends with a
+    An ElongationCheck is appended when the reference alignment ends with a
     stop codon but the query contains a valid non-stop amino
     acid in that final position.
 
@@ -55,7 +55,7 @@ def check_enlongation(sample: 'Sample') -> None:
         last_aa = aln.query[-1]
         for aa in last_aa:
             if aa not in (STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL):
-                sample.checks.append(EnlongationCheck(sample.id, alignment.protein.name))
+                sample.checks.append(ElongationCheck(sample.id, alignment.protein.name))
                 break
 
 

@@ -4,12 +4,12 @@ import pytest
 
 from flumut.core.analysis.checks import (
     check_duplications,
-    check_enlongation,
+    check_elongation,
     check_frameshifts,
     check_truncation,
     perform_checks,
 )
-from flumut.core.analysis.models import Check, DuplicationCheck, EnlongationCheck, FrameshiftCheck, TruncationCheck
+from flumut.core.analysis.models import Check, DuplicationCheck, ElongationCheck, FrameshiftCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 
 STOP, UNKNOWN, GAP = STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL, GAP_SYMBOL
@@ -55,12 +55,12 @@ def _make_sample(sample_id: str, alignments: list) -> MagicMock:
     [
         (Check, ('test message',), ['test message']),
         (TruncationCheck, ('sampleA', 'PB2', 42), ['sampleA', 'PB2', '42']),
-        (EnlongationCheck, ('sampleA', 'PB2'), ['sampleA', 'PB2']),
+        (ElongationCheck, ('sampleA', 'PB2'), ['sampleA', 'PB2']),
         (DuplicationCheck, ('sampleA', 'PB2'), ['sampleA', 'PB2']),
         (FrameshiftCheck, ('sampleA', 'PB2', 10, 20), ['sampleA', 'PB2', '10', '20']),
         (FrameshiftCheck, ('sampleA', 'PB2', 10, None), ['sampleA', 'PB2', '10', 'end']),
     ],
-    ids=['base', 'truncation', 'enlongation', 'duplication', 'frameshift', 'frameshift_open_ended'],
+    ids=['base', 'truncation', 'elongation', 'duplication', 'frameshift', 'frameshift_open_ended'],
 )
 def test_check_message_identifies_the_problem(check_class, args: tuple, fragments: list[str]) -> None:
     """Every check message names the sample, the protein and the affected positions."""
@@ -97,7 +97,7 @@ def test_check_truncation(query: list[str], reference: list[str], expected_posit
 
 
 # ---------------------------------------------------------------------------
-# check_enlongation
+# check_elongation
 # ---------------------------------------------------------------------------
 
 
@@ -120,13 +120,13 @@ def test_check_truncation(query: list[str], reference: list[str], expected_posit
         'reference_has_no_stop_query_continues',
     ],
 )
-def test_check_enlongation(query: list[str], reference: list[str], expected: int) -> None:
+def test_check_elongation(query: list[str], reference: list[str], expected: int) -> None:
     """Elongation is reported only when the reference terminates and the query does not."""
     sample = _make_sample('s1', [_make_alignment('PB2', query, reference=reference)])
-    check_enlongation(sample)
+    check_elongation(sample)
 
     assert len(sample.checks) == expected
-    assert all(isinstance(check, EnlongationCheck) for check in sample.checks)
+    assert all(isinstance(check, ElongationCheck) for check in sample.checks)
 
 
 # ---------------------------------------------------------------------------
@@ -186,11 +186,9 @@ def test_check_duplications(protein_names: list[str], expected: int) -> None:
 
 @patch('flumut.core.analysis.checks.check_duplications')
 @patch('flumut.core.analysis.checks.check_frameshifts')
-@patch('flumut.core.analysis.checks.check_enlongation')
+@patch('flumut.core.analysis.checks.check_elongation')
 @patch('flumut.core.analysis.checks.check_truncation')
-def test_perform_checks_runs_every_check_on_every_sample(
-    mock_truncation, mock_enlongation, mock_frameshifts, mock_duplications
-) -> None:
+def test_perform_checks_runs_every_check_on_every_sample(mock_truncation, mock_elongation, mock_frameshifts, mock_duplications) -> None:
     sample = MagicMock()
     analysis = MagicMock()
     analysis.samples = {sample.id: sample}
@@ -198,6 +196,6 @@ def test_perform_checks_runs_every_check_on_every_sample(
     perform_checks(analysis)
 
     mock_truncation.assert_called_once_with(sample)
-    mock_enlongation.assert_called_once_with(sample)
+    mock_elongation.assert_called_once_with(sample)
     mock_frameshifts.assert_called_once_with(sample)
     mock_duplications.assert_called_once_with(sample)

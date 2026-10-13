@@ -146,7 +146,7 @@ class TruncationCheck(Check):
         super().__init__(message)
 
 
-class EnlongationCheck(Check):
+class ElongationCheck(Check):
     """Quality check raised when a protein extends beyond the expected stop codon."""
 
     def __init__(self, sample_id: str, protein_name: str):
@@ -156,7 +156,7 @@ class EnlongationCheck(Check):
             sample_id: ID of the sample containing the elongation.
             protein_name: Name of the protein in which elongation was detected.
         """
-        message = f'Enlongation detected in sample "{sample_id}" for protein "{protein_name}"'
+        message = f'Elongation detected in sample "{sample_id}" for protein "{protein_name}"'
         super().__init__(message)
 
 
