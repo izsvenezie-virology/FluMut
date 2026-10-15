@@ -267,13 +267,14 @@ def migrate_mutations(proteins: dict[str, Protein], references: dict[str, Refere
     indexes = defaultdict(int)
     result = {}
     existing_names = {}
+    source_names = {}
 
     CURSOR.execute('SELECT mutation_name, reference_name, position, alt_seq FROM mutation_mappings ORDER BY position')
 
     for old_name, old_reference_name, position, alt_seq in CURSOR.fetchall():
         mutation_name = sanitize_mutation_name(old_name)
-        if mutation_name in existing_names:
-            result[old_name] = existing_names[mutation_name]
+        if mutation_name in source_names:
+            result[old_name] = source_names[mutation_name]
             continue
 
         protein = proteins[sanitize_protein_name(old_name.split(':')[0])]
@@ -293,6 +294,7 @@ def migrate_mutations(proteins: dict[str, Protein], references: dict[str, Refere
             Mapping.create(mutation=mutation, reference=reference, position=position, alteration=alt_seq)
         result[old_name] = mutation
         existing_names[mutation.name] = mutation
+        source_names[mutation_name] = mutation
     return result
 
 
