@@ -1,12 +1,13 @@
 import os
 import sys
+import threading
 import traceback
 from contextlib import ExitStack
 from importlib.util import find_spec
 from pathlib import Path
 
 import qdarktheme
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QObject, QSettings, Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -18,11 +19,13 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QVBoxLayout,
     QWidget,
 )
 
 from flumut import __version__
 from flumut.core.options import DEFAULT_NAME_REGEX, AnalysisOptions, FluMutOptions, InputOptions, OutputOptions
+from flumut.core.updates import Release, check_for_update
 from flumut.gui.globals import ICON_PATH
 from flumut.gui.ProgressWindow import ProgressWindow
 
@@ -116,12 +119,17 @@ class SelectFileRow(QWidget):
 
 
 class VersionRow(QWidget):
+    # Emitted from the update check thread; Qt queues it to the GUI thread
+    update_found = Signal(Release)
+
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._init_ui()
+        self.update_found.connect(self._show_update)
+        self._start_update_check()
 
     def _init_ui(self):
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 10)
 
@@ -131,7 +139,29 @@ class VersionRow(QWidget):
         self._lbl_versions.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self._lbl_versions.setText(f'FluMut v.{__version__}')
 
+        self._lbl_update = QLabel()
+        self._lbl_update.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self._lbl_update.setTextFormat(Qt.TextFormat.RichText)
+        self._lbl_update.setOpenExternalLinks(True)
+        self._lbl_update.setVisible(False)
+
         layout.addWidget(self._lbl_versions)
+        layout.addWidget(self._lbl_update)
+
+    def _start_update_check(self):
+        # A daemon thread does not keep the application alive if closed while GitHub is slow to answer
+        def check():
+            release = check_for_update()
+            if release is not None:
+                self.update_found.emit(release)
+
+        threading.Thread(target=check, daemon=True).start()
+
+    def _show_update(self, release: Release):
+        self._lbl_update.setText(f'New version available: <a href="{release.url}">FluMut {release.version}</a>')
+        self._lbl_update.setVisible(True)
+        window = self.window()
+        window.setFixedHeight(window.sizeHint().height())
 
 
 class AdvancedOptions(QWidget):
@@ -260,9 +290,7 @@ class LauncherWindow(QWidget):
                 return files.enter_context(file) if file else None
 
             try:
-                fasta_files = tuple(
-                    files.enter_context(open(path, 'r', encoding='utf-8')) for path in self.fasta_row.get_paths()
-                )
+                fasta_files = tuple(files.enter_context(open(path, 'r', encoding='utf-8')) for path in self.fasta_row.get_paths())
                 outputs = OutputOptions(
                     markers_output=opened(self.markers_row),
                     mutations_output=opened(self.mutations_row),
