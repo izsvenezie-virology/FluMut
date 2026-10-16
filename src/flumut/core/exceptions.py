@@ -26,3 +26,7 @@ class InvalidNameRegexError(FluMutError):
 
 class UpdateCheckError(FluMutError):
     """Raised when the latest release cannot be retrieved or understood."""
+
+
+class DatabaseDownloadError(FluMutError):
+    """Raised when the database of the latest release cannot be downloaded or written."""

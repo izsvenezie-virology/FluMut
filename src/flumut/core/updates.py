@@ -8,15 +8,18 @@ message.
 
 import json
 import re
+import shutil
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 from flumut import __version__
-from flumut.core.exceptions import UpdateCheckError
+from flumut.core.exceptions import DatabaseDownloadError, UpdateCheckError
 from flumut.core.logger import LOGGER
 
 LATEST_RELEASE_API = 'https://api.github.com/repos/izsvenezie-virology/FluMut/releases/latest'
 LATEST_RELEASE_PAGE = 'https://github.com/izsvenezie-virology/FluMut/releases/latest'
+LATEST_DATABASE = 'https://github.com/izsvenezie-virology/FluMut/releases/latest/download/flumut_db.sqlite'
 DEFAULT_TIMEOUT = 5.0
 
 VERSION_PATTERN = re.compile(r'^v?\.?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$')
@@ -75,3 +78,14 @@ def is_newer(candidate: str, current: str) -> bool:
         LOGGER.debug(f'Cannot compare version "{candidate}" with "{current}"')
         return False
     return candidate_key > current_key
+
+
+def download_latest_database(path: str) -> None:
+    """Download the database of the latest release to ``path``."""
+    path = Path(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with urlopen(LATEST_DATABASE, timeout=30) as response, open(path, 'wb') as file:
+            shutil.copyfileobj(response, file)
+    except OSError as e:
+        raise DatabaseDownloadError(f'Cannot download {LATEST_DATABASE} to {path}: {e}') from e

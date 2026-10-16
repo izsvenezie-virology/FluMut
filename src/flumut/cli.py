@@ -10,7 +10,7 @@ from flumut.core import logger
 from flumut.core.exceptions import FluMutError
 from flumut.core.logger import LEVELS, LOGGER
 from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
-from flumut.core.updates import fetch_latest_release, is_newer
+from flumut.core.updates import download_latest_database, fetch_latest_release, is_newer
 from flumut.core.workflows import whole_workflow
 from flumut.flumutdb import read_version
 from flumut.flumutdb.exceptions import FluMutDBError
@@ -48,6 +48,13 @@ def print_update_status() -> None:
     click.echo(f'A newer version of FluMut ({latest.version}) is available: {latest.url}')
 
 
+def download_database(path: str) -> None:
+    """Download the database of the latest FluMut release to ``path``."""
+    download_latest_database(path)
+    click.echo(f'Database saved to {path}')
+    click.echo(f'Use it with: flumut -D "{path}" ...')
+
+
 def option_group(*options: Callable) -> Callable:
     """Bundle Click options into one reusable decorator."""
 
@@ -64,6 +71,12 @@ general_options = option_group(
     click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})'),
     click.option('--all-versions', is_flag=True, help='Print the FluMut and FluMutDB versions and exit.'),
     click.option('--check-update', is_flag=True, help='Check on GitHub whether a newer FluMut is available and exit.'),
+    click.option(
+        '--download-db',
+        type=click.Path(dir_okay=False, writable=True),
+        default=None,
+        help='Download the database of the latest FluMut release to the given file and exit.',
+    ),
     click.option(
         '--loglevel',
         type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
@@ -110,11 +123,14 @@ input_options = option_group(
 @analysis_options
 @output_options
 @input_options
-def cli(all_versions: bool, check_update: bool, **options) -> None:
+def cli(all_versions: bool, check_update: bool, download_db: str | None, **options) -> None:
     run_options = FluMutOptions.from_flat(options)
     try:
         if check_update:
             print_update_status()
+            return
+        if download_db:
+            download_database(download_db)
             return
         if all_versions:
             print_all_versions(run_options.database)

@@ -6,6 +6,7 @@ cover both the comparison of versions and every way the network call can go
 wrong.
 """
 
+import io
 import json
 from unittest.mock import MagicMock, patch
 
@@ -173,3 +174,28 @@ def test_check_update_flag_reports_a_failed_check() -> None:
     assert result.exit_code == 1
     assert isinstance(result.exception, SystemExit), 'the failure must be reported, not escape as a traceback'
     assert 'up to date' not in result.output
+
+
+
+# ---------------------------------------------------------------------------
+# --download-db
+# ---------------------------------------------------------------------------
+
+
+def test_download_db_flag_saves_the_database(tmp_path) -> None:
+    """``--download-db`` writes the downloaded file where asked and exits."""
+    path = tmp_path / 'my_db.sqlite'
+    with patch('flumut.core.updates.urlopen', return_value=io.BytesIO(b'database')):
+        result = CliRunner().invoke(cli, ['--download-db', str(path)])
+
+    assert result.exit_code == 0
+    assert path.read_bytes() == b'database'
+
+
+def test_download_db_flag_reports_a_failed_download(tmp_path) -> None:
+    """A failed download is reported, not escaped as a traceback."""
+    with patch('flumut.core.updates.urlopen', side_effect=OSError('unreachable')):
+        result = CliRunner().invoke(cli, ['--download-db', str(tmp_path / 'db.sqlite')])
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)

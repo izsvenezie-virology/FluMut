@@ -261,7 +261,7 @@ jobs:
           files: |
             examples/excel_output_example.xlsm
             examples/fasta_input_example.fa
-            db/flumut_db.sql
+            src/flumut/data/flumut_db.sqlite
             dist/*
 
   pages:
