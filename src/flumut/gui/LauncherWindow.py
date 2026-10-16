@@ -50,14 +50,14 @@ class SelectFileRow(QWidget):
 
     def set_default_value(self, source, suffix):
         def set_default_name():
-            source_path = source.get_text()
+            source_paths = source.get_paths()
             if not self._is_enabled_row:
                 return
             if self.get_text():
                 return
-            if not source_path:
+            if not source_paths:
                 return
-            basename = source_path.rsplit('.', 1)[0]
+            basename = source_paths[0].rsplit('.', 1)[0]
             self.txt_path.setText(basename + suffix)
 
         self._chk_enable.toggled.connect(set_default_name)
@@ -70,6 +70,9 @@ class SelectFileRow(QWidget):
         if not self.is_enabled_row():
             return None
         return self.txt_path.text().strip()
+
+    def get_paths(self):
+        return [path.strip() for path in (self.get_text() or '').split(';') if path.strip()]
 
     def get_opened_file(self):
         if not self.get_text():
@@ -93,9 +96,9 @@ class SelectFileRow(QWidget):
                 self.txt_path.setText(None)
 
         def browse_input():
-            fname, _ = QFileDialog().getOpenFileName(None, self._browse_title, '', self._browse_filter)
-            if fname:
-                self.txt_path.setText(fname)
+            fnames, _ = QFileDialog().getOpenFileNames(None, self._browse_title, '', self._browse_filter)
+            if fnames:
+                self.txt_path.setText('; '.join(fnames))
 
         def browse_output():
             fname, _ = QFileDialog().getSaveFileName(None, self._browse_title, '', self._browse_filter)
@@ -180,7 +183,7 @@ class LauncherWindow(QWidget):
 
         self.fasta_row = SelectFileRow(self, True)
         self.fasta_row.set_switchable(False)
-        self.fasta_row.set_browse_parameters('Open input FASTA', 'FASTA files (*.fasta *.fas *.fa);;All Files (*)')
+        self.fasta_row.set_browse_parameters('Open input FASTA files', 'FASTA files (*.fasta *.fas *.fa);;All Files (*)')
         layout.addRow('Input FASTA:', self.fasta_row)
 
         self.excel_row = SelectFileRow(self, False)
@@ -239,7 +242,7 @@ class LauncherWindow(QWidget):
             'Literature': self.literature_row,
         }
 
-        if not self.fasta_row.get_text():
+        if not self.fasta_row.get_paths():
             return launch_error('No input FASTA file selected')
         if not any(row.is_enabled_row() for row in output_rows.values()):
             self.excel_row._chk_enable.setFocus()
@@ -257,7 +260,9 @@ class LauncherWindow(QWidget):
                 return files.enter_context(file) if file else None
 
             try:
-                fasta_file = opened(self.fasta_row)
+                fasta_files = tuple(
+                    files.enter_context(open(path, 'r', encoding='utf-8')) for path in self.fasta_row.get_paths()
+                )
                 outputs = OutputOptions(
                     markers_output=opened(self.markers_row),
                     mutations_output=opened(self.mutations_row),
@@ -269,7 +274,7 @@ class LauncherWindow(QWidget):
 
             options = FluMutOptions(
                 input=InputOptions(
-                    fasta_files=(fasta_file,),
+                    fasta_files=fasta_files,
                     name_regex=self.options_wdg.name_regex_txt.get_text() or DEFAULT_NAME_REGEX,
                 ),
                 output=outputs,
