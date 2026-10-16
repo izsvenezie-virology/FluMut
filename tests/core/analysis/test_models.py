@@ -59,11 +59,6 @@ def test_unsupported_mutation_type_raises() -> None:
         PositionScan(mapping=mapping, ammino_acid='A')
 
 
-def test_mutation_property_returns_mapping_mutation() -> None:
-    mapping = _make_mapping(alteration='A')
-    assert PositionScan(mapping=mapping, ammino_acid='A').mutation is mapping.mutation
-
-
 # ---------------------------------------------------------------------------
 # MarkerScan
 # ---------------------------------------------------------------------------

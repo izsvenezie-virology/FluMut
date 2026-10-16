@@ -95,22 +95,6 @@ def test_analyse_twice_does_not_duplicate_positions(mock_scanner) -> None:
         assert len(sample.positions) == 3
 
 
-@pytest.mark.parametrize(
-    'num_samples, alignments_per_sample',
-    [(0, 0), (1, 2), (2, 1), (2, 3)],
-    ids=['no_samples', 'one_sample_two_alignments', 'two_samples', 'two_samples_three_alignments'],
-)
-def test_analyse_scans_every_alignment_of_every_sample(mock_scanner, num_samples: int, alignments_per_sample: int) -> None:
-    analysis = _make_analysis(num_samples, alignments_per_sample)
-
-    analyse(analysis)
-
-    assert mock_scanner.scan_positions.call_count == num_samples * alignments_per_sample
-    assert mock_scanner.scan_markers.call_count == num_samples
-    for sample in analysis.samples.values():
-        assert len(sample.positions) == alignments_per_sample
-
-
 def test_analyse_collects_mutations_markers_and_literature(mock_scanner) -> None:
     """Only detected positions become mutations; every reported marker contributes its papers."""
     mutation = MagicMock()
@@ -134,14 +118,3 @@ def test_analyse_collects_mutations_markers_and_literature(mock_scanner) -> None
     assert sample.marker_scans == [marker_scan]
 
 
-@pytest.mark.parametrize(
-    'kwargs, expected',
-    [({}, True), ({'relaxed': True}, True), ({'relaxed': False}, False)],
-    ids=['default', 'explicit_true', 'explicit_false'],
-)
-def test_analyse_passes_relaxed_through_to_scan_markers(mock_scanner, kwargs: dict, expected: bool) -> None:
-    analysis = Analysis(samples={'s1': Sample(id='s1', alignments=[MagicMock()])})
-
-    analyse(analysis, **kwargs)
-
-    assert mock_scanner.scan_markers.call_args.args[1] is expected

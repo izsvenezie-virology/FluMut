@@ -1,7 +1,6 @@
 """Propose a FluMutDB release from the database edited in this checkout.
 
-A release puts the new versions, the SQL dump and the re-recorded snapshot on a
-``db/vX.Y.Z`` branch, pushes it, and opens GitHub's pull request page. It never
+A release puts the new versions and the SQL dump on a ``db/vX.Y.Z`` branch, pushes it, and opens GitHub's pull request page. It never
 merges or tags: merging the pull request is the review gate. The bump rules are
 the ones written down in ``VERSIONING.md``.
 """
@@ -9,7 +8,6 @@ the ones written down in ``VERSIONING.md``.
 import re
 import runpy
 import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlencode
@@ -25,8 +23,7 @@ DATABASE_FILE = Path('src/flumut/data/flumut_db.sqlite')
 DUMP_FILE = Path('db/flumut_db.sql')
 VERSION_FILE = Path('src/flumut/__init__.py')
 GLOBALS_FILE = Path('src/flumut/core/globals.py')
-SNAPSHOT_DIR = Path('tests/e2e/data/single_sample')
-RELEASE_PATHS = (DATABASE_FILE, DUMP_FILE, VERSION_FILE, GLOBALS_FILE, SNAPSHOT_DIR)
+RELEASE_PATHS = (DATABASE_FILE, DUMP_FILE, VERSION_FILE, GLOBALS_FILE)
 
 DUMP_SCRIPT = Path('scripts/dump_db.py')
 
@@ -196,7 +193,7 @@ def prepare() -> Proposal:
     return Proposal(root, level, changes, str(DbVersion.get()), flumut_version)
 
 
-def release(proposal: Proposal, summary: str, snapshot: bool = True) -> None:
+def release(proposal: Proposal, summary: str) -> None:
     """Commit the release on its own branch and push it.
 
     The branch is created first, so nothing is committed to the base branch. If a
@@ -208,14 +205,6 @@ def release(proposal: Proposal, summary: str, snapshot: bool = True) -> None:
     bump_db_version(proposal.level)
     (root / DUMP_FILE).write_text(dump(root), encoding='utf-8', newline='\n')
     rewrite(root / VERSION_FILE, VERSION_ASSIGNMENT, proposal.new_flumut_version)
-
-    if snapshot:
-        # A change that alters a marker call legitimately changes the recorded
-        # outputs, and that diff is what the reviewer reads to confirm the science.
-        command = [sys.executable, '-m', 'pytest', 'tests/e2e', '--snapshot-update', '-q']
-        result = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False)
-        if result.returncode != 0:
-            raise ReleaseError(f'Could not re-record the snapshot:\n{result.stdout}\n{result.stderr}')
 
     git(root, 'add', '--', *(path.as_posix() for path in RELEASE_PATHS if (root / path).exists()))
     git(root, 'commit', '--message', f'feat (db): {proposal.title}\n\n{description(proposal, summary)}')

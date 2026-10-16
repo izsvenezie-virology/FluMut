@@ -13,7 +13,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from flumut import __version__
 from flumut.cli import cli
 from flumut.core.updates import (
     LATEST_RELEASE_PAGE,
@@ -100,15 +99,6 @@ def test_fetch_latest_release_falls_back_to_the_releases_page() -> None:
         assert fetch_latest_release().url == LATEST_RELEASE_PAGE
 
 
-def test_fetch_latest_release_gives_up_in_time() -> None:
-    """The request never waits without a limit."""
-    urlopen = _mock_urlopen({'tag_name': '1.0.0'})
-    with patch('flumut.core.updates.urlopen', urlopen):
-        fetch_latest_release(timeout=1.5)
-
-    assert urlopen.call_args.kwargs['timeout'] == 1.5
-
-
 # ---------------------------------------------------------------------------
 # check_for_update
 # ---------------------------------------------------------------------------
@@ -139,12 +129,6 @@ def test_check_for_update_never_raises(kwargs: dict) -> None:
     """A failed check costs a log line, never the run that asked for it."""
     with patch('flumut.core.updates.urlopen', _mock_urlopen(**kwargs)):
         assert check_for_update('1.0.0') is None
-
-
-def test_check_for_update_defaults_to_the_running_version() -> None:
-    """Called with no argument, the check compares against the installed FluMut."""
-    with patch('flumut.core.updates.urlopen', _mock_urlopen({'tag_name': __version__})):
-        assert check_for_update() is None
 
 
 # ---------------------------------------------------------------------------

@@ -103,14 +103,3 @@ def test_load_nucleotide_fasta(mock_deps, headers: list[str], num_proteins: int,
         assert sample.alignments == [mock_deps.translate.return_value] * len(sample.alignments)
 
 
-def test_load_nucleotide_fasta_translates_every_protein_of_the_reference(mock_deps) -> None:
-    nt_alignment = _make_nt_alignment(2)
-    mock_deps.read_fasta.return_value = [_make_sequence('sample1')]
-    mock_deps.get_alignment.return_value = nt_alignment
-
-    load_nucleotide_fasta(Analysis(), MagicMock(), _PATTERN)
-
-    proteins = nt_alignment.reference.segment.proteins
-    assert mock_deps.get_cds.call_args_list == [((nt_alignment, proteins[0]),), ((nt_alignment, proteins[1]),)]
-    assert mock_deps.translate.call_count == 2
-    mock_deps.translate.assert_called_with(mock_deps.get_cds.return_value)

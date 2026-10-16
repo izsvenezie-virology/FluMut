@@ -32,11 +32,6 @@ def db_version() -> DbVersion:
     return version
 
 
-def test_bundled_database_exists() -> None:
-    """The package ships the database it analyses with."""
-    assert Path(DB_FILE).is_file(), f'No bundled database at {DB_FILE}'
-
-
 def test_database_major_matches_the_code(db_version: DbVersion) -> None:
     """``DB_MAJOR_VERSION`` declares the schema the bundled database actually has.
 
@@ -59,11 +54,6 @@ def test_flumut_version_is_readable() -> None:
     assert parse_version(__version__) is not None, f'__version__ = {__version__!r} is not a MAJOR.MINOR.PATCH version'
 
 
-def test_sql_dump_is_committed() -> None:
-    """The dump is tracked in git, not just generated locally."""
-    assert DUMP_FILE.is_file(), f'{DUMP_FILE} is missing. Run: python scripts/dump_db.py'
-
-
 def test_sql_dump_matches_the_database() -> None:
     """The dump describes the bundled database as it is now.
 
@@ -78,4 +68,6 @@ def test_sql_dump_matches_the_database() -> None:
     with closing(dump_db.connect(Path(DB_FILE))) as connection:
         rendered = dump_db.render(connection)
 
-    assert DUMP_FILE.read_text(encoding='utf-8') == rendered, f'{DUMP_FILE} is out of date. Run: python scripts/dump_db.py'
+    # Not a plain ``assert ==``: pytest would try to diff two megabyte-sized strings and hang.
+    if not DUMP_FILE.is_file() or DUMP_FILE.read_text(encoding='utf-8') != rendered:
+        pytest.fail(f'{DUMP_FILE} is out of date. Run: python scripts/dump_db.py', pytrace=False)

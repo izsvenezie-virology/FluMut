@@ -98,7 +98,7 @@ class ReleaseTab(QWidget):
         QVBoxLayout(summary).addWidget(self.summary_field)
 
         note = QLabel(
-            'Proposing commits the release on its own branch, re-records the end-to-end snapshot, pushes the branch '
+            'Proposing commits the release on its own branch, pushes the branch '
             'and opens the pull request page in your browser. The release is never tagged from here: merging the pull '
             'request is what publishes it.'
         )
@@ -153,7 +153,7 @@ class ReleaseTab(QWidget):
         self.pages.setCurrentWidget(self.proposal_page)
 
     def start(self) -> None:
-        """Carry out the release. The window is unresponsive until the snapshot and the push are done."""
+        """Carry out the release. The window is unresponsive until the push is done."""
         if self.proposal is None:
             return
         summary = self.summary_field.toPlainText().strip()

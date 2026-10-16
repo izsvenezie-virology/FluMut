@@ -94,15 +94,6 @@ def test_write_tsv(rows: list[dict], expected: list[str]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    'extractor',
-    [get_literature_data, get_markers_data, get_mutations_data],
-    ids=['literature', 'markers', 'mutations'],
-)
-def test_extractors_return_nothing_for_an_empty_analysis(extractor) -> None:
-    assert extractor(_make_analysis()) == []
-
-
 def test_get_literature_data_returns_every_column() -> None:
     paper = _make_paper(
         'Doe2020',

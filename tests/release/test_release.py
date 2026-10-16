@@ -100,7 +100,7 @@ def test_prepare_refuses_unrelated_changes(sandbox: Path, edit) -> None:
 def test_release_commits_every_version_and_pushes_the_branch(sandbox: Path, edit) -> None:
     edit(ADD_EVIDENCE)
 
-    release(prepare(), 'Add the 2024 H5N1 evidence', snapshot=False)
+    release(prepare(), 'Add the 2024 H5N1 evidence')
 
     assert run('git', 'branch', '--show-current', cwd=sandbox).strip() == 'db/v7.0.1'
     assert run('git', 'status', '--porcelain', cwd=sandbox) == '', 'everything the release touched should be committed'
@@ -120,7 +120,7 @@ def test_a_major_release_commits_the_hand_edited_db_major_version(sandbox: Path,
     (sandbox / GLOBALS_FILE).write_text('DB_MAJOR_VERSION = 8\n', encoding='utf-8')
 
     proposal = prepare()
-    release(proposal, '', snapshot=False)
+    release(proposal, '')
 
     assert proposal.new_db_version == '8.0.0'
     assert 'DB_MAJOR_VERSION = 8' in run('git', 'show', 'HEAD', '--', GLOBALS_FILE.as_posix(), cwd=sandbox)

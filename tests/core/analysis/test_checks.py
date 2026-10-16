@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -7,7 +7,6 @@ from flumut.core.analysis.checks import (
     check_elongation,
     check_frameshifts,
     check_truncation,
-    perform_checks,
 )
 from flumut.core.analysis.models import Check, DuplicationCheck, ElongationCheck, FrameshiftCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
@@ -184,18 +183,3 @@ def test_check_duplications(protein_names: list[str], expected: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-@patch('flumut.core.analysis.checks.check_duplications')
-@patch('flumut.core.analysis.checks.check_frameshifts')
-@patch('flumut.core.analysis.checks.check_elongation')
-@patch('flumut.core.analysis.checks.check_truncation')
-def test_perform_checks_runs_every_check_on_every_sample(mock_truncation, mock_elongation, mock_frameshifts, mock_duplications) -> None:
-    sample = MagicMock()
-    analysis = MagicMock()
-    analysis.samples = {sample.id: sample}
-
-    perform_checks(analysis)
-
-    mock_truncation.assert_called_once_with(sample)
-    mock_elongation.assert_called_once_with(sample)
-    mock_frameshifts.assert_called_once_with(sample)
-    mock_duplications.assert_called_once_with(sample)

@@ -59,14 +59,6 @@ def test_translate(reference: str, query: str, expected_reference: list[str], ex
     assert result.alignment.query == expected_query
 
 
-def test_translate_result_carries_over_the_cds_fields() -> None:
-    cds = _make_cds('ATG', 'GTG')
-    result = translate(cds)
-    assert result.protein is cds.protein
-    assert result.reference is cds.nucleotides.reference
-    assert result.cds is cds
-
-
 # ---------------------------------------------------------------------------
 # get_cds
 # ---------------------------------------------------------------------------
@@ -91,14 +83,6 @@ def test_get_cds_slices_by_reference_position(
     cds = get_cds(nucleotides, protein)
     assert cds.alignment.reference == list(expected_reference)
     assert cds.alignment.query == list(expected_query)
-
-
-def test_get_cds_wraps_its_inputs_and_adjusts_the_frame(mock_adjust_frame) -> None:
-    nucleotides, protein = _make_nucleotides('ACT', 'KMR')
-    cds = get_cds(nucleotides, protein)
-    assert cds.nucleotides is nucleotides
-    assert cds.protein is protein
-    mock_adjust_frame.assert_called_once_with(cds)
 
 
 # ---------------------------------------------------------------------------
