@@ -142,6 +142,7 @@ class ProgressWindow(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint)
 
         self.flumut_options = options
+        self._close_requested = False
         self.start_flumut()
 
     def init_ui(self):
@@ -217,6 +218,7 @@ class ProgressWindow(QDialog):
         self.flumut_thread.started.connect(handle_start)
         self.flumut_thread.ended.connect(handle_end)
         self.flumut_thread.error.connect(handle_error)
+        self.flumut_thread.finished.connect(self._close_if_requested)
 
         self.logger_thread = FluMutOutputReader(self.stderr_stream)
         self.logger_thread.stderr.connect(log_stderr)
@@ -232,6 +234,25 @@ class ProgressWindow(QDialog):
             self.log_txt.append('Stopping FluMut analysis...')
             self.cancel_btn.setEnabled(False)
             self.flumut_thread.cancel()
+
+    def reject(self) -> None:
+        """Close the window, cancelling the analysis first if it is still running.
+
+        The window button and Esc both end up here. The window must not go away
+        while the analysis runs: its thread would be destroyed while running,
+        and the output files closed while they are still being written. So the
+        run is cancelled, and the window closes once its thread has finished.
+        """
+        if self.flumut_thread.isRunning():
+            self._close_requested = True
+            if self.cancel_btn.isEnabled():
+                self.cancel_flumut()
+            return
+        super().reject()
+
+    def _close_if_requested(self) -> None:
+        if self._close_requested:
+            self.reject()
 
     def set_progress_bar_color(self, r, g, b):
         custom_palette = QtGui.QPalette()

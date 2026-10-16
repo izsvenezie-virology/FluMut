@@ -7,7 +7,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 import qdarktheme
-from PySide6.QtCore import QObject, QSettings, Qt, Signal
+from PySide6.QtCore import QSettings, Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
