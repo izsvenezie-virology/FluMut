@@ -20,7 +20,7 @@ class MutationType(Enum):
 
 
 class MarkerPriority(Enum):
-    pass
+    HIGH = 'high'
 
 
 class BaseModel(Model):

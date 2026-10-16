@@ -12,6 +12,7 @@ from flumut.core.globals import EXCEL_TEMPLATE
 from flumut.core.logger import LOGGER
 from flumut.core.options import OutputOptions
 from flumut.flumutdb import DbVersion
+from flumut.flumutdb.models import MarkerPriority
 
 TSV_data = list[dict[str, str]]
 
@@ -105,7 +106,7 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
     """Extract detected marker data from an analysis for output.
 
     Groups evidences by (effect, subtype) and aggregates associated paper
-    short names. One output row is produced per sample × marker × (effect, subtype)
+    short names. One output row is produced per sample x marker x (effect, subtype)
     combination.
 
     Args:
@@ -130,7 +131,7 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
             for (effect, subtype), papers in papers_collect.items():
                 marker_evidence = {
                     'Sample': sample.id,
-                    'Marker': scan.marker.name,
+                    'Marker': f'{scan.marker.name}{"^" if scan.marker.priority == MarkerPriority.HIGH.value else ""}',
                     'Mutations in your sample': '; '.join([m.mutation.name for m in scan.detected_mutations]),
                     'Effect': effect,
                     'Subtype': subtype,

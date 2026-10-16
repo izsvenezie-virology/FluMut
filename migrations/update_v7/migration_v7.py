@@ -14,6 +14,7 @@ from flumut.flumutdb.models import (
     Mapping,
     Marker,
     MarkerMutation,
+    MarkerPriority,
     Mutation,
     MutationType,
     Paper,
@@ -30,6 +31,7 @@ BASE = Path(__file__).parent
 INPUT_DB = BASE / 'data' / 'flumut_db.sqlite'
 OUTPUT_DB = BASE / 'flumut_db_v7.sqlite'
 NEW_REFERENCE_PATH = BASE / 'data' / 'new_refs.json'
+EFSA_MARKERS_PATH = BASE / 'data' / 'efsa_2025_markers.json'
 
 CONNECTION = sqlite3.connect(INPUT_DB)
 CURSOR = CONNECTION.cursor()
@@ -474,6 +476,22 @@ def migrate_evidences(
         Evidence.create(**values)
 
 
+def set_marker_priorities(source: Path) -> None:
+    """Flag as HIGH priority the markers reported by an external assessment.
+
+    Markers the assessment lists but that the database does not hold are skipped: those phenotypes
+    were only ever studied as part of a mutation combination, so there is no standalone marker.
+    """
+    data = json.loads(source.read_text('utf-8'))
+    for name in data['markers']:
+        marker = Marker.get_or_none(Marker.name == name)
+        if marker is None:
+            print(f'Skipping priority for {name}: no such marker')
+            continue
+        marker.priority = MarkerPriority.HIGH.value
+        marker.save()
+
+
 # Create v7 database
 if OUTPUT_DB.exists():
     OUTPUT_DB.unlink()
@@ -496,3 +514,4 @@ subtypes = migrate_subtypes()
 papers = migrate_papers()
 markers = migrate_markers(mutations)
 migrate_evidences(markers, papers, effects, subtypes)
+set_marker_priorities(EFSA_MARKERS_PATH)
