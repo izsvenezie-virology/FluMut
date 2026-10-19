@@ -1,66 +1,182 @@
 name: Create release and deploy FluMut
-run-name: ${{ github.actor }} is releasing ${{ github.ref }}
+run-name: Release ${{ github.ref_name }}${{ inputs.dry_run && ' (dry run)' || '' }}
 
-on: 
+on:
   push:
     tags:
       - "v.*"
 
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Rehearse only: draft release, upload to TestPyPI."
+        type: boolean
+        default: true
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
+  config:
+    name: Decide release mode
+    runs-on: ubuntu-latest
+    outputs:
+      dry_run: ${{ steps.decide.outputs.dry_run }}
+
+    steps:
+      - name: Decide whether this is a real release
+        id: decide
+        env:
+          REQUESTED: ${{ inputs.dry_run }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          DRY="$REQUESTED"
+          if [ -z "$DRY" ]; then
+            # No explicit choice: only a tag push publishes for real.
+            if [ "$EVENT" = "push" ]; then DRY=false; else DRY=true; fi
+          fi
+          if [ "$DRY" = "false" ] && [[ "$REF" != refs/tags/* ]]; then
+            echo "::error::A real release must be run from a tag, but ref is '$REF'."
+            exit 1
+          fi
+          echo "dry_run=$DRY" >> "$GITHUB_OUTPUT"
+          echo "Dry run: $DRY"
+
+  verify:
+    name: Verify version
+    runs-on: ubuntu-latest
+    needs: config
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Verify tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=$(grep -oP "__version__\s*=\s*['\"]\K[^'\"]+" src/flumut/__init__.py)
+          TAG="${GITHUB_REF_NAME#v.}"
+          echo "Package version: $VERSION"
+          echo "Git tag: $GITHUB_REF_NAME (stripped: $TAG)"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "::error::Git tag '$GITHUB_REF_NAME' does not match package version '$VERSION' (expected tag 'v.$VERSION')"
+            exit 1
+          fi
+
+  test:
+    name: Checks
+    needs: config
+    uses: ./.github/workflows/ci.yml
+
   build:
     name: Build FluMut
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    
+    needs: [verify, test]
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build twine
       - name: Build FluMut
         run: python -m build
+      - name: Check the distributions
+        run: twine check --strict dist/*
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: dist
+          name: build
           path: dist
           if-no-files-found: error
 
+  executables:
+    name: Create executables
+    needs: [verify, test]
 
-  create-examples:
-    name: Create FluMut examples files
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "13.0"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: "3.x"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install ".[gui]"
+      - name: Build with Pyinstaller
+        run: |
+          # PyInstaller's splash screen is not supported on macOS
+          splash=(--splash docs/images/flumut_splash.png)
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            splash=()
+            pip install pillow
+          fi
+          python -m PyInstaller ./src/flumut/gui/__main__.py \
+            --name FluMutGUI-$RUNNER_OS \
+            --icon src/flumut/gui/resources/flumut_icon.ico \
+            --add-data src/flumut/data/:flumut/data/ \
+            --add-data src/flumut/gui/resources/:flumut/gui/resources \
+            "${splash[@]}" \
+            --clean --noconfirm -w --onefile
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: executable-${{ runner.os }}
+          path: dist/
+          if-no-files-found: error
+
+  examples:
+    name: Create FluMut examples files
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
       - name: Install FluMut
         run: |
           python -m pip install --upgrade pip
           pip install .
       - name: Run FluMut
-        run: | 
-          cp examples/multiple_samples.fa examples/fasta_input_example.fa
-          flumut --update
-          flumut -x examples/excel_output_example.xlsm examples/multiple_samples.fa
+        run: |
+          mv examples/multiple_samples.fa examples/fasta_input_example.fa
+          flumut -x examples/excel_output_example.xlsm examples/fasta_input_example.fa
       - name: Upload examples
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: examples
           path: |
@@ -68,49 +184,98 @@ jobs:
             examples/fasta_input_example.fa
           if-no-files-found: error
 
+  pypi:
+    name: Publish to ${{ needs.config.outputs.dry_run == 'true' && 'TestPyPI' || 'PyPI' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    environment: ${{ needs.config.outputs.dry_run == 'true' && 'testpypi-release' || 'pypi-release' }}
+    needs: [config, build, executables, examples]
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build
+          path: dist
+      - name: Publish to TestPyPI
+        if: needs.config.outputs.dry_run == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+      - name: Publish to PyPI
+        if: needs.config.outputs.dry_run != 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
 
   release:
     name: Create release on GitHub
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: [build, create-examples]
+    needs: [config, pypi]
 
     steps:
-      - name: Download dist
-        uses: actions/download-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Download build
+        uses: actions/download-artifact@v8
         with:
-          name: dist
+          name: build
           path: dist
+      - name: Download executables
+        uses: actions/download-artifact@v8
+        with:
+          pattern: executable-*
+          path: dist
+          merge-multiple: true
       - name: Download examples
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: examples
           path: examples
+      - name: Describe the database
+        id: database
+        run: |
+          VERSION=$(python -c "
+          import sqlite3
+          row = sqlite3.connect('src/flumut/data/flumut_db.sqlite').execute(
+              'SELECT major, minor, patch FROM dbversion'
+          ).fetchone()
+          print('.'.join(map(str, row)))
+          ")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "FluMutDB version: $VERSION"
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          draft: ${{ needs.config.outputs.dry_run == 'true' }}
+          name: ${{ needs.config.outputs.dry_run == 'true' && format('DRY RUN {0}', github.ref_name) || '' }}
+          tag_name: ${{ needs.config.outputs.dry_run == 'true' && format('dry-run-{0}', github.ref_name) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          append_body: true
+          body: |
+            Bundled **FluMutDB v.${{ steps.database.outputs.version }}**.
           files: |
             examples/excel_output_example.xlsm
             examples/fasta_input_example.fa
+            src/flumut/data/flumut_db.sqlite
             dist/*
 
-
-  pypi:
-    name: Publish to PyPI
+  pages:
+    name: Update FluMut site
     runs-on: ubuntu-latest
+    if: needs.config.outputs.dry_run == 'false'
     permissions:
-      contents: read
-      id-token: write
-    environment: pypi-release
-    needs: release
+      actions: write
+    needs: [config, release]
 
     steps:
-    - name: Download dist artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Dispatch the site deployment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: gh workflow run deploy-pages.yml --ref "$BRANCH"

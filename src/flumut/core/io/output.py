@@ -1,0 +1,286 @@
+import csv
+from collections import defaultdict
+from io import TextIOWrapper
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.utils.cell import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
+
+import flumut
+from flumut.core.analysis.models import Analysis
+from flumut.core.globals import EXCEL_TEMPLATE
+from flumut.core.logger import LOGGER
+from flumut.core.options import OutputOptions
+from flumut.flumutdb import DbVersion
+from flumut.flumutdb.models import BaseModel, Evidence, Marker, MarkerPriority
+
+H5_REFERENCE = 'H5'
+
+TSV_data = list[dict[str, str]]
+
+
+def write_outputs(analysis: Analysis, outputs: OutputOptions):
+    """Write all analysis results to the requested output files.
+
+    Extracts data from the completed Analysis object, writes tab-separated values
+    to the provided file handles, and populates an Excel workbook with the same
+    data using the built-in template.
+
+    Args:
+        analysis: The completed Analysis object.
+        outputs: The requested reports. The TSV ones are open file handles and
+            the Excel one is a path, whose extension determines its format
+            (``.xlsx`` or ``.xlsm``). Each is None when not requested.
+    """
+    markers_output = outputs.markers_output
+    mutations_output = outputs.mutations_output
+    literature_output = outputs.literature_output
+    excel_output = outputs.excel_output
+
+    if markers_output or excel_output:
+        markers = get_markers_data(analysis)
+        if markers_output:
+            LOGGER.debug(f'Writing markers to {markers_output.name}')
+            write_tsv(markers_output, markers)
+    if mutations_output or excel_output:
+        mutations = get_mutations_data(analysis)
+        if mutations_output:
+            LOGGER.debug(f'Writing mutations to {mutations_output.name}')
+            write_tsv(mutations_output, mutations)
+    if literature_output or excel_output:
+        literature = get_literature_data(analysis)
+        if literature_output:
+            LOGGER.debug(f'Writing literature to {literature_output.name}')
+            write_tsv(literature_output, literature)
+    if excel_output:
+        checks = get_checks_data(analysis)
+        LOGGER.debug(f'Writing Excel report to {excel_output}')
+        write_excel(excel_output, markers, mutations, literature, checks)  # type: ignore
+
+
+def write_tsv(file: TextIOWrapper, values: TSV_data):
+    """Write a list of row dictionaries to a tab-separated file.
+
+    The column order follows the key order of the first row. Rows missing a
+    key are written as empty strings. Does nothing and emits a warning if
+    ``values`` is empty.
+
+    Args:
+        file: Open file handle for the output TSV file.
+        values: List of row dictionaries to write.
+    """
+    if not values:
+        LOGGER.warning(f'No data to write in file {file.name}')
+        return
+    header = values[0].keys()
+    writer = csv.DictWriter(file, header, delimiter='\t', lineterminator='\n', extrasaction='ignore')
+    writer.writeheader()
+    writer.writerows(values)
+
+
+def get_literature_data(analysis: Analysis) -> TSV_data:
+    """Extract literature reference data from an analysis for output.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with keys: Short name, Title, Authors, Year,
+        Journal, Link, DOI.
+    """
+    values = []
+
+    for paper in sorted(analysis.literature, key=lambda paper: paper.short_name):
+        paper_dict = {
+            'Short name': paper.short_name,
+            'Title': paper.title,
+            'Authors': paper.authors,
+            'Year': paper.year,
+            'Journal': paper.journal,
+            'Link': paper.url,
+            'DOI': paper.doi,
+        }
+        values.append(paper_dict)
+    return values
+
+
+def get_markers_data(analysis: Analysis) -> TSV_data:
+    """Extract detected marker data from an analysis for output.
+
+    Groups evidences by (effect, subtype) and aggregates associated paper
+    short names and notes. One output row is produced per sample x marker x
+    (effect, subtype) combination.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with keys: Sample, Marker, Mutations in your sample,
+        Effect, Subtype, Literature, Marker (H5 numbering), Notes.
+    """
+    values = []
+
+    for sample in analysis.samples.values():
+        for scan in sample.marker_scans:
+            evidences_collect = defaultdict(list)
+            for evidence in scan.marker.evidences:
+                evidences_collect[(evidence.get_effect_name(), evidence.subtype.name)].append(evidence)
+            priority = '^' if scan.marker.priority == MarkerPriority.HIGH.value else ''
+            for (effect, subtype), evidences in evidences_collect.items():
+                marker_evidence = {
+                    'Sample': sample.id,
+                    'Marker': f'{scan.marker.name}{priority}',
+                    'Mutations in your sample': '; '.join([m.mutation.name for m in scan.detected_mutations]),
+                    'Effect': effect,
+                    'Subtype': subtype,
+                    'Literature': '; '.join([evidence.paper.short_name for evidence in evidences]),
+                    'Marker (H5 numbering)': f'{_get_h5_marker_name(scan.marker)}{priority}',
+                    'Notes': _get_marker_notes(scan.marker, evidences),
+                }
+                values.append(marker_evidence)
+    return values
+
+
+def _get_h5_marker_name(marker: Marker) -> str:
+    """Rename a marker using the H5 numbering for its HA mutations.
+
+    Each mutation of the marker is renamed after its mapping on the H5
+    reference, keeping the order of the marker name. Mutations without an H5
+    mapping (i.e. not on HA) keep their original name.
+    """
+    h5_names = {}
+    for mutation in marker.mutations:
+        h5_mapping = next((m for m in mutation.mappings if m.reference.name == H5_REFERENCE), None)
+        if h5_mapping:
+            h5_names[mutation.name] = f'{mutation.protein.name}:{h5_mapping.position}{h5_mapping.alteration}'
+    return '; '.join(h5_names.get(name, name) for name in marker.name.split('; '))
+
+
+def _get_marker_notes(marker: Marker, evidences: list[Evidence]) -> str:
+    """Concatenate the notes of a marker and of all the objects related to its evidences.
+
+    Each note is prefixed by the kind of object it belongs to (e.g.
+    ``Paper: note``). Duplicated notes are reported once.
+    """
+    notes: dict[str, None] = {}
+
+    def add(label: str, obj: BaseModel | None) -> None:
+        if obj is not None and obj.notes:
+            notes[f'{label}: {obj.notes}'] = None
+
+    add('Marker', marker)
+    for mutation in marker.mutations:
+        add(f'Mutation {mutation.name}', mutation)
+    for evidence in evidences:
+        add('Evidence', evidence)
+        add(f'Paper {evidence.paper.short_name}', evidence.paper)
+        add('Effect', evidence.effect)
+        add('Subtype', evidence.subtype)
+        add('Host', evidence.host)
+        add('Target', evidence.target)
+    return '; '.join(notes)
+
+
+def get_mutations_data(analysis: Analysis) -> TSV_data:
+    """Extract per-sample mutation amino acid data from an analysis for output.
+
+    Produces one row per sample with a column for each mutation detected across
+    the entire analysis, filled with the observed amino acid(s) or left empty
+    when the mutation was not scanned in that sample.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with ``'Sample'`` as the first key followed by one
+        key per detected mutation, sorted by default position.
+    """
+    mutations = sorted(analysis.mutations)
+    values = []
+
+    for sample in analysis.samples.values():
+        value = {'Sample': sample.id}
+        mapping = {pos.mutation: pos for pos in sample.positions}
+        for mutation in mutations:
+            pos = mapping.get(mutation, None)
+            value[mutation.name] = pos.ammino_acid if pos else ''
+        values.append(value)
+    return values
+
+
+def get_checks_data(analysis: Analysis) -> TSV_data:
+    """Extract quality-check messages from an analysis for output.
+
+    Args:
+        analysis: The completed Analysis object.
+
+    Returns:
+        A list of row dicts with a single ``'Checks'`` key containing the
+        message for each issue detected across all samples.
+    """
+    values = []
+
+    for sample in analysis.samples.values():
+        for check in sample.checks:
+            check_dict = {'Checks': check.message}
+            values.append(check_dict)
+    return values
+
+
+def write_excel(output_file: str, markers: TSV_data, mutations: TSV_data, literature: TSV_data, checks: TSV_data) -> None:
+    """Write all analysis results to an Excel workbook using the built-in template.
+
+    Loads the FluMut Excel template, writes version information to the Checks
+    sheet, then populates the Mutations, Markers, Literature, and Checks sheets
+    before saving to ``output_file``.
+
+    Args:
+        output_file: Path of the workbook to write, whose extension determines
+            its format (``.xlsx`` or ``.xlsm``).
+        markers: Rows to write to the Markers sheet.
+        mutations: Rows to write to the Mutations sheet.
+        literature: Rows to write to the Literature sheet.
+        checks: Rows to write to the Checks sheet.
+    """
+    wb = load_workbook(EXCEL_TEMPLATE, keep_vba=output_file.endswith('.xlsm'))
+
+    ws = wb['Checks']
+    ws.cell(row=1, column=4, value=flumut.__version__)
+    ws.cell(row=1, column=7, value=str(DbVersion().get()))
+
+    _write_excel_sheet(wb, 'Mutations', mutations)
+    _write_excel_sheet(wb, 'Markers', markers)
+    _write_excel_sheet(wb, 'Literature', literature)
+    if checks:
+        _write_excel_sheet(wb, 'Checks', checks)
+
+    wb.save(output_file)
+
+
+def _write_excel_sheet(wb: Workbook, sheet_name: str, values: TSV_data) -> None:
+    """Populate one sheet of a workbook with tabular data and apply table formatting.
+
+    Writes column headers from the first row's keys, fills subsequent rows with
+    the corresponding values, and registers a styled Excel table over the data
+    range. Does nothing if ``values`` is empty.
+
+    Args:
+        wb: The Workbook object to modify in-place.
+        sheet_name: Name of the worksheet to populate.
+        values: List of row dicts to write; column order follows the first row's keys.
+    """
+    if not values:
+        LOGGER.warning(f'No data to write in sheet {sheet_name}')
+        return
+    ws = wb[sheet_name]
+    header = list(values[0].keys())
+    for col, col_name in enumerate(header):
+        ws.cell(row=1, column=col + 1, value=col_name)
+    for row, row_values in enumerate(values):
+        for col, col_name in enumerate(header):
+            ws.cell(row=row + 2, column=col + 1, value=row_values.get(col_name, ''))
+    table = Table(displayName=f'{sheet_name}Table', ref=f'A1:{get_column_letter(len(header))}{len(values) + 1}')
+    table.tableStyleInfo = TableStyleInfo(
+        name='TableStyleMedium2', showFirstColumn=False, showLastColumn=False, showRowStripes=True, showColumnStripes=False
+    )
+    ws.add_table(table)

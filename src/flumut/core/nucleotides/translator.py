@@ -1,0 +1,116 @@
+import itertools
+
+from flumut.core.analysis.models import ProteinAlignment
+from flumut.core.globals import STOP_CODON_SYMBOL as SCS
+from flumut.core.globals import UNKNOWN_AA_SYMBOL, WILDCARD
+from flumut.core.nucleotides.exceptions import UnknownNucleotideError
+from flumut.core.nucleotides.framer import adjust_frame
+from flumut.core.nucleotides.models import CDS, Alignment, Nucleotide
+from flumut.flumutdb import Protein
+
+
+def translate(cds: CDS) -> ProteinAlignment:
+    """Translate a nucleotide alignment to an amino acid alignment for one protein.
+
+    Extracts the CDS, adjusts for frameshifts, then translates each codon pair
+    (reference and query) to produce a ProteinAlignment.
+
+    Args:
+        cds: The CDS object containing the nucleotide alignment.
+
+    Returns:
+        A ProteinAlignment with reference and query amino acid sequences.
+    """
+    sequences = Alignment()
+
+    for i in range(0, len(cds.alignment.query), 3):
+        codon_reference = cds.alignment.reference[i : i + 3]
+        codon_query = cds.alignment.query[i : i + 3]
+        sequences.reference.append(translate_codon(codon_reference))
+        sequences.query.append(translate_codon(codon_query))
+
+    return ProteinAlignment(cds.protein, cds.nucleotides.reference, sequences, cds)
+
+
+def get_cds(nucleotides: Nucleotide, protein: Protein) -> CDS:
+    """Slice the nucleotide alignment to the annotated CDS boundaries for a protein.
+
+    Looks up the annotation whose reference matches the nucleotide alignment's
+    reference, then extracts the corresponding sub-alignment.
+
+    Args:
+        nucleotides: The full-length nucleotide alignment to slice.
+        protein: The protein whose annotations define the CDS start and end.
+
+    Returns:
+        A CDS object containing the sliced alignment for the matching annotation.
+    """
+    annotations = nucleotides.reference.annotations_by_protein[protein]
+    positions = nucleotides.alignment.get_positions()
+    alignment = Alignment()
+
+    for annotation in annotations:
+        start = positions.index(annotation.start)
+        end = positions.index(annotation.end) + 1
+        alignment.reference += nucleotides.alignment.reference[start:end]
+        alignment.query += nucleotides.alignment.query[start:end]
+    cds = CDS(nucleotides, protein, alignment)
+    adjust_frame(cds)
+    return cds
+
+
+def translate_codon(codon: list[str]) -> str:
+    """Translate a single codon to its amino acid representation.
+
+    Handles degenerate nucleotides by expanding each position to all possible
+    bases, computing all resulting codons, and returning the sorted set of
+    translated amino acids as a concatenated string.
+
+    Args:
+        codon: A list of three nucleotide characters (may include IUPAC
+            degenerate codes).
+
+    Returns:
+        A string of one or more amino acid characters. Returns the unknown
+        amino acid symbol when the codon contains a wildcard or is incomplete.
+
+    Raises:
+        UnknownNucleotideError: If ``codon`` contains a character absent from the degeneration dict.
+    """
+    if WILDCARD in codon:
+        return UNKNOWN_AA_SYMBOL
+    if len(codon) < 3:
+        return UNKNOWN_AA_SYMBOL
+
+    try:
+        undegenerated_codon = [_degeneration_dict[nucl] for nucl in codon]
+    except KeyError:
+        raise UnknownNucleotideError(''.join([nt for nt in codon if nt not in _degeneration_dict])) from None
+
+    codons = list(itertools.product(*undegenerated_codon))
+    aas = [_translation_dict.get(''.join(c), UNKNOWN_AA_SYMBOL) for c in codons]
+    return ''.join(sorted(set(aas)))
+
+
+# fmt: off
+_translation_dict = {
+    'TTT': 'F', 'TTC': 'F', 'TTA': 'L', 'TTG': 'L', 'CTT': 'L', 'CTC': 'L', 'CTA': 'L', 'CTG': 'L',
+    'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V',
+    'TCT': 'S', 'TCC': 'S', 'TCA': 'S', 'TCG': 'S', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P',
+    'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A',
+    'TAT': 'Y', 'TAC': 'Y', 'TAA': SCS, 'TAG': SCS, 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q',
+    'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E',
+    'TGT': 'C', 'TGC': 'C', 'TGA': SCS, 'TGG': 'W', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R',
+    'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G',
+    '---': '-'
+}
+'''Codon to translated amminoacid'''
+
+_degeneration_dict = {
+    'A': ['A'], 'C': ['C'], 'G': ['G'], 'T': ['T'], 'U': ['T'], '-': ['-'],
+    'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'], 'W': ['A', 'T'],
+    'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['C', 'G', 'T'], 'D': ['A', 'G', 'T'],
+    'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'], 'N': ['A', 'C', 'G', 'T']
+}
+'''Degenerated nucleotide to list of possible nucleotides'''
+# fmt: on

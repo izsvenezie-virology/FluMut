@@ -1,52 +1,143 @@
+import logging
+from collections.abc import Callable
+from typing import NoReturn
+
 import click
 from click import File
 
-import flumut
-from flumut import __version__, __author__, __contact__
+from flumut import __author__, __contact__, __version__
+from flumut.core import logger
+from flumut.core.exceptions import FluMutError
+from flumut.core.logger import LEVELS, LOGGER
+from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
+from flumut.core.updates import download_latest_database, fetch_latest_release, is_newer
+from flumut.core.workflows import whole_workflow
+from flumut.flumutdb import read_version
+from flumut.flumutdb.exceptions import FluMutDBError
 
 
-def update(ctx, param, value):
+def set_verbosity(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    old_version = flumut.versions()['FluMutDB']
-    flumut.update()
-    new_version = flumut.versions()['FluMutDB']
-    if old_version == new_version:
-        print(f'Already using latest FluMutDB version ({new_version})')
-    else:
-        print(f'Updated FluMutDB to version {new_version}')
-    ctx.exit()
+    LOGGER.setLevel(LEVELS[value])
 
 
-def versions(ctx, param, value):
-    if not value or ctx.resilient_parsing:
+def print_errors(error: Exception) -> NoReturn:
+    LOGGER.critical(f'{type(error).__name__}: {error}')
+    if LOGGER.level == logging.DEBUG:
+        raise error
+    raise SystemExit(1)
+
+
+def print_all_versions(database: DatabaseOptions) -> None:
+    """Print the version of FluMut and of the database it would analyse with."""
+    click.echo(f'FluMut v.{__version__}; FluMutDB v.{read_version(database)}')
+
+
+def print_update_status() -> None:
+    """Print whether a newer FluMut has been released on GitHub.
+
+    Raises:
+        UpdateCheckError: If the latest release cannot be retrieved. The user
+            asked for this check, so a failed one is reported, not swallowed.
+    """
+    latest = fetch_latest_release()
+    if not is_newer(latest.version, __version__):
+        click.echo(f'FluMut v.{__version__} is up to date.')
         return
-    for package, version in flumut.versions().items():
-        print(f'{package}: {version}')
-    ctx.exit()
+    click.echo(f'A newer version of FluMut ({latest.version}) is available: {latest.url}')
+
+
+def download_database(path: str) -> None:
+    """Download the database of the latest FluMut release to ``path``."""
+    download_latest_database(path)
+    click.echo(f'Database saved to {path}')
+    click.echo(f'Use it with: flumut -D "{path}" ...')
+
+
+def option_group(*options: Callable) -> Callable:
+    """Bundle Click options into one reusable decorator."""
+
+    def decorator(func: Callable) -> Callable:
+        for option in reversed(options):
+            func = option(func)
+        return func
+
+    return decorator
+
+
+general_options = option_group(
+    click.help_option('-h', '--help'),
+    click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})'),
+    click.option('--all-versions', is_flag=True, help='Print the FluMut and FluMutDB versions and exit.'),
+    click.option('--check-update', is_flag=True, help='Check on GitHub whether a newer FluMut is available and exit.'),
+    click.option(
+        '--download-db',
+        type=click.Path(dir_okay=False, writable=True),
+        default=None,
+        help='Download the database of the latest FluMut release to the given file and exit.',
+    ),
+    click.option(
+        '--loglevel',
+        type=click.Choice(logger.LEVELS.keys(), case_sensitive=False),
+        callback=set_verbosity,
+        expose_value=False,
+        default='wrn',
+        show_default=True,
+        is_eager=True,
+        help='Verbosity of the logging messages',
+    ),
+)
+
+database_options = option_group(
+    click.option('-D', '--db-file', 'path', type=str, default=None, help='Set source database.'),
+)
+
+analysis_options = option_group(
+    click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.'),
+)
+
+output_options = option_group(
+    click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.'),
+    click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.'),
+    click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.'),
+    click.option('-x', '--excel-output', type=click.Path(dir_okay=False, writable=True), default=None, help='Excel complete report.'),
+)
+
+input_options = option_group(
+    click.option(
+        '-n',
+        '--name-regex',
+        type=str,
+        default=DEFAULT_NAME_REGEX,
+        show_default=True,
+        help='Set regular expression to parse sequence name.',
+    ),
+    click.argument('fasta-files', type=File('r'), nargs=-1),
+)
 
 
 @click.command()
-@click.help_option('-h', '--help')
-@click.version_option(__version__, '-v', '--version', message=f'%(prog)s, version %(version)s, by {__author__} ({__contact__})')
-@click.option('-V', '--all-versions', is_flag=True, callback=versions, expose_value=False, is_eager=True, help='Prints all versions and exit.')
-@click.option('--update', is_flag=True, callback=update, expose_value=False, is_eager=True, help='Update the database to the latest version and exit.')
-@click.option('-n', '--name-regex', type=str, default=r'(?P<sample>.+)_(?P<segment>.+)', show_default=True, help='Set regular expression to parse sequence name.')
-@click.option('--skip-unmatch-names', is_flag=True, default=False, help='Skip sequences with name that does not match the regular expression pattern.')
-@click.option('--skip-unknown-segments', is_flag=True, default=False, help='Skip sequences with segment not present in the database.')
-@click.option('-r', '--relaxed', is_flag=True, help='Report markers of which at least one mutation is found.')
-@click.option('-D', '--db-file', type=str, default=None, help='Set source database.')
-@click.option('-m', '--markers-output', type=File('w', 'utf-8'), default=None, help='TSV markers output file.')
-@click.option('-M', '--mutations-output', type=File('w', 'utf-8'), default=None, help='TSV mutations output file.')
-@click.option('-l', '--literature-output', type=File('w', 'utf-8'), default=None, help='TSV literature output file.')
-@click.option('-x', '--excel-output', type=str, default=None, help='Excel complete report.')
-@click.option('--debug', is_flag=True, hidden=True, help='Output errors with traceback')
-@click.option('--verbose', is_flag=True, hidden=True)
-@click.argument('fasta-file', type=File('r'))
-def cli(name_regex: str, fasta_file: File, db_file: str,
-        markers_output: File, mutations_output: File, literature_output: File, excel_output: str,
-        relaxed: bool, skip_unmatch_names: bool, skip_unknown_segments: bool, debug: bool, verbose: bool) -> None:
-    flumut.analyze(**locals())
+@general_options
+@database_options
+@analysis_options
+@output_options
+@input_options
+def cli(all_versions: bool, check_update: bool, download_db: str | None, **options) -> None:
+    run_options = FluMutOptions.from_flat(options)
+    try:
+        if check_update:
+            print_update_status()
+            return
+        if download_db:
+            download_database(download_db)
+            return
+        if all_versions:
+            print_all_versions(run_options.database)
+            return
+        whole_workflow(run_options)
+    except (FluMutError, FluMutDBError) as e:
+        print_errors(e)
 
 
 if __name__ == '__main__':
