@@ -40,14 +40,17 @@ def _make_evidence(effect: str, subtype: str, paper: str, host: str | None = Non
     evidence.effect.name = effect
     evidence.subtype.name = subtype
     evidence.paper.short_name = paper
+    evidence.notes = evidence.effect.notes = evidence.subtype.notes = evidence.paper.notes = None
     evidence.host = None
     evidence.target = None
     if host is not None:
         evidence.host = MagicMock()
         evidence.host.name = host
+        evidence.host.notes = None
     if target is not None:
         evidence.target = MagicMock()
         evidence.target.name = target
+        evidence.target.notes = None
     # Use the real formatting so the host/target cases exercise the model's logic, not a mock
     evidence.get_effect_name = lambda: Evidence.get_effect_name(evidence)
     return evidence
@@ -62,10 +65,25 @@ def _make_mutation(name: str, order: int) -> MagicMock:
     return mutation
 
 
-def _make_scan(marker_name: str, mutation_names: tuple, evidences: list) -> MagicMock:
+def _make_mapping(reference: str, position: int, alteration: str) -> MagicMock:
+    mapping = MagicMock(position=position, alteration=alteration)
+    mapping.reference.name = reference
+    return mapping
+
+
+def _make_marker_mutation(name: str, protein: str, mappings: tuple = (), notes: str | None = None) -> MagicMock:
+    mutation = MagicMock(notes=notes, mappings=list(mappings))
+    mutation.name = name
+    mutation.protein.name = protein
+    return mutation
+
+
+def _make_scan(marker_name: str, mutation_names: tuple, evidences: list, mutations: tuple = (), notes: str | None = None) -> MagicMock:
     scan = MagicMock()
     scan.marker.name = marker_name
     scan.marker.evidences = evidences
+    scan.marker.mutations = list(mutations)
+    scan.marker.notes = notes
     scan.detected_mutations = [MagicMock(**{'mutation.name': name}) for name in mutation_names]
     return scan
 
@@ -166,8 +184,37 @@ def test_get_markers_data(evidences: tuple, expected_effect: str, expected_liter
             'Effect': expected_effect,
             'Subtype': 'H5N1',
             'Literature': expected_literature,
+            'Marker (H5 numbering)': 'I97T',
+            'Notes': '',
         }
     ]
+
+
+def test_get_markers_data_renames_ha_mutations_with_h5_numbering() -> None:
+    """HA mutations take their H5 position, the others keep their name and the marker order is kept."""
+    mutations = (
+        _make_marker_mutation('HA1:83K', 'HA1', (_make_mapping('H3', 83, 'K'), _make_mapping('H5', 75, 'K'))),
+        _make_marker_mutation('PB2:627K', 'PB2', (_make_mapping('PB2', 627, 'K'),)),
+    )
+    scan = _make_scan('HA1:83K; PB2:627K', (), [_make_evidence('Effect', 'H5N1', 'Doe2020')], mutations)
+    analysis = _make_analysis(samples={'sample1': _make_sample('sample1', marker_scans=(scan,))})
+
+    assert get_markers_data(analysis)[0]['Marker (H5 numbering)'] == 'HA1:75K; PB2:627K'
+
+
+def test_get_markers_data_concatenates_labelled_notes() -> None:
+    """Notes of the marker and its related objects are labelled by object and reported once."""
+    evidences = [_make_evidence('Effect', 'H5N1', 'Doe2020'), _make_evidence('Effect', 'H5N1', 'Smith2021')]
+    evidences[0].paper.notes = 'paper note'
+    for evidence in evidences:
+        evidence.subtype.notes = 'subtype note'
+    mutations = (_make_marker_mutation('HA1:83K', 'HA1', notes='mutation note'),)
+    scan = _make_scan('HA1:83K', (), evidences, mutations, notes='marker note')
+    analysis = _make_analysis(samples={'sample1': _make_sample('sample1', marker_scans=(scan,))})
+
+    assert get_markers_data(analysis)[0]['Notes'] == (
+        'Marker: marker note; Mutation HA1:83K: mutation note; Paper Doe2020: paper note; Subtype: subtype note'
+    )
 
 
 @pytest.mark.parametrize(

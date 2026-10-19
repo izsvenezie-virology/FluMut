@@ -47,12 +47,15 @@ Specifically, it contains six columns:
 - **_Marker_**: markers identified in the sequences.
   If the `--relaxed` option is selected, markers for which at least a mutation composing the marker is identified are reported.
   Markers flagged with `^` are [high priority markers](#high-priority-markers).
+- **_Marker (H5 numbering)_**: the marker name with HA mutations renumbered according to the H5 numbering.
+  Mutations on other proteins are unchanged.
 - **_Mutations in your sample_**: mutations composing the marker that are identified in the sequences analysed.
   This column is identical to the column `Marker` unless the [`--relaxed` option](usage/usage-cli#options) was selected.
   With the `--relaxed` option this column allows to inspect which of the mutations composing the marker are identified in the analysed sequences.
 - **_Effect_**: biological effects of the marker, as described in the literature.
 - **_Subtype_**: influenza subtypes where the effect of the marker has been observed or tested.
 - **_Literature_**: bibliographic references where the marker has been described.
+- **_Notes_**: notes on the marker and on its mutations, evidences, papers, effects, subtypes, hosts and targets, each prefixed by the object it refers to (e.g. `Paper Doe2020: note; Subtype: note`).
 
 {: .note}
 By double-clicking on cells in the `Marker` or `Mutations in your sample` columns, you are redirected to the `Mutations` sheet, with columns filtered to display only mutations of selected marker.

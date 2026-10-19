@@ -10,7 +10,16 @@ from openpyxl import load_workbook
 #: The only sample in ``single_sample.fa``, as parsed by the default name regex.
 SAMPLE_ID = 'A/black-headed_gull/Italy/23VIR1099-4/2023_H5N1_2023-02-03'
 
-MARKERS_COLUMNS = ['Sample', 'Marker', 'Mutations in your sample', 'Effect', 'Subtype', 'Literature']
+MARKERS_COLUMNS = [
+    'Sample',
+    'Marker',
+    'Mutations in your sample',
+    'Effect',
+    'Subtype',
+    'Literature',
+    'Marker (H5 numbering)',
+    'Notes',
+]
 LITERATURE_COLUMNS = ['Short name', 'Title', 'Authors', 'Year', 'Journal', 'Link', 'DOI']
 
 

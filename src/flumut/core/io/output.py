@@ -12,7 +12,9 @@ from flumut.core.globals import EXCEL_TEMPLATE
 from flumut.core.logger import LOGGER
 from flumut.core.options import OutputOptions
 from flumut.flumutdb import DbVersion
-from flumut.flumutdb.models import MarkerPriority
+from flumut.flumutdb.models import BaseModel, Evidence, Marker, MarkerPriority
+
+H5_REFERENCE = 'H5'
 
 TSV_data = list[dict[str, str]]
 
@@ -106,39 +108,77 @@ def get_markers_data(analysis: Analysis) -> TSV_data:
     """Extract detected marker data from an analysis for output.
 
     Groups evidences by (effect, subtype) and aggregates associated paper
-    short names. One output row is produced per sample x marker x (effect, subtype)
-    combination.
+    short names and notes. One output row is produced per sample x marker x
+    (effect, subtype) combination.
 
     Args:
         analysis: The completed Analysis object.
 
     Returns:
         A list of row dicts with keys: Sample, Marker, Mutations in your sample,
-        Effect, Subtype, Literature.
+        Effect, Subtype, Literature, Marker (H5 numbering), Notes.
     """
     values = []
 
     for sample in analysis.samples.values():
         for scan in sample.marker_scans:
-            papers_collect = defaultdict(list)
+            evidences_collect = defaultdict(list)
             for evidence in scan.marker.evidences:
-                papers_collect[
-                    (
-                        evidence.get_effect_name(),
-                        evidence.subtype.name,
-                    )
-                ].append(evidence.paper.short_name)
-            for (effect, subtype), papers in papers_collect.items():
+                evidences_collect[(evidence.get_effect_name(), evidence.subtype.name)].append(evidence)
+            priority = '^' if scan.marker.priority == MarkerPriority.HIGH.value else ''
+            for (effect, subtype), evidences in evidences_collect.items():
                 marker_evidence = {
                     'Sample': sample.id,
-                    'Marker': f'{scan.marker.name}{"^" if scan.marker.priority == MarkerPriority.HIGH.value else ""}',
+                    'Marker': f'{scan.marker.name}{priority}',
                     'Mutations in your sample': '; '.join([m.mutation.name for m in scan.detected_mutations]),
                     'Effect': effect,
                     'Subtype': subtype,
-                    'Literature': '; '.join(papers),
+                    'Literature': '; '.join([evidence.paper.short_name for evidence in evidences]),
+                    'Marker (H5 numbering)': f'{_get_h5_marker_name(scan.marker)}{priority}',
+                    'Notes': _get_marker_notes(scan.marker, evidences),
                 }
                 values.append(marker_evidence)
     return values
+
+
+def _get_h5_marker_name(marker: Marker) -> str:
+    """Rename a marker using the H5 numbering for its HA mutations.
+
+    Each mutation of the marker is renamed after its mapping on the H5
+    reference, keeping the order of the marker name. Mutations without an H5
+    mapping (i.e. not on HA) keep their original name.
+    """
+    h5_names = {}
+    for mutation in marker.mutations:
+        h5_mapping = next((m for m in mutation.mappings if m.reference.name == H5_REFERENCE), None)
+        if h5_mapping:
+            h5_names[mutation.name] = f'{mutation.protein.name}:{h5_mapping.position}{h5_mapping.alteration}'
+    return '; '.join(h5_names.get(name, name) for name in marker.name.split('; '))
+
+
+def _get_marker_notes(marker: Marker, evidences: list[Evidence]) -> str:
+    """Concatenate the notes of a marker and of all the objects related to its evidences.
+
+    Each note is prefixed by the kind of object it belongs to (e.g.
+    ``Paper: note``). Duplicated notes are reported once.
+    """
+    notes: dict[str, None] = {}
+
+    def add(label: str, obj: BaseModel | None) -> None:
+        if obj is not None and obj.notes:
+            notes[f'{label}: {obj.notes}'] = None
+
+    add('Marker', marker)
+    for mutation in marker.mutations:
+        add(f'Mutation {mutation.name}', mutation)
+    for evidence in evidences:
+        add('Evidence', evidence)
+        add(f'Paper {evidence.paper.short_name}', evidence.paper)
+        add('Effect', evidence.effect)
+        add('Subtype', evidence.subtype)
+        add('Host', evidence.host)
+        add('Target', evidence.target)
+    return '; '.join(notes)
 
 
 def get_mutations_data(analysis: Analysis) -> TSV_data:
