@@ -156,7 +156,7 @@
       "args": ["--check-update", "--loglevel", "dbg"]
     },
     {
-      "name": "FluMut-GUI",
+      "name": "FluMutGUI",
       "type": "debugpy",
       "request": "launch",
       "module": "flumut.gui",

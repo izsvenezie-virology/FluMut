@@ -1,7 +1,7 @@
 ---
 title: Acknowledgements
 layout: default
-nav_order: 6
+nav_order: 7
 permalink: docs/acknowledgements
 ---
 

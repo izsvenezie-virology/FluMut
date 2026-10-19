@@ -1,7 +1,7 @@
 ---
 title: Contribute
 layout: default
-nav_order: 5
+nav_order: 6
 permalink: docs/contribute
 ---
 
@@ -9,14 +9,14 @@ permalink: docs/contribute
 
 ## Suggest new markers
 
-To suggest us a new marker, open an issue on our [FluMut GitHub page](https://github.com/izsvenezie-virology/FluMut).
+To suggest us a new marker, open an issue on our [FluMut GitHub page](https://github.com/izsvenezie-virology/FluMut/issues).
 In the issue you should report:
 
 - the paper where the marker is described
 - the mutations composing the marker
 - the effect reported in the literature
 
-[Suggest a marker](https://github.com/izsvenezie-virology/FluMutDB/issues/new?assignees=&labels=&projects=&template=new-marker-request.md&title=){: .btn .btn-purple}
+[Suggest a marker](https://github.com/izsvenezie-virology/FluMut/issues/new?title=New%20marker%20request){: .btn .btn-purple}
 
 ## Other suggestions
 

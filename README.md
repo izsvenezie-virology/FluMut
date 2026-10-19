@@ -7,38 +7,38 @@
 </p>
 
 [![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMut?label=FluMut)](https://github.com/izsvenezie-virology/FluMut/releases/latest/)
-[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutDB?label=FluMutDB)](https://github.com/izsvenezie-virology/FluMutDB/releases/latest/)
-[![GitHub Release](https://img.shields.io/github/v/release/izsvenezie-virology/FluMutGUI?label=FluMutGUI)](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/)
-
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/flumut/README.html)
 [![install with pip](https://img.shields.io/badge/install%20with-pip-brightgreen.svg)](https://pypi.org/project/flumut/)
 
-FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses of the A(H5N1) subtype, starting from complete or partial nucleotide genome sequences.
+FluMut is an open-source tool designed to search for molecular markers with potential impact on the biological characteristics of Influenza A viruses, starting from complete or partial nucleotide genome sequences.
+It works on all HA (H1–H16) and NA (N1–N9) subtypes and is available both as a command line tool and as a graphical interface (FluMutGUI).
 
 For the complete documentation please visit [FluMut site](https://izsvenezie-virology.github.io/FluMut/).
 
 ## Installation
 
-### FluMut-GUI
+### FluMutGUI
 
-FluMut-GUI is the graphical interface of FluMut, easy to use and easy to install.
+FluMutGUI is the graphical interface of FluMut, easy to use and easy to install.
 If you need the CLI version, check [FluMut installation](#flumut).
-Download the compiled version for your OS, double click on it and follow instructions to install FluMutGUI:
+Download the executable for your OS and double click on it to launch FluMutGUI, no installation required:
 
-- [Windows](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-Windows-installer.exe)
-- [MacOS](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-MacOS.zip)
-- [Linux](https://github.com/izsvenezie-virology/FluMutGUI/releases/latest/download/FluMutGUI-linux.tar.gz)
+- [Windows](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/FluMutGUI-Windows.exe)
+- [MacOS](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/FluMutGUI-macOS)
+- [Linux](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/FluMutGUI-Linux)
+
+FluMutGUI can also be installed from [PyPI](https://pypi.org/project/flumut/) (`pip install "flumut[gui]"`) and launched with `flumutgui`.
 
 ### FluMut
 
-FluMut is a CLI tool, if you prefer a graphical interface see [FluMut-GUI](#flumut-gui) installation.
+FluMut is a CLI tool, if you prefer a graphical interface see [FluMutGUI](#flumutgui) installation.
 
 #### Pip [![install with pip](https://img.shields.io/badge/install%20with-pip-brightgreen.svg)](https://pypi.org/project/flumut/)
 
 FluMut is available on [PyPI](https://pypi.org/project/flumut/).
 Before installing FluMut via Pip you need:
 
-- [Python](https://www.python.org/downloads/)
+- [Python](https://www.python.org/downloads/) 3.10 or newer
 - [Pip](https://pypi.org/project/pip/) (often packed with Python)
 
 Then, you can install FluMut with this simple command:
@@ -68,13 +68,16 @@ conda install -c bioconda flumut
 
 ### Input
 
-FluMut can analyze multiple A(H5N1) Influenza virus sequences simultaneously.
+FluMut can analyze multiple Influenza A virus sequences simultaneously.
 It can handle partial and complete genome sequences of multiple samples.
-You must provide a single file containing all the nucleotide sequences in FASTA format.
+You must provide one or more files containing the nucleotide sequences in FASTA format.
 Sequences must adhere to the [IUPAC code](https://www.bioinformatics.org/sms/iupac.html).
 
-FluMut relies on the FASTA header to assign the sequence to a specific segment and sample.
-For this reason, the header must contain both a sample ID (consistent among sequences of the same sample) and one of the following segment names: `PB2`, `PB1`, `PA`, `HA`, `NP`, `NA`, `MP`, `NS`.
+FluMut relies on the FASTA header to assign the sequence to a sample.
+For this reason, the header must contain a sample ID consistent among sequences of the same sample.
+By default FluMut expects the sample ID followed by an underscore and the segment name (e.g. `my_sample_PB2`); a different format can be parsed with the `-n`/`--name-regex` option.
+The segment is detected automatically by aligning the sequence against the references in the database: the one in the header is used only as a hint.
+Find out more [here](https://izsvenezie-virology.github.io/FluMut/docs/usage/input-file).
 
 An example of input file can be downloaded [here](https://github.com/izsvenezie-virology/FluMut/releases/latest/download/fasta_input_example.fa).
 
@@ -92,12 +95,23 @@ If you prefer the [text outputs](#text-outputs) (machine-readable format) run:
 flumut -m markers_output.tsv -M mutations_output.tsv -l literature_output.tsv your_fasta.fa
 ```
 
+You can analyze several FASTA files at once by listing them all at the end of the command.
+The full list of options is available [here](https://izsvenezie-virology.github.io/FluMut/docs/usage/usage-cli#options).
+
 #### Update database
 
-You should always use the latest version of our database and you can do it just by running this command:
+The markers database is shipped inside FluMut, and every database update is released as a new FluMut version.
+You can check whether a newer one is available with:
 
 ```
-flumut --update
+flumut --check-update
+```
+
+If you cannot update FluMut, you can download the latest database and use it with the `-D`/`--db-file` option:
+
+```
+flumut --download-db flumut_db.sqlite
+flumut -D flumut_db.sqlite -x excel_output.xlsm your_fasta.fa
 ```
 
 ### Outputs
@@ -116,18 +130,20 @@ This is the most user-friendly and complete output.
 You can obtain this output using the `-x`/`--excel-output` option.
 Find out more [here](https://izsvenezie-virology.github.io/FluMut/docs/output#excel-output).
 
-> **_IMPORTANT:_** To enable the navigation feature the exstension of the Excel file must be `.xlsm`.
-> If you don't care about navigation, you can use `.xlsx` exstension.
-> Other exstensions lead to unreadable files.
+The Excel output also contains a `Checks` sheet listing possible issues found in your sequences (frameshifts, premature stop codons, duplicated proteins, etc.).
+
+> **_IMPORTANT:_** To enable the navigation feature the extension of the Excel file must be `.xlsm`.
+> If you don't care about navigation, you can use `.xlsx` extension.
+> Other extensions lead to unreadable files.
 
 #### Text outputs
 
 You can obtain 3 different text outputs:
-| Option | Output | Desctription |
+| Option | Output | Description |
 | -- | -- | -- |
 | `-m`/`--markers-output` | [Markers output](https://izsvenezie-virology.github.io/FluMut/docs/output#markers-output) | List of detected markers |
 | `-M`/`--mutations-output` | [Mutations output](https://izsvenezie-virology.github.io/FluMut/docs/output#mutations-output) | List of amino acids present in the positions of mutations of interest for each sample |
-| `-l`/`--literature-output` | [Literature output](https://izsvenezie-virology.github.io/FluMut/docs/output#literature-output) | List of all papers present in the database |
+| `-l`/`--literature-output` | [Literature output](https://izsvenezie-virology.github.io/FluMut/docs/output#literature-output) | List of the papers describing the detected markers |
 
 ## Cite FluMut
 

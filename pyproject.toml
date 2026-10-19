@@ -39,7 +39,7 @@ file = "README.md"
 
 [project.scripts]
 flumut = "flumut.cli:cli"
-flumut-gui = "flumut.gui:main"
+flumutgui = "flumut.gui:main"
 
 [tool.setuptools]
 include-package-data = true
