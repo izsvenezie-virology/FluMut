@@ -87,7 +87,7 @@ class FluMutWorker(QThread):
         handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
         LOGGER.addHandler(handler)
         LOGGER.propagate = False
-        LOGGER.setLevel(logging.DEBUG)
+        LOGGER.setLevel(logging.INFO)
 
         try:
             whole_workflow(self.options)
