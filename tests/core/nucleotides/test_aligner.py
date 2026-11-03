@@ -97,12 +97,11 @@ def test_get_best_alignment_returns_query_reference_and_alignment(mock_aligner) 
 def test_get_best_alignment_picks_the_highest_scoring_reference(mock_aligner) -> None:
     low = _make_reference('low', sequence='AAAA')
     high = _make_reference('high', sequence='ACGT')
-    mock_aligner.align.side_effect = [
-        [_make_aln_result(1.0, ['A'], ['A'])],
-        [_make_aln_result(100.0, ['A', 'C'], ['A', 'C'])],
-    ]
+    mock_aligner.score.side_effect = [1.0, 100.0]
+    mock_aligner.align.return_value = [_make_aln_result(100.0, ['A', 'C'], ['A', 'C'])]
 
     assert get_best_alignment(_make_query('ACGT'), [low, high]).reference is high
+    mock_aligner.align.assert_called_once_with('ACGT', 'ACGT')
 
 
 def test_get_best_alignment_strips_gaps_from_the_query(mock_aligner) -> None:

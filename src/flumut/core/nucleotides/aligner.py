@@ -57,27 +57,25 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
         resulting Alignment.
 
     Raises:
-        ValueError: If ``candidates`` is empty and no alignment can be produced.
+        NoReferenceFoundError: If ``candidates`` is empty and no alignment can be produced.
     """
-    best_alignment = None
-    best_score = -1_000_000
+    if not candidates:
+        raise NoReferenceFoundError(f'No reference found for sequence {query.header} in file {query.file}')
+
+    scores: dict[Reference, float] = {}
     query_sequence = str(query.sequence).replace(GAP_SYMBOL, '')
 
     LOGGER.debug(f'Aligning "{query.header}" against {len(candidates)} candidate reference(s)...')
 
     for reference in candidates:
-        reference_sequence = str(reference.sequence)
-        alignment = _aligner.align(reference_sequence, query_sequence)[0]
-        if best_score < alignment.score:  # type: ignore
-            aln = Alignment(list(alignment[0]), list(alignment[1]))  # type: ignore
-            best_alignment = Nucleotide(query, reference, aln)
-            best_score = alignment.score  # type: ignore
+        scores[reference] = _aligner.score(reference.sequence, query_sequence)
 
-    if not best_alignment:
-        raise NoReferenceFoundError(f'No reference found for sequence {query.header} in file {query.file}')
+    best_reference: Reference = max(scores, key=scores.get)
+    alignment = _aligner.align(best_reference.sequence, query_sequence)[0]
+    aln = Alignment(list(alignment[0]), list(alignment[1]))  # type: ignore
+    LOGGER.debug(f'Best reference: {best_reference.name} (segment {best_reference.segment})')
 
-    LOGGER.debug(f'Best reference: {best_alignment.reference.name} (segment {best_alignment.reference.segment})')
-    return best_alignment
+    return Nucleotide(query, best_reference, aln)
 
 
 def _is_candidate_reference(reference: Reference, candidate_hint: str) -> bool:
