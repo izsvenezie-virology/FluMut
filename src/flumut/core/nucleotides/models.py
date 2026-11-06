@@ -19,6 +19,7 @@ class Alignment:
 
     reference: list[str] = field(default_factory=list)
     query: list[str] = field(default_factory=list)
+    reversed: bool = False
 
     def get_positions(self) -> list[int]:
         """Map each alignment column to its 1-based reference position.

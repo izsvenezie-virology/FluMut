@@ -1,4 +1,5 @@
 from Bio.Align import PairwiseAligner
+from Bio.Seq import reverse_complement
 
 from flumut.core.globals import GAP_END_SCORE, GAP_EXTEND_SCORE, GAP_OPEN_SCORE, GAP_SYMBOL, MISMATCH_SCORE, WILDCARD
 from flumut.core.io.input import FastaSequence
@@ -62,17 +63,20 @@ def get_best_alignment(query: FastaSequence, candidates: list[Reference]) -> Nuc
     if not candidates:
         raise NoReferenceFoundError(f'No reference found for sequence {query.header} in file {query.file}')
 
-    scores: dict[Reference, float] = {}
-    query_sequence = str(query.sequence).replace(GAP_SYMBOL, '')
+    scores: dict[(Reference, bool), float] = {}
+    query.sequence = str(query.sequence).replace(GAP_SYMBOL, '')
 
     LOGGER.debug(f'Aligning "{query.header}" against {len(candidates)} candidate reference(s)...')
 
     for reference in candidates:
-        scores[reference] = _aligner.score(reference.sequence, query_sequence)
+        scores[(reference, False)] = _aligner.score(reference.sequence, query.sequence, '+')
+        scores[(reference, True)] = _aligner.score(reference.sequence, query.sequence, '-')
 
-    best_reference: Reference = max(scores, key=scores.get)
-    alignment = _aligner.align(best_reference.sequence, query_sequence)[0]
-    aln = Alignment(list(alignment[0]), list(alignment[1]))  # type: ignore
+    best_reference, is_reverse = max(scores, key=scores.get)
+    if is_reverse:
+        query.sequence = reverse_complement(query.sequence)
+    alignment = _aligner.align(best_reference.sequence, query.sequence)[0]
+    aln = Alignment(list(alignment[0]), list(alignment[1]), is_reverse)  # type: ignore
     LOGGER.debug(f'Best reference: {best_reference.name} (segment {best_reference.segment})')
 
     return Nucleotide(query, best_reference, aln)

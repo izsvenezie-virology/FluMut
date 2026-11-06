@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from flumut.core.analysis.models import DuplicationCheck, ElongationCheck, FrameshiftCheck, TruncationCheck
+from flumut.core.analysis.models import DuplicationCheck, ElongationCheck, FrameshiftCheck, ReverseCheck, TruncationCheck
 from flumut.core.globals import GAP_SYMBOL, STOP_CODON_SYMBOL, UNKNOWN_AA_SYMBOL
 from flumut.core.logger import LOGGER
 
@@ -16,10 +16,26 @@ def perform_checks(analysis: 'Analysis') -> None:
     """
     for sample in analysis.samples.values():
         LOGGER.debug(f'Checking {sample.id}')
+        check_reversed(sample)
         check_duplications(sample)
         check_frameshifts(sample)
         check_truncation(sample)
         check_elongation(sample)
+
+
+def check_reversed(sample: 'Sample') -> None:
+    """Detect sequences aligned in reverse orientation relative to the reference.
+
+    A ReverseCheck is appended for every protein alignment whose underlying
+    nucleotide alignment is flagged as reversed.
+
+    Args:
+        sample: The sample whose protein alignments are inspected.
+    """
+    for alignemnt in sample.alignments:
+        nt_aln = alignemnt.cds.nucleotides.alignment
+        if nt_aln.reversed:
+            sample.checks.append(ReverseCheck(sample.id, alignemnt.cds.nucleotides.query.header))
 
 
 def check_truncation(sample: 'Sample') -> None:

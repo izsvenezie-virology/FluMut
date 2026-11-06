@@ -131,6 +131,20 @@ class Check:
         LOGGER.warning(self.message)
 
 
+class ReverseCheck(Check):
+    """Quality check raised when a sequence is in reverse orientation relative to the reference."""
+
+    def __init__(self, sample_id: str, sequence_header: str):
+        """Create a reverse check for the given sample and sequence.
+
+        Args:
+            sample_id: ID of the sample containing the reversed sequence.
+            sequence_header: FASTA header of the reversed sequence.
+        """
+        message = f'Reversed sequence detected in sample "{sample_id}": "{sequence_header}"'
+        super().__init__(message)
+
+
 class TruncationCheck(Check):
     """Quality check raised when a premature stop codon is detected."""
 
