@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from Bio.Seq import reverse_complement
 
 from flumut.core.globals import GAP_SYMBOL
 from flumut.core.nucleotides.aligner import get_best_alignment, select_candidate_references
@@ -83,6 +84,7 @@ def test_get_best_alignment_returns_query_reference_and_alignment(mock_aligner) 
     reference = _make_reference('PB2_ref_A')
     aligned_reference = ['A', 'C', GAP_SYMBOL, 'T']
     aligned_query = ['A', 'C', 'G', 'T']
+    mock_aligner.score.return_value = 10.0
     mock_aligner.align.return_value = [_make_aln_result(10.0, aligned_reference, aligned_query)]
 
     result = get_best_alignment(query, [reference])
@@ -97,7 +99,8 @@ def test_get_best_alignment_returns_query_reference_and_alignment(mock_aligner) 
 def test_get_best_alignment_picks_the_highest_scoring_reference(mock_aligner) -> None:
     low = _make_reference('low', sequence='AAAA')
     high = _make_reference('high', sequence='ACGT')
-    mock_aligner.score.side_effect = [1.0, 100.0]
+    # Each reference is scored on the forward strand, then on the reverse one.
+    mock_aligner.score.side_effect = [1.0, 0.0, 100.0, 0.0]
     mock_aligner.align.return_value = [_make_aln_result(100.0, ['A', 'C'], ['A', 'C'])]
 
     assert get_best_alignment(_make_query('ACGT'), [low, high]).reference is high
@@ -105,8 +108,35 @@ def test_get_best_alignment_picks_the_highest_scoring_reference(mock_aligner) ->
 
 
 def test_get_best_alignment_strips_gaps_from_the_query(mock_aligner) -> None:
+    mock_aligner.score.return_value = 10.0
     mock_aligner.align.return_value = [_make_aln_result(10.0, ['A'], ['A'])]
 
     get_best_alignment(_make_query(f'AC{GAP_SYMBOL}GT'), [_make_reference('PB2_ref_A')])
 
     mock_aligner.align.assert_called_once_with('ACGT', 'ACGT')
+
+
+def test_get_best_alignment_reverse_complements_a_reversed_query() -> None:
+    """A query on the reverse strand is reverse complemented before being aligned."""
+    reference_sequence = 'ATGGCGTTACCGGATTCAAGCTTGGCAAATCCG'
+    reference = _make_reference('PB2_ref_A', sequence=reference_sequence)
+    query = _make_query(reverse_complement(reference_sequence))
+
+    result = get_best_alignment(query, [reference])
+
+    assert result.alignment.reversed
+    assert result.query.sequence == reference_sequence
+    assert ''.join(result.alignment.query) == reference_sequence
+    assert ''.join(result.alignment.reference) == reference_sequence
+
+
+def test_get_best_alignment_keeps_a_forward_query_as_is() -> None:
+    """A query on the forward strand is aligned unchanged and not flagged as reversed."""
+    reference_sequence = 'ATGGCGTTACCGGATTCAAGCTTGGCAAATCCG'
+    reference = _make_reference('PB2_ref_A', sequence=reference_sequence)
+
+    result = get_best_alignment(_make_query(reference_sequence), [reference])
+
+    assert not result.alignment.reversed
+    assert result.query.sequence == reference_sequence
+    assert ''.join(result.alignment.query) == reference_sequence
