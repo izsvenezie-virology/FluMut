@@ -5,11 +5,11 @@ from typing import NoReturn
 import click
 from click import File
 
-from flumut import __author__, __contact__, __version__
+from flumut import __version__
 from flumut.core import logger
 from flumut.core.exceptions import FluMutError
 from flumut.core.logger import LEVELS, LOGGER
-from flumut.core.options import DEFAULT_NAME_REGEX, DatabaseOptions, FluMutOptions
+from flumut.core.options import DEFAULT_NAME_REGEX, FluMutOptions
 from flumut.core.updates import download_latest_database, fetch_latest_release, is_newer
 from flumut.core.workflows import whole_workflow
 from flumut.flumutdb import read_version
@@ -27,11 +27,6 @@ def print_errors(error: Exception) -> NoReturn:
     if LOGGER.level == logging.DEBUG:
         raise error
     raise SystemExit(1)
-
-
-def print_all_versions(database: DatabaseOptions) -> None:
-    """Print the version of FluMut and of the database it would analyse with."""
-    click.echo(f'FluMut v.{__version__}; FluMutDB v.{read_version(database)}')
 
 
 def print_update_status() -> None:
@@ -68,7 +63,8 @@ def option_group(*options: Callable) -> Callable:
 
 general_options = option_group(
     click.help_option('-h', '--help'),
-    click.version_option(__version__, '--version', message=f'%(prog)s, v.%(version)s, by {__author__} ({__contact__})'),
+    click.version_option(__version__, '--version', message='FluMut v.%(version)s'),
+    click.option('--db-version', is_flag=True, help='Print the version of the FluMutDB in use (see -D) and exit.'),
     click.option('--all-versions', is_flag=True, help='Print the FluMut and FluMutDB versions and exit.'),
     click.option('--check-update', is_flag=True, help='Check on GitHub whether a newer FluMut is available and exit.'),
     click.option(
@@ -123,7 +119,7 @@ input_options = option_group(
 @analysis_options
 @output_options
 @input_options
-def cli(all_versions: bool, check_update: bool, download_db: str | None, **options) -> None:
+def cli(db_version: bool, all_versions: bool, check_update: bool, download_db: str | None, **options) -> None:
     run_options = FluMutOptions.from_flat(options)
     try:
         if check_update:
@@ -132,8 +128,11 @@ def cli(all_versions: bool, check_update: bool, download_db: str | None, **optio
         if download_db:
             download_database(download_db)
             return
+        if db_version:
+            click.echo(f'FluMutDB v.{read_version(run_options.database)}')
+            return
         if all_versions:
-            print_all_versions(run_options.database)
+            click.echo(f'FluMut v.{__version__}\nFluMutDB v.{read_version(run_options.database)}')
             return
         whole_workflow(run_options)
     except (FluMutError, FluMutDBError) as e:
