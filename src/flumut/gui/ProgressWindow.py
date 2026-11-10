@@ -59,9 +59,10 @@ class FluMutWorker(QThread):
     error = Signal(Exception)
     ended = Signal(int)
 
-    def __init__(self, options: FluMutOptions, stderr_stream):
+    def __init__(self, options: FluMutOptions, debug: bool, stderr_stream):
         QThread.__init__(self)
         self.options = options
+        self.debug = debug
         self.stderr_stream = stderr_stream
 
     def __del__(self):
@@ -87,7 +88,10 @@ class FluMutWorker(QThread):
         handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
         LOGGER.addHandler(handler)
         LOGGER.propagate = False
-        LOGGER.setLevel(logging.INFO)
+        if self.debug:
+            LOGGER.setLevel(logging.DEBUG)
+        else:
+            LOGGER.setLevel(logging.INFO)
 
         try:
             whole_workflow(self.options)
@@ -133,7 +137,7 @@ class FluMutOutputReader(QThread):
 
 
 class ProgressWindow(QDialog):
-    def __init__(self, options: FluMutOptions) -> None:
+    def __init__(self, options: FluMutOptions, debug: bool) -> None:
         super().__init__()
         self.init_ui()
         self.setModal(True)
@@ -142,6 +146,7 @@ class ProgressWindow(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint)
 
         self.flumut_options = options
+        self.debug = debug
         self._close_requested = False
         self.start_flumut()
 
@@ -214,7 +219,7 @@ class ProgressWindow(QDialog):
 
         self.stderr_stream = StdIO()
 
-        self.flumut_thread = FluMutWorker(self.flumut_options, self.stderr_stream)
+        self.flumut_thread = FluMutWorker(self.flumut_options, self.debug, self.stderr_stream)
         self.flumut_thread.started.connect(handle_start)
         self.flumut_thread.ended.connect(handle_end)
         self.flumut_thread.error.connect(handle_error)

@@ -185,9 +185,13 @@ class AdvancedOptions(QWidget):
         self.name_regex_txt._btn_browse.setVisible(False)
         layout.addRow('Name regex:', self.name_regex_txt)
 
+        self.debug_chk = QCheckBox()
+        layout.addRow('Debug:', self.debug_chk)
+
     def reset(self):
         self.relaxed_chk.setChecked(False)
         self.name_regex_txt.set_enabled_row(False)
+        self.debug_chk.setChecked(False)
 
 
 class LauncherWindow(QWidget):
@@ -308,7 +312,7 @@ class LauncherWindow(QWidget):
                 output=outputs,
                 analysis=AnalysisOptions(relaxed=self.options_wdg.relaxed_chk.isChecked()),
             )
-            ProgressWindow(options).exec()
+            ProgressWindow(options, self.options_wdg.debug_chk.isChecked()).exec()
 
     def is_pyinstaller(self):
         return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
