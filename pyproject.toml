@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=77.0"]
 
 [project]
 authors = [
@@ -25,7 +25,7 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 gui = [
   "pyqtdarktheme-fork>=2.3.0",
-  "pyside6>=6.11.1",
+  "pyside6-essentials>=6.11.1",
 ]
 
 [project.readme]
@@ -40,10 +40,6 @@ file = "README.md"
 [project.scripts]
 flumut = "flumut.cli:cli"
 flumutgui = "flumut.gui:main"
-
-[tool.setuptools]
-include-package-data = true
-package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 exclude = ["flumut_db_editor*"]
@@ -61,9 +57,6 @@ dev = [
   "pytest>=9.0.3",
   "ruff>=0.14.2",
 ]
-
-[tool.uv.dependency-groups]
-dev = {requires-python = "==3.10"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
