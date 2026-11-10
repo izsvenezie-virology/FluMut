@@ -27,7 +27,7 @@ from flumut import __version__
 from flumut.core.options import DEFAULT_NAME_REGEX, AnalysisOptions, FluMutOptions, InputOptions, OutputOptions
 from flumut.core.updates import Release, check_for_update
 from flumut.gui.globals import ICON_PATH
-from flumut.gui.ProgressWindow import ProgressWindow
+from flumut.gui.progress_window import ProgressWindow
 
 
 def excepthook(exc_type, exc_value, exc_tb):
